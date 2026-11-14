@@ -281,6 +281,14 @@ details[open] summary > span { transform: rotate(45deg); }
 input:disabled + span { cursor:default; }
 
 /* Morphagene form additions. */
+/* First installation appears before the firmware builder. */
+.first-install{margin:0 0 32px;gap:22px 36px}
+.first-install-heading{grid-column:1/-1;margin:0;flex-wrap:wrap}
+.first-install .section-number{display:inline}
+.install-required{padding:3px 8px;border:1px solid #aebeb0;border-radius:4px;background:var(--card);color:var(--green);font-size:10px;font-weight:700}
+.first-install p:not(.eyebrow),.first-install .install-steps{font-size:13px}
+.first-install-copy>p:first-child{margin-top:0}
+.first-install .install-aside{margin-top:6px}
 .secondary-button{padding:12px 18px;margin-top:12px;border:1px solid var(--green);border-radius:5px;background:var(--card);color:var(--green)}
 .options-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin:26px 0}.option-field{padding:20px;background:var(--card);border:1px solid var(--line);border-radius:8px}
 .option-field label{display:block;font-weight:650;margin-bottom:10px}.option-field code{float:right;color:var(--orange)}

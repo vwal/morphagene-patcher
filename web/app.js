@@ -332,7 +332,7 @@ function init() {
         status('build-status', 'Encoding the audio update…');
         await new Promise((res) => setTimeout(res, 20));
         download('mg204+c.wav', updateWav(image), 'audio/wav');
-        status('build-status', 'Update WAV saved. Follow Install & recover below.', 'ok');
+        status('build-status', 'mg204+c.wav saved. Follow the first-time audio installation steps above.', 'ok');
       }
     } catch (err) {
       status('build-status', err.message, 'error');
