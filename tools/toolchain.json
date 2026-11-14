@@ -1,0 +1,25 @@
+{
+  "release": "14.2.rel1",
+  "platforms": {
+    "Darwin-arm64": {
+      "filename": "arm-gnu-toolchain-14.2.rel1-darwin-arm64-arm-none-eabi.tar.xz",
+      "url": "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-arm64-arm-none-eabi.tar.xz",
+      "sha256": "c7c78ffab9bebfce91d99d3c24da6bf4b81c01e16cf551eb2ff9f25b9e0a3818"
+    },
+    "Linux-x86_64": {
+      "filename": "arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz",
+      "url": "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz",
+      "sha256": "62a63b981fe391a9cbad7ef51b17e49aeaa3e7b0d029b36ca1e9c3b2a9b78823"
+    },
+    "Darwin-x86_64": {
+      "filename": "arm-gnu-toolchain-14.2.rel1-darwin-x86_64-arm-none-eabi.tar.xz",
+      "url": "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-x86_64-arm-none-eabi.tar.xz",
+      "sha256": "2d9e717dd4f7751d18936ae1365d25916534105ebcb7583039eff1092b824505"
+    },
+    "Linux-aarch64": {
+      "filename": "arm-gnu-toolchain-14.2.rel1-aarch64-arm-none-eabi.tar.xz",
+      "url": "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-aarch64-arm-none-eabi.tar.xz",
+      "sha256": "87330bab085dd8749d4ed0ad633674b9dc48b237b61069e3b481abd364d0a684"
+    }
+  }
+}

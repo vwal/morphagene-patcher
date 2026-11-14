@@ -1,0 +1,27 @@
+name: tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  hooks-and-builder:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install checksum-pinned Arm GNU toolchain
+        run: python tools/install_toolchain.py --print-bin >> "$GITHUB_PATH"
+      - run: python -m pip install -r requirements-test.txt
+      - name: Host checks and assembled ARM hook tests
+        run: python -m unittest discover -v
+      - name: Web settings round-trip checks
+        run: node tests/test_web.mjs
+      # Full-firmware integration requires the user's mg204.wav and is run locally.
+      # No vendor firmware or generated firmware is committed or uploaded by CI.

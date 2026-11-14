@@ -1,0 +1,73 @@
+# Morphagene mg204+c
+
+[Open the firmware patcher and options editor](https://vwal.github.io/morphagene-patcher/).
+
+An unofficial Morphagene mg204 extension by vwal, built on
+[Briskcat’s Morphagene mods](https://github.com/briskcat/morphagene-mods).
+The browser patches your own official `mg204.wav` locally and downloads
+`mg204+c.wav` for audio installation or `mgmod.bin` for an existing SD updater.
+No firmware is uploaded. This repository contains source and patch data only.
+
+- Expanded Varispeed: +/-4x, or forward stop-to-8x.
+- Optional normal pitch quantization and custom scales.
+- Independent Gene density, 0.1–128 Genes/sec, with configurable startup/recall
+  density (`dstr`, default 8). Knob changes are not saved across power cycles.
+- Morph Loop included and disabled by default (`mlop 0`; enable with `mlop 1`).
+- Settings-only reload: remove the idle card, wait for its SHIFT light to go out,
+  hold SHIFT alone for one second until steady, then insert a matching card while
+  holding SHIFT. Preserves the live reel/playback position and leaves the card
+  mounted. Arming is unavailable while mounted. Two flashes mean success.
+- Briskcat’s tape/TLA feedback, playback effects, jitter/Turing patterns,
+  saved input gain, mono input, SD updater and other improvements.
+
+Trusted-card reload does **not** compare reel contents. Keep WAVs, splice files
+and reel names identical; change only options.txt. Recording/saving/editing can
+make other copies stale: synchronize them before the next settings-only swap.
+Normal mounting still loads a card’s reel in the usual way.
+
+## Guides
+
+The website includes Letter/A4 manuals and quick cards. Source documentation:
+[release and live settings guide](docs/DEVELOPMENT_5_LIVE_OPTIONS.md),
+[options](docs/OPTIONS.md), [controls](docs/USING.md),
+[installation/recovery](docs/INSTALLING.md), and [build/tests](docs/TESTING.md).
+
+The released firmware is the hardware-tested Development 5 image. The owner
+confirmed SHIFT arming and changed options applying on card insertion without
+an audible playback interruption. The full local regression suite passed
+**89 tests without skips**. Exact SD latency and every clock/recording/CPU-load
+combination are not established by those results. Earlier development guides
+are historical; their verification behavior does not describe mg204+c.
+
+Raw application SHA-256 (188,416 bytes):
+`5c150c24540517af487693c53f5b4e7fa9b9dc5c33147ba6ab801ded60912335`.
+
+## Development and publication
+
+Use the pinned Arm GNU 14.2.rel1 toolchain; see the test guide. The `full` and
+`full_morph_loop` CLI names are compatibility aliases for the same mg204+c image.
+CLI files retain their internal `mg204-full.*` names. Keep generated firmware
+private; it contains Make Noise code and must not be committed here.
+
+`web/` is the static site. `tools/make_site.py` regenerates its HTML/CSS;
+`tools/make_manual.py` generates the printable guides with Liberation Sans,
+ReportLab and pypdf. GitHub Pages deploys `web/` on pushes to `main`.
+Local development packaging scripts also reference preserved development
+folders outside this repository; they are not needed to use or deploy the site.
+
+## Credits and license
+
+Briskcat created the upstream mods, browser patcher and encoder; its MIT
+copyright and permission notice are retained. Audio encoding derives from
+Émilie Gillet’s [stm-audio-bootloader](https://github.com/pichenettes/stm-audio-bootloader).
+
+Our original additions: Copyright (c) 2026 vwal,
+[Attribution - No Sale License 1.0](LICENSE), with [scope/examples](LICENSING.md).
+Free use, modification and sharing with notices retained; no sales, paid bundles,
+paid products containing our additions, or paid firmware services. **Make Noise
+may integrate and commercially distribute our additions in its official firmware
+and products**, with notices retained, as specified in section 5. Paid musical
+performances and recordings remain allowed. Upstream MIT rights are unchanged.
+This is source available, not an OSI open-source license for the combined work.
+Morphagene and Make Noise are trademarks of Make Noise. This project is unofficial
+and not endorsed by Make Noise.

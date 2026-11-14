@@ -1,0 +1,156 @@
+Morphagene Extended Attribution - No Sale License 1.0
+License identifier: LicenseRef-Morphagene-Extended-No-Sale-1.0
+
+Copyright (c) 2026 vwal
+
+1. Scope and ownership
+
+This license covers only the copyrightable original additions and modifications
+in the Morphagene extended project for which vwal controls the licensing rights
+(the "Covered Work"), including source code, compiled forms, patch data,
+website materials, documentation and their copyrightable derivatives. Ownership
+remains with the respective copyright holders; this license does not transfer
+copyright or claim ownership of another person's independent contributions.
+
+The Covered Work excludes the pre-existing work of Briskcat and the
+morphagene-mods contributors, other third-party material, and Make Noise's
+firmware. Upstream portions remain under their original MIT license, reproduced
+below and in LICENSES/Briskcat-MIT.txt. Nothing here restricts rights granted
+under that license for those portions, grants rights in Make Noise's firmware,
+or withdraws permissions already granted for earlier copies under other terms.
+See LICENSING.md for provenance and examples.
+
+2. Permissions
+
+Subject to the conditions below, you are granted a worldwide, non-exclusive,
+royalty-free license to use, study, copy, modify, merge, reproduce and distribute
+the Covered Work, in source or compiled form, and to include it in other works
+or products distributed without payment or other required consideration. You
+may use it privately, in education, in a business, or professionally, provided
+you do not commercially supply it as described in section 4.
+
+3. Required notices and downstream distribution
+
+Keep all applicable copyright, attribution and license notices, including the
+notice for vwal and the upstream MIT copyright and permission notices. Identify
+your modifications without implying endorsement by the original authors.
+
+Distributions containing the Covered Work or a substantial portion of it must
+include this complete license and applicable third-party notices. For compiled
+software these may accompany the distribution in accessible documentation; for
+PDF documents they may be included as an embedded text attachment. Retain a
+readable copyright and license notice on the documents themselves. Printed
+copies of the documents must retain that notice and the no-sale summary; the
+complete terms may accompany them on a separate sheet or digital medium.
+
+Recipients receive the same permissions to the Covered Work under this license.
+You may not remove its conditions or offer the Covered Work under terms that
+purport to authorize the sales or paid supply prohibited below. This condition
+covers only the Covered Work, not unrelated, independently authored material.
+
+4. No sales, paid bundles, paid products or paid firmware services
+
+Except as expressly permitted by section 5 or separate written permission
+from the relevant copyright holder(s), you may not sell, rent, license for payment, or otherwise supply the
+Covered Work or its derivatives in exchange for money or other consideration.
+
+This prohibition includes:
+- charging for a download, copy, access, subscription or update;
+- including the Covered Work in a paid bundle, software product, firmware
+  product, or hardware product, including devices supplied with it installed;
+- charging for services that provide, install, build, modify, update or host
+  the Covered Work or firmware containing it for another person.
+
+The prohibition applies even if you describe the Covered Work as a free bonus,
+assign the price to another part of the bundle, or require a donation, membership
+or purchase instead of a separately stated software fee. An unconditional,
+voluntary donation that is not required for access, delivery or a service is
+not payment for the Covered Work.
+
+5. Explicit exception for Make Noise official firmware and products
+
+"Make Noise" means the manufacturer of the Morphagene operating as Make Noise,
+identified at https://www.makenoisemusic.com/.
+
+Make Noise may use, modify, incorporate, reproduce, distribute, sublicense and
+sell the Covered Work as part of its official firmware and official products,
+including commercial products and official firmware updates or services,
+without a license fee or further permission from vwal. Make Noise may license
+its resulting official firmware/products under its own terms, provided it
+retains the copyright, attribution and applicable license notices for the
+Covered Work and for upstream material. Its license must not purport to remove
+rights that upstream's MIT license independently grants in upstream portions.
+
+This exception extends to contractors and authorized distributors acting on
+Make Noise's behalf solely for that official integration, production and
+distribution. It also permits distribution and resale of Make Noise's official
+products and official firmware containing that integration in accordance with
+Make Noise's applicable permissions. It does not grant a general permission
+to sell this community release, extracted copies of the Covered Work, or
+third-party products containing it.
+
+For distributions authorized by this section, it overrides the no-sale restrictions in
+sections 2-4, including the corresponding downstream condition in section 3.
+Other applicable notices, third-party rights and license conditions remain.
+This is permission to Make Noise, not a statement of its endorsement or an
+obligation for it to use, support or release these changes.
+
+6. Musical use and output
+
+You may use the Covered Work to create, perform, record, broadcast and sell
+music or other creative output, including in paid performances, recordings,
+lessons and studio sessions. Such output is not the Covered Work merely because
+you used this software to make it. It does not require software attribution or
+inherit this license, unless it itself reproduces protected code or documents.
+This musical-use permission by itself does not authorize supplying the software or a product
+containing it for payment.
+
+7. Warranty and liability
+
+The Covered Work is supplied "as is" and "as available", without warranties,
+including warranties of merchantability, fitness for a particular purpose or
+non-infringement, to the fullest extent permitted by applicable law. To that
+same extent, its authors and copyright holders are not liable for claims,
+damages or other liability arising from its use or distribution. Rights that
+applicable law does not allow to be excluded remain unaffected.
+
+8. Compliance and exceptions
+
+The permissions in this license are conditional on compliance with its terms;
+no permission is granted for uses that violate them. A separate written license
+may authorize an otherwise prohibited use, but only for rights controlled by
+its grantor. No trademark rights or endorsement are granted. Nothing here limits
+rights or exceptions that apply independently of this license under law.
+
+This is a custom source-available license, not the MIT license and not an
+OSI-approved open-source license.
+
+--------------------------------------------------------------------------
+Upstream license (preserved verbatim)
+Source: https://github.com/briskcat/morphagene-mods
+--------------------------------------------------------------------------
+MIT License
+
+Copyright (c) 2026 the morphagene-mods contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+This licence covers the code and documentation in this repository only. It
+grants nothing in the Make Noise Morphagene firmware, which this repository
+does not contain.

@@ -1,0 +1,2 @@
+# Public instruction-level tests; no proprietary firmware in the test package.
+unicorn==2.1.4

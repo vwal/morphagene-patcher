@@ -1,0 +1,230 @@
+{
+  "fields": [
+    [
+      "vsop",
+      "Varispeed layout",
+      "Stock option. Choose forward-only for stop-to-8x with Extended range enabled.",
+      [
+        "0: Bidirectional",
+        "1: Bidirectional (alternate)",
+        "2: Forward only"
+      ],
+      "0"
+    ],
+    [
+      "vrng",
+      "Extended range",
+      "Off keeps stock ranges. On gives +/-4x in vsop 0/1, or stop to forward 8x in vsop 2.",
+      [
+        "0: Off",
+        "1: On"
+      ],
+      "0"
+    ],
+    [
+      "vqnt",
+      "Quantize normally",
+      "Off: SHIFT + Varispeed locks to the scale. On: pitch is normally quantized; SHIFT + Varispeed temporarily becomes continuous. Release snaps back.",
+      [
+        "0: SHIFT to lock",
+        "1: Quantized normally"
+      ],
+      "0"
+    ],
+    [
+      "octl",
+      "Varispeed scale",
+      "Applies to both quantization modes. Off disables quantization.",
+      [
+        "0: Off",
+        "1: Octaves",
+        "2: Octaves + fifths",
+        "3: Semitones",
+        "4: Custom scale"
+      ],
+      "1"
+    ],
+    [
+      "scal",
+      "Custom semitones",
+      "For octl 4: comma-separated 1-11, e.g. 3,5,7,10. Root and octaves are always included. 0 means root/octaves only.",
+      null,
+      "0"
+    ],
+    [
+      "dens",
+      "Independent Gene density",
+      "With dens 1, startup density comes from dstr (default 8 Genes/sec). Hold SHIFT and turn Gene Size to adjust it from 0.1 to 128 Genes/sec. Knob changes remain until adjusted again, recalled by dstr reload or powered off; they are not saved across power cycles. The configured dstr value is kept in options.txt. Overrides the Turing rate gesture; external clock takes priority.",
+      [
+        "0: Off",
+        "1: On"
+      ],
+      "0"
+    ],
+    [
+      "dstr",
+      "Startup / reload density (Genes/sec)",
+      "0.1-128 Genes/sec in 0.1 steps; default 8. Sets the startup rate and recalls the rate on settings-only reload whenever dstr is present, even if unchanged. Use the checkbox below to recall this rate or preserve the current density during settings-only reload. Requires dens 1; external clock takes priority.",
+      null,
+      "8"
+    ],
+    [
+      "mlop",
+      "Morph Loop",
+      "Always included in this firmware. On removes the silent gaps at minimum Morph. Higher overlap settings stay unchanged.",
+      [
+        "0: Off (stock gaps)",
+        "1: On (seamless loop)"
+      ],
+      "0"
+    ],
+    [
+      "gnsm",
+      "Gene smoothing",
+      "Stock option: choose the original or smoother Gene envelope.",
+      [
+        "0: Original",
+        "1: Smooth"
+      ],
+      "0"
+    ],
+    [
+      "tape",
+      "SHIFT + S.O.S. mode",
+      "Tape mode activates on the first SHIFT + S.O.S. turn after startup. Sets feedback while the ordinary knob still sets the listening mix.",
+      [
+        "0: Classic TLA feedback",
+        "1: Tape mode"
+      ],
+      "1"
+    ],
+    [
+      "fxsl",
+      "SHIFT + Morph effect",
+      "Effect applies to Gene playback. The amount resets on power-up. Warble uses less CPU than sample-rate reduction.",
+      [
+        "0: Off",
+        "1: Sample-rate reduction",
+        "2: Tape warble"
+      ],
+      "1"
+    ],
+    [
+      "mcap",
+      "Tape overdub Morph cap",
+      "Limits overlap while tape-dubbing. 0 disables the cap; 1-9 means 0.1-0.9. Higher values can increase glitches.",
+      [
+        "0: No cap",
+        "1: 0.1",
+        "2: 0.2",
+        "3: 0.3",
+        "4: 0.4",
+        "5: 0.5",
+        "6: 0.6",
+        "7: 0.7",
+        "8: 0.8",
+        "9: 0.9"
+      ],
+      "3"
+    ],
+    [
+      "sldm",
+      "Turing mode",
+      "SHIFT + Organize: evolution; SHIFT + Slide: repeating scatter; SHIFT + Gene Size: Genes per step when dens is off.",
+      [
+        "0: Off",
+        "1: On"
+      ],
+      "0"
+    ],
+    [
+      "root",
+      "Turing root chance (%)",
+      "Chance of choosing the root rather than a chord ratio from mcr1-mcr3. 100 disables pitch changes.",
+      null,
+      "50"
+    ],
+    [
+      "tlen",
+      "Turing loop steps",
+      "Number of repeating random steps, 1-16.",
+      null,
+      "8"
+    ],
+    [
+      "mono",
+      "Mono input",
+      "Always copies L to both channels and ignores R. Auto copies L only while R is quiet.",
+      [
+        "0: Stereo",
+        "1: Always copy left",
+        "2: Auto while right is quiet"
+      ],
+      "0"
+    ],
+    [
+      "ingn",
+      "Input gain",
+      "Stock gain index, 0-3. REC held + SHIFT taps changes it on the module; the mod saves it after about 3 seconds.",
+      [
+        "0: Stock starting gain",
+        "1: Gain step 1",
+        "2: Gain step 2",
+        "3: Gain step 3"
+      ],
+      "0"
+    ],
+    [
+      "cpul",
+      "CPU troubleshooting log",
+      "Writes cpulog.txt periodically. Leave off for normal performance.",
+      [
+        "0: Off",
+        "1: On"
+      ],
+      "0"
+    ]
+  ],
+  "features": [
+    [
+      "Pitch & timing",
+      "Expanded Varispeed",
+      "Enable <code>vrng 1</code> for +/-4x, or combine it with <code>vsop 2</code> for stop to forward 8x. Scale locking works across the expanded range."
+    ],
+    [
+      "Pitch & timing",
+      "Quantize your way",
+      "Choose octaves, fifths, semitones or a custom scale. <code>vqnt 1</code> keeps pitch quantized normally; SHIFT + Varispeed temporarily frees it. The default <code>vqnt 0</code> retains SHIFT-to-lock."
+    ],
+    [
+      "Pitch & timing",
+      "Independent Gene density",
+      "With <code>dens 1</code>, startup density comes from <code>dstr</code>, with <strong>8 Genes/sec as the default</strong>. Hold SHIFT and turn Gene Size to adjust it from <strong>0.1 to 128 Genes/sec</strong>, independently of pitch and Morph. Knob changes remain until adjusted again, recalled by dstr reload or powered off; <strong>they are not saved across power cycles</strong>. Set <code>dstr</code> to choose a startup and card-recall rate (0.1-128, in 0.1 steps). In the options editor, check \u201cRecall density on settings-only reload\u201d to recall dstr, or uncheck it to preserve the live rate. At 0.1, a new Gene is requested every ten seconds. The knob midpoint remains 8/sec. External clock takes priority; dense, long Genes remain limited by available voices."
+    ],
+    [
+      "Pitch & timing",
+      "Morph Loop, on demand",
+      "Set <code>mlop 1</code> for seamless looping at the bottom of Morph. Set <code>mlop 0</code> for the original gaps. Included in mg204+c, <strong>disabled by default</strong>."
+    ],
+    [
+      "Sound & movement",
+      "Tape feedback & playback effects",
+      "SHIFT + S.O.S. controls tape overdub feedback or classic TLA feedback. SHIFT + Morph adds sample-rate reduction or tape warble. The Morph cap helps keep tape overdubbing within the CPU budget."
+    ],
+    [
+      "Sound & movement",
+      "Jitter & Turing patterns",
+      "SHIFT + Slide scatters Gene start positions. Enable <code>sldm 1</code> for repeating random steps: SHIFT + Organize controls evolution, and SHIFT + Gene Size sets Genes per step when independent density is off."
+    ],
+    [
+      "Live workflow",
+      "Trusted-card settings reload",
+      "Remove the idle card, hold SHIFT alone for one second, then insert a prepared matching card while still holding SHIFT. Settings apply without resetting the reel or playback position; the card remains mounted for recording and saving."
+    ],
+    [
+      "Live workflow",
+      "Small conveniences",
+      "Input gain is remembered. Mono input can copy L onto both channels. Updates can be installed from SD after the first audio install. Includes Briskcat\u2019s splice-overdub fix and flash prefetch."
+    ]
+  ]
+}
