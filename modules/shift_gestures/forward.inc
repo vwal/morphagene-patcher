@@ -187,5 +187,47 @@ forward_lookup:
 f328: .float 328.0
 f376: .float 376.0
     .ltorg
+
+@ Stock has a second lookup when Gene Size <= 199 (full-splice/reel mode).
+@ It must use the same extended table as the ordinary Gene path above.
+@ Its return continues the full-splice path, preserving that engine state.
+    .global forward_lookup_full
+    .type FORWARD_FULL_STOCK, %function
+    .type FORWARD_FULL_DONE, %function
+    .thumb_func
+forward_lookup_full:
+    push {r0-r2}
+    ldr r0, =RANGE
+    ldrb r0, [r0]
+    cmp r0, #1
+    beq 1f
+    pop {r0-r2}
+    vldr s16, f328                  @ replaced stock literal
+    b.w FORWARD_FULL_STOCK
+1:  vpush {s0-s1}
+    vldr s0, f376
+    vmul.f32 s0, s18, s0
+    vcvt.s32.f32 s0, s0
+    vmov r0, s0
+    subs r0, #16
+    it mi
+    movmi r0, #0
+    movw r1, #343
+    cmp r0, r1
+    it gt
+    movgt r0, r1
+    ldr r1, =forward_table
+    ldr r0, [r1, r0, lsl #2]
+    ldr r1, =0x200220e8
+    str r0, [r1]
+    vmov.f32 s0, #1.0
+    vadd.f32 s0, s18, s0
+    vcvt.s32.f32 s0, s0, #6
+    ldr r1, =0x200220dc
+    vstr s0, [r1]
+    vpop {s0-s1}
+    pop {r0-r2}
+    b.w FORWARD_FULL_DONE
+    .ltorg
 forward_table:
     .include "forward_table.inc"

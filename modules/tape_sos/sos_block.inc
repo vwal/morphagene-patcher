@@ -61,7 +61,11 @@ p7_sos_block:
     b       9f
 6:  movs    r0, #0                      @ knob is back: follow it again
     strb    r0, [r3, #17]
-9:  P7_EXTRA
+9:  preset_post preset_feedback_effect, 0, 0
+    P7_EXTRA
+    mov r0, r5
+    preset_post preset_sos, 0, 0
+    mov r5, r0
     vpop    {s0-s1}
     pop     {r0-r3}
     vldr    s1, k_top                   @ replaced: vldr s1, =1.04884

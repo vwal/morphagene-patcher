@@ -188,3 +188,62 @@ reads stall.
   reel mode crashed until it moved to 0x08027808.
 - **Range.** `cbz`/`cbnz` reach only forward, 126 bytes. Use `cmp` + `beq` when
   the assembler says "branch out of range".
+
+
+## Development 6 unity controls
+
+`options_keys` owns 0x2002A618 (`vuni`) and 0x2002A619 (`vctr`), both u8,
+explicitly defaulted to 0 by the updater and covered by the full BSS reset.
+`shift_gestures` owns 0x2002A620..0x2002A65F (64 bytes): phase, start sample,
+six ADC snapshots, card state, mount state, audio request, held-unity flag,
+previous calibrated input, mapping configuration, force-glide and override.
+Owner 8 consumes a unity-reset release. The timer observer runs before existing
+knob claims mask button combinations. C calls preserve volatile integer/FP
+registers and flags. The input line cannot distinguish SHIFT button from jack.
+
+The P5 audio hook maps calibrated s18 before quantization, or overrides it to
+the exact unity table position while held/in the noon detent. 0x20021DF8 is
+the stock cached Varispeed input: setting it to -2 forces lookup refresh without
+changing reel/playhead state. P6 uses glide coefficient 1 for unity override.
+At idle with both options off, no C mapping/gesture helper is called.
+
+Settings reload appends vuni/vctr at table indices 28/29, with staged u32 values
+at offsets 244/248. The 252-byte header still fits before FIL at offset 256.
+Seen-mask coverage is 30 bits; all old field offsets remain unchanged.
+
+Revision 3 uses a common 48..52% detent and continuous anchors at the actual
+native/quantized unity-cell edges. The cell is centered about calibrated noon,
+with its excess width distributed equally on either side. The configured curve
+is unchanged by temporary SHIFT free pitch. Configuration includes scale/mask
+information so changes invalidate the quantizer and stock lookup cache. The
+64-byte arena and options ABI remain unchanged.
+
+Stock has separate rate lookups when Gene Size ADC is <=199. Matching hooks at
+0x0802ABFA (forward), 0x08028A4E (bidirectional index), 0x08028A66 (positive rate)
+and 0x0802AD7C (negative rate) now apply the same extended-range processing while
+returning to the original full-splice engine path. Standard-range behavior is
+preserved. No reel, splice or playhead metadata is reset by these hooks.
+
+## Development 7 preset recall
+
+`options_keys` owns `0x2002A660..0x2002A6FF`: PRST magic, generation, recall
+and saved masks, four configured values, four 24-byte runtime lanes, and 32
+bytes for splice-specific context. The shared ABI is declared in
+`modules/preset_recall/preset.h`. Saved-mask omission is independent of held
+live state. The updater explicitly clears the arena; the existing BSS reset
+also covers it.
+
+Normal and live parse stages occupy 32 bytes each at `0x2002AE10` and
+`0x2002AE30`, within settings_reload's existing arena, after GOT. Normal-file
+chunk tracking suppresses header/comment continuations from the stock
+63-byte fgets reader. Normal completion publishes after mount_ready==2 has
+returned to the main loop; live reload publishes at its audio commit. Both
+paths validate splice count at 0x2002208C and publish one generation under
+the interrupt lock. No preset disk I/O runs in the audio path.
+
+Morph, Gene Size and Slide run pickup after legacy secondary-gesture handling.
+Physical snapshots remain physical for gesture detection. Two extra Gene Size
+reads used by Morph scatter are intercepted at 0x08027EC4 and 0x0802967C so
+those paths see the same cached effective value. Splice recall writes the
+stock 1-based request at 0x20021CBC; stock omod retains transition timing.
+Organize pickup uses stock calibrated selection cells and preserves navigation.

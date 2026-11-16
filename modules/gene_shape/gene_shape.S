@@ -53,6 +53,7 @@
     .equ SMORPH,     0x20022084        @ smoothed Morph (drives the stock scatter)
     .equ SLIDE_POS,  0x20022154        @ Slide position (float, 0..1)
     .equ GS_ADC,     0x20021c7c
+    .include "../preset_recall/preset_asm.inc"
 
     .text
     .global g2_size, g3_size, gs_slide, ga_birth, gb_birth, ca_chord, cb_chord, o1_organize
@@ -110,7 +111,8 @@ size_hold:
     b       9f
 6:  movs    r1, #0                      @ knob is back: follow it again
     strb    r1, [r3, #212]
-9:  pop     {r1-r3, pc}
+9:  preset_post preset_gene_size, 0, 0
+    pop     {r1-r3, pc}
 
 @ r1 = 1 with options.txt "sldm 1" (Turing mode), else 0. Keeps the rest.
     .thumb_func
@@ -158,8 +160,10 @@ rate_table: .byte 1, 2, 3, 4, 6, 8, 12, 16   @ Genes per step, by zone
 @ It must not cover 0x0802780c: the reel-mode override path (0x08028ad0) and the
 @ G3 path (0x080288f8) branch there.
     .thumb_func
+    .include "../preset_recall/varispeed_asm.inc"
 g2_size:
     ldr     r6, [r0, #12]               @ replaced
+    preset_vs_cached r6
     ldr     r0, [r0, #20]
     push    {lr}
     bl      size_hold
@@ -170,6 +174,7 @@ g2_size:
     .thumb_func
 g3_size:
     ldr     r6, [r0, #12]               @ replaced
+    preset_vs_cached r6
     ldr     r0, [r0, #20]
     push    {lr}
     bl      size_hold
@@ -232,7 +237,8 @@ gs_slide:
     b       9f
 6:  movs    r0, #0
     strb    r0, [r5, #213]
-9:  pop     {r3}
+9:  preset_post preset_slide, 8, 8
+    pop     {r3}
     vldr    s2, k_stock_s2              @ replaced: vldr s2, [pc, #64] (0x080279b8)
     b.w     GS_RETURN
 
@@ -346,6 +352,7 @@ k_stock_s2: .word 0x398a26fe            @ the stock literal at 0x080279b8
     ble     8f
     ldr     r1, =GS_ADC
     ldr     r1, [r1]
+    bl      preset_size_cached          @ same effective-size gate as stock scatter
     cmp     r1, #2000
     blt     8f
     subs    r4, r6, r5                  @ splice length
@@ -448,7 +455,9 @@ gb_birth:
 @ +0 magic, +4 xorshift32, +8 step u8, +12 evolution f, +20 chord pick u8
 @ (index + 1, 0 = none), +21 rate zone u8, +22 pattern rate u8, +23 repeat u8,
 @ +24..+87 seeds[16], +100 seeded spread value u32, +104 its valid flag u8.
+    .global preset_turing_init
     .thumb_func
+preset_turing_init:
 turing_init:
     push    {r0-r2, lr}
     ldr     r0, =TURING
@@ -596,8 +605,10 @@ o1_organize:
     b       9f
 5:  mov     r0, r2
 9:  pop     {r1-r3}
+    preset_post preset_organize, 0, 0  @ optional splice recall + Organize pickup
     ldr     r7, =ORG_MAX                @ replaced (literal load)
     b.w     O1_RETURN
     .ltorg
 
     .include "density.inc"
+    .include "preset_reads.inc"

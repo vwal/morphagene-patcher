@@ -1,6 +1,6 @@
 # Using the mods
 
-See [the mg204+c guide](DEVELOPMENT_5_LIVE_OPTIONS.md) for trusted-card reload and the switchable `mlop` option. Armed insertion and changed options were confirmed on hardware without an audible playback interruption.
+See [the mg204+c2 guide](RELEASE_MG204_C2.md) for trusted-card reload and the switchable `mlop` option. Armed insertion and changed options were confirmed on hardware without an audible playback interruption.
 
 Most performance gestures use **SHIFT**: hold SHIFT and turn a knob. When you
 let go of SHIFT after a turn, the module **doesn't** jump to the next splice,
@@ -23,9 +23,28 @@ back near where it was (pickup). That way the sound doesn't jump when you let go
 
 Settings are in `options.txt`; see [OPTIONS.md](OPTIONS.md).
 
+## Return to 1:1 and optional presets
+
+With `vuni 1`, hold SHIFT alone for at least 0.5 seconds, then release for exact
+forward +1x from any Varispeed position. Short taps still navigate splices.
+Knob movement, another button or card/reload activity cancels the reset. Keep
+the SHIFT input unpatched. Speed holds until the combined knob/CV input picks up.
+
+With `vctr 1`, +1x sits at calibrated noon in every layout, range and scale,
+with a 48-52% notch. Bidirectional reverse/stop fit into the left half. With
+`vctr 0`, no extra flat zone is added to continuous Varispeed. Both options
+default to 0.
+
+All dialable control values can be optionally recalled; see [all keys](OPTIONS.md).
+Included values use soft pickup from the preset position. Secondary amounts
+are picked up with their corresponding SHIFT + knob gesture. Omitted keys
+preserve live state on settings-only reload; saves retain configured values,
+not later live adjustments. A splice preset above the reel count selects the
+last splice. Existing density/gain keys remain available.
+
 ## SHIFT + S.O.S.: tape mode (default)
 
-The first SHIFT + S.O.S. turn after power-up switches tape mode on. Until then,
+A SHIFT + S.O.S. turn or explicit fbkp recall switches feedback control on. Without either,
 S.O.S. works exactly as stock.
 
 While you overdub an existing splice:
@@ -51,7 +70,9 @@ sound-on-sound with TLA, without tape mode's moving head.
 - **`fxsl 0`:** off. Morph stays stock.
 
 The input itself isn't affected, so with feedback or TLA the effect builds
-up pass by pass. The amount resets at power-up.
+up pass by pass. Optional srrp and wrbp recall separate amounts at startup/live reload; otherwise
+amounts start at their normal defaults. fxsl 0 bypasses both effects and removes
+any lingering warble offset.
 
 ## SHIFT + Varispeed: scale lock
 

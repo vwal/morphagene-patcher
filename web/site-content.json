@@ -3,10 +3,10 @@
     [
       "vsop",
       "Varispeed layout",
-      "Stock option. Choose forward-only for stop-to-8x with Extended range enabled.",
+      "Classic (0) is the original bidirectional response with smooth braking around stop. V/oct (1) is the alternate bidirectional pitch response: with the input attenuverter carefully adjusted, CV can track volts per octave. Forward only (2) runs from stop at fully CCW to maximum forward speed. Extended range and Unity at noon reshape these responses; V/oct is not a promise of calibrated tracking in every modified layout.",
       [
-        "0: Bidirectional",
-        "1: Bidirectional (alternate)",
+        "0: Bidirectional \u2014 classic",
+        "1: Bidirectional \u2014 V/oct",
         "2: Forward only"
       ],
       "0"
@@ -19,6 +19,33 @@
         "0: Off",
         "1: On"
       ],
+      "0"
+    ],
+    [
+      "vuni",
+      "Return to 1:1 with SHIFT",
+      "Optional and off by default. Hold SHIFT alone for at least 0.5 seconds, then release to recall exact forward +1x. Varispeed holds there until the combined knob/CV input picks it up. Short taps still advance splices. Moving a knob, pressing another button or card activity cancels the reset. Keep the SHIFT input unpatched.",
+      [
+        "0: Off",
+        "1: Hold / release recalls +1x"
+      ],
+      "0"
+    ],
+    [
+      "vctr",
+      "1:1 at Varispeed noon",
+      "Optional and off by default. Places forward +1x at calibrated noon in every layout, range and scale, with an easy-to-find 48-52% notch. Bidirectional layouts fit stop and reverse into the left half. With this off, no extra flat zone is added to continuous Varispeed.",
+      [
+        "0: Original mapping",
+        "1: +1x at noon with notch"
+      ],
+      "0"
+    ],
+    [
+      "vpos",
+      "Varispeed preset (%)",
+      "0-100% of the calibrated control range, before layout, extended range and Unity at noon mapping. It is a knob position, not a playback-speed percentage. With vctr 1, 50% recalls forward +1x; otherwise speed depends on the selected layout and quantization. A later SHIFT unity recall replaces this hold.",
+      null,
       "0"
     ],
     [
@@ -52,6 +79,54 @@
       "0"
     ],
     [
+      "mlop",
+      "Morph Loop",
+      "Always included in this firmware. On removes the silent gaps at minimum Morph. Higher overlap settings stay unchanged.",
+      [
+        "0: Off (stock gaps)",
+        "1: On (seamless loop)"
+      ],
+      "0"
+    ],
+    [
+      "mpos",
+      "Morph preset (%)",
+      "0-100% virtual knob position. For normal unclocked playback with independent density off, 10% selects the stock seamless-loop setting (9-11%). At 0%, Morph Loop Off leaves a scheduling gap; Morph Loop On removes it. Higher values add overlap, then pitch/pan variation. Clock and independent density can change Gene spacing.",
+      null,
+      "0"
+    ],
+    [
+      "gnsm",
+      "Gene smoothing",
+      "Stock option: choose the original or smoother Gene envelope.",
+      [
+        "0: Original",
+        "1: Smooth"
+      ],
+      "0"
+    ],
+    [
+      "gpos",
+      "Gene Size preset (%)",
+      "0-100% virtual knob position, not a percentage of the splice length. 0% and 1% play the longest Genes (the full splice); turning up shortens them, and 100% gives the shortest Genes. The response is nonlinear; actual duration also depends on the reel, speed and clock.",
+      null,
+      "0"
+    ],
+    [
+      "spos",
+      "Slide preset (%)",
+      "0-100% virtual knob position: move the Gene window from the beginning toward the end of the selected splice. Gene Size affects which portion is heard. This is not an absolute timestamp.",
+      null,
+      "0"
+    ],
+    [
+      "jitp",
+      "Jitter / spread preset (%)",
+      "SHIFT + Slide position, 0-100%: 0% is no jitter, and increasing it widens Gene-start scatter. With sldm 1 this becomes repeating Turing spread. The response is nonlinear, not a percentage of reel length.",
+      null,
+      "0"
+    ],
+    [
       "dens",
       "Independent Gene density",
       "With dens 1, startup density comes from dstr (default 8 Genes/sec). Hold SHIFT and turn Gene Size to adjust it from 0.1 to 128 Genes/sec. Knob changes remain until adjusted again, recalled by dstr reload or powered off; they are not saved across power cycles. The configured dstr value is kept in options.txt. Overrides the Turing rate gesture; external clock takes priority.",
@@ -69,29 +144,9 @@
       "8"
     ],
     [
-      "mlop",
-      "Morph Loop",
-      "Always included in this firmware. On removes the silent gaps at minimum Morph. Higher overlap settings stay unchanged.",
-      [
-        "0: Off (stock gaps)",
-        "1: On (seamless loop)"
-      ],
-      "0"
-    ],
-    [
-      "gnsm",
-      "Gene smoothing",
-      "Stock option: choose the original or smoother Gene envelope.",
-      [
-        "0: Original",
-        "1: Smooth"
-      ],
-      "0"
-    ],
-    [
       "tape",
       "SHIFT + S.O.S. mode",
-      "Tape mode activates on the first SHIFT + S.O.S. turn after startup. Sets feedback while the ordinary knob still sets the listening mix.",
+      "Selects the feedback mode used by SHIFT + S.O.S. and fbkp: tape overdub or classic TLA feedback. The primary S.O.S. mix is separate (sosp).",
       [
         "0: Classic TLA feedback",
         "1: Tape mode"
@@ -99,15 +154,18 @@
       "1"
     ],
     [
-      "fxsl",
-      "SHIFT + Morph effect",
-      "Effect applies to Gene playback. The amount resets on power-up. Warble uses less CPU than sample-rate reduction.",
-      [
-        "0: Off",
-        "1: Sample-rate reduction",
-        "2: Tape warble"
-      ],
-      "1"
+      "fbkp",
+      "Feedback preset (%)",
+      "SHIFT + S.O.S. virtual knob position, 0-100%. 0% gives no retained feedback; 100% gives maximum retention. This is the existing knob curve, not a linear gain percentage. tape selects overdub or classic TLA behavior; recalling it activates feedback control separately from the main mix.",
+      null,
+      "0"
+    ],
+    [
+      "sosp",
+      "S.O.S. mix preset (%)",
+      "Primary S.O.S. virtual knob position: 0% is incoming audio, 100% is recorded Gene playback; middle positions blend them. This is separate from SHIFT + S.O.S. feedback (fbkp). Stock inop still determines what is recorded.",
+      null,
+      "0"
     ],
     [
       "mcap",
@@ -128,6 +186,31 @@
       "3"
     ],
     [
+      "fxsl",
+      "SHIFT + Morph effect",
+      "Selects one playback effect: sample-rate reduction or warble; they cannot run together. srrp and wrbp retain separate recalled amounts. Without an amount preset, startup uses the existing reset behavior. Warble uses less CPU than sample-rate reduction.",
+      [
+        "0: Off",
+        "1: Sample-rate reduction",
+        "2: Tape warble"
+      ],
+      "1"
+    ],
+    [
+      "srrp",
+      "Sample-rate reduction preset (%)",
+      "SHIFT + Morph position, 0-100%: 0% bypasses SRR; increasing it strengthens sample-rate reduction. Active with fxsl 1. This is the knob curve, not a bit-depth or sample-rate percentage. Stored separately from warble; fxsl 0 bypasses both effects.",
+      null,
+      "0"
+    ],
+    [
+      "wrbp",
+      "Warble preset (%)",
+      "SHIFT + Morph position, 0-100%: 0% is no warble; higher values add stronger wow/flutter. Active with fxsl 2. This is the knob curve, not a pitch percentage. Stored separately from SRR; only the selected effect runs.",
+      null,
+      "0"
+    ],
+    [
       "sldm",
       "Turing mode",
       "SHIFT + Organize: evolution; SHIFT + Slide: repeating scatter; SHIFT + Gene Size: Genes per step when dens is off.",
@@ -138,11 +221,27 @@
       "0"
     ],
     [
-      "root",
-      "Turing root chance (%)",
-      "Chance of choosing the root rather than a chord ratio from mcr1-mcr3. 100 disables pitch changes.",
+      "evop",
+      "Turing evolution preset (%)",
+      "SHIFT + Organize position, 0-100%, used with sldm 1. 0% locks the repeating pattern; 100% produces fresh randomness. Intermediate values follow the existing nonlinear knob curve, not a literal probability percentage.",
       null,
-      "50"
+      "0"
+    ],
+    [
+      "trst",
+      "Turing Genes per step",
+      "Choose 1, 2, 3, 4, 6, 8, 12 or 16 Genes per step. Used with sldm 1; dens 1 takes priority over the Turing rate. Unchecked preserves the live Turing rate on reload.",
+      [
+        "1: 1 Gene per step",
+        "2: 2 Genes per step",
+        "3: 3 Genes per step",
+        "4: 4 Genes per step",
+        "6: 6 Genes per step",
+        "8: 8 Genes per step",
+        "12: 12 Genes per step",
+        "16: 16 Genes per step"
+      ],
+      "1"
     ],
     [
       "tlen",
@@ -152,15 +251,18 @@
       "8"
     ],
     [
-      "mono",
-      "Mono input",
-      "Always copies L to both channels and ignores R. Auto copies L only while R is quiet.",
-      [
-        "0: Stereo",
-        "1: Always copy left",
-        "2: Auto while right is quiet"
-      ],
-      "0"
+      "root",
+      "Turing root chance (%)",
+      "Chance of choosing the root rather than a chord ratio from mcr1-mcr3. 100 disables pitch changes.",
+      null,
+      "50"
+    ],
+    [
+      "splc",
+      "Splice to recall",
+      "Splice number, integer 1-300; 1 is the first splice. A number above the loaded reel count selects its last splice while keeping your configured number. Unchecked keeps normal startup selection and preserves the current splice on settings-only reload.",
+      null,
+      "1"
     ],
     [
       "ingn",
@@ -171,6 +273,17 @@
         "1: Gain step 1",
         "2: Gain step 2",
         "3: Gain step 3"
+      ],
+      "0"
+    ],
+    [
+      "mono",
+      "Mono input",
+      "Always copies L to both channels and ignores R. Auto copies L only while R is quiet.",
+      [
+        "0: Stereo",
+        "1: Always copy left",
+        "2: Auto while right is quiet"
       ],
       "0"
     ],
@@ -187,42 +300,52 @@
   ],
   "features": [
     [
-      "Pitch & timing",
-      "Expanded Varispeed",
-      "Enable <code>vrng 1</code> for +/-4x, or combine it with <code>vsop 2</code> for stop to forward 8x. Scale locking works across the expanded range."
+      "New in mg204+c2",
+      "Return to 1:1",
+      "Enable <code>vuni 1</code>, hold SHIFT alone for at least half a second, then release to return to exact forward +1x from any Varispeed position. Soft pickup holds the speed until the combined knob/CV input reaches or crosses it. Short SHIFT taps retain ordinary splice navigation."
+    ],
+    [
+      "New in mg204+c2",
+      "1:1 at noon",
+      "Enable <code>vctr 1</code> to place forward +1x at calibrated noon in full-range and bidirectional layouts, with every quantized scale. The 48-52% notch makes it easy to find in continuous mode too. Stop and reverse fit into the left half in bidirectional modes. Both unity options default to off."
+    ],
+    [
+      "New in mg204+c2",
+      "Recall the controls you choose",
+      "All dialable values can now be included in prepared options: Morph, Gene Size, Slide, Varispeed, S.O.S. mix, feedback, effects, Turing evolution and Genes per step, alongside density and gain. Select a splice too. Each new recall is optional; unchecked values stay live during settings-only reload. Included controls resume from their recalled positions through soft pickup."
+    ],
+    [
+      "New in mg204+c2",
+      "Prepared effects and splices",
+      "SRR and warble retain separate amounts; <code>fxsl</code> selects one or bypasses both. <code>splc</code> selects a numbered splice; a number above the reel count selects the last while retaining your configured number. Normal saves preserve configured presets, not subsequent knob movements."
     ],
     [
       "Pitch & timing",
-      "Quantize your way",
-      "Choose octaves, fifths, semitones or a custom scale. <code>vqnt 1</code> keeps pitch quantized normally; SHIFT + Varispeed temporarily frees it. The default <code>vqnt 0</code> retains SHIFT-to-lock."
+      "Expanded Varispeed",
+      "Enable <code>vrng 1</code> for +/-4x, or combine it with <code>vsop 2</code> for stop to forward 8x. Choose octaves, fifths, semitones or a custom scale. <code>vqnt 1</code> keeps pitch quantized normally; SHIFT + Varispeed temporarily frees it. Default <code>vqnt 0</code> retains SHIFT-to-lock."
     ],
     [
       "Pitch & timing",
       "Independent Gene density",
-      "With <code>dens 1</code>, startup density comes from <code>dstr</code>, with <strong>8 Genes/sec as the default</strong>. Hold SHIFT and turn Gene Size to adjust it from <strong>0.1 to 128 Genes/sec</strong>, independently of pitch and Morph. Knob changes remain until adjusted again, recalled by dstr reload or powered off; <strong>they are not saved across power cycles</strong>. Set <code>dstr</code> to choose a startup and card-recall rate (0.1-128, in 0.1 steps). In the options editor, check \u201cRecall density on settings-only reload\u201d to recall dstr, or uncheck it to preserve the live rate. At 0.1, a new Gene is requested every ten seconds. The knob midpoint remains 8/sec. External clock takes priority; dense, long Genes remain limited by available voices."
-    ],
-    [
-      "Pitch & timing",
-      "Morph Loop, on demand",
-      "Set <code>mlop 1</code> for seamless looping at the bottom of Morph. Set <code>mlop 0</code> for the original gaps. Included in mg204+c, <strong>disabled by default</strong>."
+      "With <code>dens 1</code>, startup density comes from <code>dstr</code>, default <strong>8 Genes/sec</strong>. SHIFT + Gene Size adjusts <strong>0.1-128 Genes/sec</strong>, independently of pitch and Morph. Live knob changes are not saved across power cycles. Include <code>dstr</code> to recall a prepared rate on settings-only reload; omit it to keep the live rate. External clock takes priority; available voices limit dense, long Genes."
     ],
     [
       "Sound & movement",
-      "Tape feedback & playback effects",
-      "SHIFT + S.O.S. controls tape overdub feedback or classic TLA feedback. SHIFT + Morph adds sample-rate reduction or tape warble. The Morph cap helps keep tape overdubbing within the CPU budget."
+      "Morph Loop and playback effects",
+      "<code>mlop 1</code> removes the gaps at minimum Morph; default <code>mlop 0</code> retains them. The stock seamless-loop setting is also available with <code>mpos 10</code> under normal unclocked scheduling. SHIFT + Morph controls SRR or warble, and SHIFT + Slide controls start jitter."
     ],
     [
       "Sound & movement",
-      "Jitter & Turing patterns",
-      "SHIFT + Slide scatters Gene start positions. Enable <code>sldm 1</code> for repeating random steps: SHIFT + Organize controls evolution, and SHIFT + Gene Size sets Genes per step when independent density is off."
+      "Feedback and Turing patterns",
+      "SHIFT + S.O.S. controls tape overdub or classic TLA feedback. With <code>sldm 1</code>, SHIFT + Organize controls evolution, SHIFT + Slide controls repeating spread, and SHIFT + Gene Size sets Genes per step when independent density is off."
     ],
     [
       "Live workflow",
-      "Trusted-card settings reload",
-      "Remove the idle card, hold SHIFT alone for one second, then insert a prepared matching card while still holding SHIFT. Settings apply without resetting the reel or playback position; the card remains mounted for recording and saving."
+      "Swap settings and keep playing",
+      "Remove the idle card, hold SHIFT alone for one second, then insert a prepared matching card while still holding SHIFT. The live reel stays loaded and the card remains mounted for recording and saving. Explicit presets recall; omitted ones preserve their live state. An explicit splice recall intentionally changes selection."
     ],
     [
-      "Live workflow",
+      "Everyday use",
       "Small conveniences",
       "Input gain is remembered. Mono input can copy L onto both channels. Updates can be installed from SD after the first audio install. Includes Briskcat\u2019s splice-overdub fix and flash prefetch."
     ]

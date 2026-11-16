@@ -7,6 +7,8 @@ MODULE = Module(
     source='gene_shape.S', entry='g2_size',
     requires=['shift_gestures'],
     hooks=[
+        (0x08027ec4, '77690097', 'preset_size_a'),             # scatter's repeated Gene Size read
+        (0x0802967c, '77690097', 'preset_size_b'),
         (0x080280dc, "f4eec6aa", "density_a"),
         (0x08029940, "b4eee5aa", "density_b"),
         (0x08027808, 'c6684069', 'g2_size'),                   # Gene Size reading (hold, pickup); not

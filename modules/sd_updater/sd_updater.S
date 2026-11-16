@@ -94,6 +94,7 @@ upd_hook:
     strb    r1, [r0, #2]               @ vrng 0: standard +/-2x range
     strb    r1, [r0, #12]              @ vqnt 0: legacy SHIFT scale locking
     strb    r1, [r0, #13]              @ mlop 0: stock Morph gaps; applied cache resets at boot
+    strh    r1, [r0, #20]              @ vuni/vctr off by default
     movs    r1, #80                    @ dstr 8.0 Genes/sec, stored in tenths
     str     r1, [r0, #16]              @ 0x2002A614
     ldr     r0, =0x2002A700             @ warble state (tape_mode, fxsl 2): start
@@ -101,6 +102,16 @@ upd_hook:
     str     r1, [r0]
     ldr     r0, =0x2002A740             @ Turing state (gene_shape): defaults
     str     r1, [r0]                    @ (new seeds, evolution 1) after any reset
+    ldr     r0, =0x2002A660             @ Dev7 presets: absent keys use live controls
+    movs    r2, #40
+0:  str     r1, [r0], #4
+    subs    r2, #1
+    bne     0b
+    ldr     r0, =0x2002AE10             @ staged normal/live option transactions
+    movs    r2, #104                   @ 128-byte stages + 288-byte extended runtime
+0:  str     r1, [r0], #4
+    subs    r2, #1
+    bne     0b
     MARK    m_hook
     ldr     r0, =SHIFT_GPIO
     ldr     r0, [r0]

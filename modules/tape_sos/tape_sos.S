@@ -73,6 +73,7 @@
     .equ TARGET,     0x200220e8         @ Varispeed target rate (stock, per block)
     .equ WARBLE,     0x2002A700         @ warble state (MOD + 0x700)
     .equ WARBLE_MAGIC, 0x4c425257       @ "WRBL"
+    .include "../preset_recall/preset_asm.inc"
 
     .text
     .global p7_sos_block, p11_mix_a, p12_mix_b, wa_tape, wb_tape, engine, engine_end, eng_prepare, eng_flush, p10_morph_cap, led_rate
@@ -449,7 +450,14 @@ p10_morph_cap:
 16: movs    r0, #0                      @ knob is back: Morph follows it again
     strb    r0, [r3, #94]
     @ --- smooth the amount, derive hold step and wet mix (once per block).
-20: vldr    s0, [r3, #100]              @ target
+20: vmov    s0, s31                    @ effective Morph before cap/smoothing
+    vcvt.u32.f32 s0, s0, #12
+    vmov    r0, s0
+    preset_post preset_morph, 0, 0
+    vmov    s31, r0
+    vcvt.f32.s32 s31, s31, #12
+    preset_post preset_morph_effects, 0, 0
+    vldr    s0, [r3, #100]              @ target
     vldr    s1, [r3, #104]              @ smoothed amount
     vsub.f32 s2, s0, s1
     vldr    s0, k_srr_slew
@@ -468,10 +476,21 @@ p10_morph_cap:
     ldr     r1, [r0]
     ldr     r2, =SETTINGS_MAGIC
     cmp     r1, r2
-    bne     22f
+    bne     23f
     ldrb    r0, [r0, #6]
+    b       24f
+23: movs    r0, #1                      @ settings unavailable: legacy SRR default
+24:
     cmp     r0, #2
+    beq     25f
+    push    {lr}
+    bl      warble_stop                @ leaving warble must restore clean pitch
+    pop     {lr}
+    cmp     r0, #0
     bne     22f
+    strb    r0, [r3, #95]               @ explicit fxsl 0: SRR and warble bypass
+    b       90f
+25:
     push    {lr}                        @ lr is live in the stock audio routine
     bl      warble_block
     pop     {lr}
@@ -570,6 +589,31 @@ k_srr_slew:  .float 0.008               @ ~ the plugin's per-sample 0.001, per 8
 k_srr_floor: .float 0.00001
 k_64:        .float 64.0
 k_fx_span:   .float 0.000250062516     @ 1 / (4095 - T_FX_ZERO)
+
+@ Leaving fxsl 2: land the virtual delay at rest and remove the multiplier
+@ already applied to target/glided rate. Preserve the selected effect amount
+@ and RNG state so stored bank levels survive Off or SRR selection.
+    .global warble_stop
+    .thumb_func
+warble_stop:
+    push    {r0-r2, lr}
+    vpush   {s1-s2}
+    ldr     r0, =WARBLE
+    ldr     r1, [r0]
+    ldr     r2, =WARBLE_MAGIC
+    cmp     r1, r2
+    bne     9f
+    vldr    s2, k_w_rest
+    vstr    s2, [r0, #8]
+    vstr    s2, [r0, #12]
+    vsub.f32 s1, s1, s1
+    bl      warble_block                @ w=1, applying 1/previous w exactly once
+    ldr     r0, =WARBLE
+    movs    r1, #0
+    str     r1, [r0, #16]              @ no residual virtual-delay drift
+9:  vpop    {s1-s2}
+    pop     {r0-r2, pc}
+    .ltorg
 
 @ Warble (fxsl 2), once per block from P10 with r3 = MOD, s1 = smoothed amount.
 @ A virtual tape delay d (samples) drifts to random targets, as in the plugin's

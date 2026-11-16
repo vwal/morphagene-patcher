@@ -38,6 +38,7 @@
 
     .syntax unified
     .cpu cortex-m4
+    .fpu fpv4-sp-d16
     .thumb
 
     .equ SETTINGS,       0x2002A0F0
@@ -63,6 +64,10 @@
     .equ KEY_DENS,       0x736e6564
     .equ KEY_VRNG,       0x676e7276     @ "vrng"
     .equ KEY_VQNT,       0x746e7176     @ "vqnt"
+    .equ KEY_VUNI,       0x696e7576
+    .equ KEY_VCTR,       0x72746376
+    .equ VUNI,           0x2002A618
+    .equ VCTR,           0x2002A619
     .equ KEY_MLOP,       0x706f6c6d
     .equ MLOP,           0x2002A611
     .equ VQNT,           0x2002A610
@@ -85,6 +90,16 @@
 @ Live: fp = line buffer, r9 = line number, sl = fp[0]. Free: r0-r3, ip, lr.
     .thumb_func
 opt_parse:
+    ldr     r0, =0x2002AE4C             @ only a permitted logical preset line
+    ldr     r0, [r0]
+    cbz     r0, opt_parse_ordinary
+    push    {r4, lr}
+    mov     r0, fp
+    bl      presets_normal_parse
+    pop     {r4, lr}
+    cmp     r0, #0
+    bne.w   PARSE_NEXT
+opt_parse_ordinary:
     ldrb    r0, [fp]                    @ key bytes (buffer may be unaligned)
     ldrb    r1, [fp, #1]
     orr     r0, r0, r1, lsl #8
@@ -132,6 +147,12 @@ opt_parse:
     ldr     r1, =KEY_MLOP
     cmp     r0, r1
     beq     44f
+    ldr     r1, =KEY_VUNI
+    cmp     r0, r1
+    beq     parse_vuni
+    ldr     r1, =KEY_VCTR
+    cmp     r0, r1
+    beq     parse_vctr
     ldr     r1, =KEY_VQNT
     cmp     r0, r1
     beq     43f
@@ -143,6 +164,12 @@ opt_parse:
     beq     6f
     ldrb.w  ip, [fp, #1]                @ replaced instruction: stock keys
     b.w     PARSE_STOCK
+parse_vuni:
+    ldr     r2, =VUNI
+    b       3f
+parse_vctr:
+    ldr     r2, =VCTR
+    b       3f
 44: ldr     r2, =MLOP
     b       3f
 43: ldr     r2, =VQNT
@@ -509,6 +536,22 @@ opt_write:
     ldr     r1, =fmt_mlop
     ldr     r3, =F_PRINTF
     blx     r3
+    ldr     r2, =VUNI
+    ldrb    r2, [r2]
+    addw    r0, sp, #1396
+    ldr     r1, =fmt_vuni
+    ldr     r3, =F_PRINTF
+    blx     r3
+    ldr     r2, =VCTR
+    ldrb    r2, [r2]
+    addw    r0, sp, #1396
+    ldr     r1, =fmt_vctr
+    ldr     r3, =F_PRINTF
+    blx     r3
+    addw    r0, sp, #1396
+    push    {r4, lr}
+    bl      presets_write
+    pop     {r4, lr}
     addw    r0, sp, #1396               @ replaced: f_close(options.txt)
     ldr     r3, =F_CLOSE
     blx     r3
@@ -631,3 +674,68 @@ fmt_mono: .asciz "mono %d //Mono input: 0 off (stereo), 1 left input copied to t
 fmt_dstr: .asciz "dstr %d.%d //Startup/reload density in Genes/sec: 0.1-128, at most one decimal; default 8. Explicit dstr recalls on settings-only reload. Knob changes are not saved.\n"
     .align 2
 fmt_mlop: .asciz "mlop %d //Morph loop: 0 stock gaps (default), 1 seamless loop at minimum Morph\n"
+
+fmt_vuni: .asciz "vuni %d //0 off; 1 SHIFT hold >=0.5 sec then release recalls +1x with pickup. Manual use: SHIFT jack must be unpatched. Other controls cancel.\n"
+fmt_vctr: .asciz "vctr %d //0 original mapping; 1 +1x at calibrated knob noon with zero CV, all ranges/layouts; reverse and stop compressed into left half.\n"
+
+@ Normal options-file transaction boundaries. No runtime control is changed
+@ while individual lines are parsed; reload_service publishes after reel load.
+.macro preset_io_save
+    push {r0-r3,r12,lr}
+    vpush {s0-s15}
+    mrs r0, APSR
+    vmrs r1, FPSCR
+    push {r0,r1}
+.endm
+.macro preset_io_restore
+    pop {r0,r1}
+    msr APSR_nzcvq, r0
+    vmsr FPSCR, r1
+    vpop {s0-s15}
+    pop {r0-r3,r12,lr}
+.endm
+.align 2
+.global opt_preset_begin, opt_preset_chunk, opt_preset_end
+.type PRESET_BEGIN_RETURN, %function
+.type PRESET_CHUNK_RETURN, %function
+.type PRESET_END_RETURN, %function
+.thumb_func
+opt_preset_begin:
+    preset_io_save
+    bl presets_normal_begin
+    preset_io_restore
+    ldr r6, =0x726d6f64
+    ldr r5, =0x73746570
+    b.w PRESET_BEGIN_RETURN
+.thumb_func
+opt_preset_chunk:
+    preset_io_save
+    ldr r1, [sp, #72]                  @ original fgets result (NULL at EOF)
+    mov r0, fp
+    bl presets_normal_chunk
+    preset_io_restore
+    add.w r9, r9, #1                  @ displaced stock chunk counter
+    b.w PRESET_CHUNK_RETURN
+.thumb_func
+opt_preset_end:
+    preset_io_save
+    addw r0, sp, #(1396+96)
+    bl presets_normal_end
+    preset_io_restore
+    mov r9, r0
+    addw r0, sp, #1396
+    b.w PRESET_END_RETURN
+    .ltorg
+
+@ Keep stock numeric metadata on line 1; identify the modified format in the
+@ human-readable version comment, including the legacy calibration branch.
+.align 2
+.global opt_version
+.type VERSION_RETURN, %function
+.thumb_func
+opt_version:
+    ldr r1, =fmt_version
+    addw r0, sp, #1396
+    b.w VERSION_RETURN
+fmt_version:
+    .asciz "// firmware version 204+c2\n"

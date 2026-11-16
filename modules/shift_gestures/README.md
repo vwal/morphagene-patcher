@@ -1,5 +1,10 @@
 # shift_gestures
 
+**Development 6:** [unity recall and noon mapping](../../docs/DEVELOPMENT_6_UNITY.md).
+Both options default off; new behavior is emulator-tested and awaits hardware
+audition. Companion C implements integer-ABI helpers called by `unity.inc`;
+the original quantizer remains in assembly.
+
 **Development 3:** optional quantized Varispeed by default (`vqnt 1`), with
 SHIFT + Varispeed for temporary continuous adjustment. Includes the forward 8x
 range and independent density. See [behavior and installation](../../docs/DEVELOPMENT_3_QUANTIZED.md).

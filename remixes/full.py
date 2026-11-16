@@ -1,10 +1,9 @@
 # Every module. Each feature is switched in options.txt (tape, octl, scal, fxsl,
 # mcap, sldm, cpul, ingn, mono), so one image covers every combination.
 REMIX = dict(
-    title='mg204+c',
-    description='mg204+c: trusted-card reload and switchable Morph loop. settings-only reload plus optional quantized-by-default Varispeed, forward 8x and independent Gene density. Every module: Varispeed scale lock, tape / TLA feedback, SRR, warble, Slide jitter, '
-                'Turing mode, mono input, SD-card updates, options.txt settings, always-on flash prefetch and a troubleshooting CPU log.',
+    title='mg204+c2 — unity recall and complete presets',
+    description='mg204+c2: optional SHIFT hold/release return to exact forward +1x, unity at noon, and complete preset recall with soft pickup. Includes all original mg204+c features, selectable Morph Loop, independent density, expanded Varispeed and trusted-card settings reload. Built on Briskcat’s Morphagene mods.',
     modules=['record_start_splice', 'shift_gestures', 'tape_sos', 'sd_updater', 'options_keys', 'gene_shape',
              'cpu_meter', 'mono_in', 'settings_reload', 'morph_loop'],
-    sha256='5c150c24540517af487693c53f5b4e7fa9b9dc5c33147ba6ab801ded60912335',
+    sha256='5dd01fb87b3f514a61663aa0f9dc393ca3a986836e874a0b7c38c5f3f6527488',
 )

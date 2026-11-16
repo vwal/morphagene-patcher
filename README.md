@@ -1,13 +1,17 @@
-# Morphagene mg204+c
+# Morphagene mg204+c2
 
 [Open the firmware patcher and options editor](https://vwal.github.io/morphagene-patcher/).
 
 An unofficial Morphagene mg204 extension by vwal, built on
 [Briskcat’s Morphagene mods](https://github.com/briskcat/morphagene-mods).
 The browser patches your own official `mg204.wav` locally and downloads
-`mg204+c.wav` for audio installation or `mgmod.bin` for an existing SD updater.
+`mg204+c2.wav` for audio installation or `mgmod.bin` for an existing SD updater.
 No firmware is uploaded. This repository contains source and patch data only.
 
+- Optional SHIFT hold/release return to exact forward +1x, with soft pickup.
+- Optional +1x at calibrated noon, across all layouts/ranges/scales, with a 48-52% notch.
+- Optional presets for every dialable control plus splice selection; independent
+  checkboxes, startup/live recall, soft pickup and last-splice fallback.
 - Expanded Varispeed: +/-4x, or forward stop-to-8x.
 - Optional normal pitch quantization and custom scales.
 - Independent Gene density, 0.1–128 Genes/sec, with configurable startup/recall
@@ -28,24 +32,26 @@ Normal mounting still loads a card’s reel in the usual way.
 ## Guides
 
 The website includes Letter/A4 manuals and quick cards. Source documentation:
-[release and live settings guide](docs/DEVELOPMENT_5_LIVE_OPTIONS.md),
+[mg204+c2 release guide](docs/RELEASE_MG204_C2.md),
 [options](docs/OPTIONS.md), [controls](docs/USING.md),
 [installation/recovery](docs/INSTALLING.md), and [build/tests](docs/TESTING.md).
 
-The released firmware is the hardware-tested Development 5 image. The owner
-confirmed SHIFT arming and changed options applying on card insertion without
-an audible playback interruption. The full local regression suite passed
-**89 tests without skips**. Exact SD latency and every clock/recording/CPU-load
-combination are not established by those results. Earlier development guides
-are historical; their verification behavior does not describe mg204+c.
+The owner confirmed the unity and preset features on hardware. **201 automated
+firmware tests pass with no skips**, including combined playback/recording
+comparisons. Browser options and firmware generation are checked separately.
+Exact SD latency and every performance combination remain unmeasured.
 
-Raw application SHA-256 (188,416 bytes):
-`5c150c24540517af487693c53f5b4e7fa9b9dc5c33147ba6ab801ded60912335`.
+See [the mg204+c2 release guide](docs/RELEASE_MG204_C2.md) and
+[version history](CHANGELOG.md). Earlier Development guides are retained as
+historical engineering records; use the release guide for current behavior.
+
+This project contains carefully tested AI-generated code.  
+Independent customization. Not an official Make Noise release.
 
 ## Development and publication
 
 Use the pinned Arm GNU 14.2.rel1 toolchain; see the test guide. The `full` and
-`full_morph_loop` CLI names are compatibility aliases for the same mg204+c image.
+`full_morph_loop` CLI names are compatibility aliases for the same mg204+c2 image.
 CLI files retain their internal `mg204-full.*` names. Keep generated firmware
 private; it contains Make Noise code and must not be committed here.
 

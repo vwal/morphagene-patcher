@@ -3,6 +3,8 @@
  */
 #include <stdint.h>
 #include <stddef.h>
+#include "../options_keys/preset_io.h"
+#include "../preset_recall/preset.h"
 
 #define U32(a) (*(volatile uint32_t *)(a))
 #define U16(a) (*(volatile uint16_t *)(a))
@@ -34,6 +36,7 @@ typedef struct {
     uint32_t morph_loop_value; /* separate slot preserves the assembly state ABI */
     uint32_t density_start_value;
     uint32_t mount_ready; /* 1: owned fresh mount; 2: normal load in progress */
+    uint32_t unity_value, center_value;
 } Reload;
 #define S ((volatile Reload *)0x2002a820)
 _Static_assert(sizeof(Reload) <= 0x100, "reload state overlaps FIL");
@@ -72,6 +75,33 @@ static uint32_t lock(void) {
 }
 static void unlock(uint32_t p) {
     __asm__ volatile("msr primask, %0" :: "r"(p) : "memory");
+}
+
+static int presets_splice_valid(volatile PresetStage *stage) {
+    if (!(stage->mask & 8u)) return 1;
+    return stage->values[3] >= 1 && stage->values[3] <= 300;
+}
+/* Caller holds the audio/TIM2 lock. Publication is one generation, so all
+ * explicit recalls apply together. Omitted controls keep live hold state but
+ * are omitted from future options writes, matching the card just read. */
+static void presets_publish(volatile PresetStage *stage) {
+    volatile uint32_t *state = (volatile uint32_t *)0x2002a660;
+    unsigned mask = stage->mask & PRESET_MASK;
+    if (!mask && state[0] != PRESET_MAGIC) return;
+    for (unsigned i=0; i<PRESET_COUNT; ++i)
+        if (mask & (1u<<i)) {
+            if (i < 4) PRESET->value[i] = stage->values[i];
+            else PRESET_EXT->value[i-4] = stage->values[i];
+        }
+    state[2] = state[3] = mask;
+    uint32_t generation = state[1]+1u;
+    if (!generation) {
+        for (unsigned i=0; i<PRESET_COUNT; ++i) preset_lane(i)->seen_generation = 0;
+        generation = 1;
+    }
+    __asm__ volatile("dmb" ::: "memory");
+    state[1] = generation;
+    state[0] = PRESET_MAGIC;
 }
 
 /* TIM2: observe the hold without claiming existing SHIFT gestures. Only an
@@ -161,8 +191,10 @@ static const Option options[] = {
     {KEY('v','q','n','t'),0x2002a610,0,1,1},
     {KEY('m','l','o','p'),0x2002a611,0,1,1},
     {KEY('d','s','t','r'),0x2002a614,0,0,4},
+    {KEY('v','u','n','i'),0x2002a618,0,1,1},
+    {KEY('v','c','t','r'),0x2002a619,0,1,1},
 };
-_Static_assert(sizeof(options)/sizeof(options[0]) == 28, "seen mask/table mismatch");
+_Static_assert(sizeof(options)/sizeof(options[0]) == 30, "seen mask/table mismatch");
 
 static int ws(char c) { return c == ' ' || c == '\t' || c == '\r'; }
 static const char *space(const char *p) { while (ws(*p)) ++p; return p; }
@@ -232,14 +264,23 @@ static int scale(const char *p, uint32_t *out) {
 int reload_parse_line(const char *line) {
     const char *p = space(line);
     if (!*p) return 1;
+    int preset = preset_key(p);
+    if (preset >= 0) {
+        uint32_t value, bit = 1u << (unsigned)preset;
+        if ((PRESET_LIVE->mask & bit) ||
+            !preset_number(p, (unsigned)preset, &value)) return 0;
+        PRESET_LIVE->values[preset] = value;
+        PRESET_LIVE->mask |= bit;
+        return 1;
+    }
     uint32_t key = 0;
     for (unsigned i=0; i<4; ++i) {
         if (!p[i]) return 1;
         key |= (uint32_t)(uint8_t)p[i] << (8*i);
     }
     unsigned i;
-    for (i=0; i<28 && options[i].key != key; ++i) {}
-    if (i == 28) return 1;
+    for (i=0; i<30 && options[i].key != key; ++i) {}
+    if (i == 30) return 1;
     if (!ws(p[4]) || (S->seen & (1u<<i))) return 0;
     p = space(p+4);
     uint32_t n;
@@ -248,7 +289,9 @@ int reload_parse_line(const char *line) {
     else if (i == 22) { if (!scale(p, &n)) return 0; }
     else if (!integer(&p, &n) || *space(p) ||
              n < options[i].min || n > options[i].max) return 0;
-    if (i == 27) S->density_start_value = n;
+    if (i == 29) S->center_value = n;
+    else if (i == 28) S->unity_value = n;
+    else if (i == 27) S->density_start_value = n;
     else if (i == 26) S->morph_loop_value = n;
     else S->values[i] = n;
     S->seen |= 1u<<i;
@@ -260,6 +303,8 @@ int reload_parse_line(const char *line) {
  * is deliberately ignored: it contains saved reel/gain metadata, not options.
  */
 static int read_options(void) {
+    PRESET_LIVE->mask = 0;
+    PRESET_LIVE->ready = 0;
     if (f_open(FIL, "options.txt", 1)) return 0;
     unsigned total = 0, line = 0, used = 0, comment = 0, valid = 1;
     S->seen = 0;
@@ -291,7 +336,7 @@ static int read_options(void) {
         if (line && !reload_parse_line(LINE)) valid = 0;
     }
     if (f_close(FIL)) valid = 0;
-    return valid && line && S->seen;
+    return valid && line && (S->seen || PRESET_LIVE->mask);
 }
 
 /* Called before FatFs's common write core (also used by f_printf), and before
@@ -356,7 +401,19 @@ static int reconnect(void *fatfs, volatile uint32_t *file) {
 /* Called at the common loop head, including while SHIFT is released and the
  * card is absent. Return 1 to defer stock dispatch until audio commits. */
 unsigned reload_service(void *fatfs, volatile uint32_t *file) {
-    if (S->mount_ready == 2) S->mount_ready = 0; /* normal load returned to main */
+    if (S->mount_ready == 2) {
+        /* Normal startup/mount has returned from stock reel loading. Never
+         * recall a splice against the preceding reel's metadata. */
+        uint32_t p = lock();
+        if (!(PRESET_NORMAL->ready == 2 && CARD == 1 && !quiet())) {
+            if (PRESET_NORMAL->ready == 2 && CARD == 1) {
+                presets_publish(PRESET_NORMAL);
+            }
+            PRESET_NORMAL->ready = 0;
+            S->mount_ready = 0;
+        }
+        unlock(p);
+    }
     if (S->phase == PHASE_READY) return 1;
     if (S->phase == PHASE_CLEANUP) {
         f_close((void *)file);
@@ -387,6 +444,7 @@ unsigned reload_service(void *fatfs, volatile uint32_t *file) {
     if (same_live_reel() && S->snapshot_ready==1 &&
         (S->mount_ready == 1 || !f_mount(fatfs, "", 1))) {
         valid = read_options();
+        if (valid) valid = presets_splice_valid(PRESET_LIVE);
         if (valid) valid = attached = reconnect(fatfs, file);
     }
     uint32_t primask = lock();
@@ -436,7 +494,8 @@ void reload_commit(void) {
     /* The hardware detect pin cannot validate removal here. Media loss is
      * checked by actual mount/read/seek I/O in main; after the final I/O,
      * removal is handled by the stock card-access failure path. */
-    if (S->phase == PHASE_READY && (!quiet() || !same_live_reel())) {
+    if (S->phase == PHASE_READY && (!quiet() || !same_live_reel() ||
+                                  !presets_splice_valid(PRESET_LIVE))) {
         S->pending = 0;
         S->result = 2;
         S->finished = SAMPLES;
@@ -445,9 +504,10 @@ void reload_commit(void) {
         return;
     }
     if (!quiet()) { unlock(primask); return; }
-    for (unsigned i=0; i<28; ++i) {
+    for (unsigned i=0; i<30; ++i) {
         if (!(S->seen & (1u<<i))) continue;
-        uint32_t address = options[i].address, value = i == 27 ? S->density_start_value :
+        uint32_t address = options[i].address, value = i == 29 ? S->center_value :
+            i == 28 ? S->unity_value : i == 27 ? S->density_start_value :
             i == 26 ? S->morph_loop_value : S->values[i];
         uint32_t previous = options[i].width == 4 ? U32(address) :
                             options[i].width == 2 ? U16(address) : U8(address);
@@ -456,7 +516,7 @@ void reload_commit(void) {
         else if (options[i].width == 2) U16(address) = (uint16_t)value;
         else U8(address) = (uint8_t)value;
         if (i >= 9 && i <= 11) U32(0x20022124 + (i-9)*4) = value;
-        if (i == 0 || i == 13 || i == 22 || i == 23 || i == 25)
+        if (i == 0 || i == 13 || i == 22 || i == 23 || i == 25 || i == 28 || i == 29)
             U8(0x2002a007) = 0; /* invalidate only a stale Varispeed lock */
         if (i == 21) {
             U8(0x2002a0fe) = 0; /* existing main hook applies codec gain */
@@ -476,6 +536,7 @@ void reload_commit(void) {
         U32(0x2002a808) = interval;
         U32(0x2002a80c) = interval;
     }
+    presets_publish(PRESET_LIVE);
     morph_loop_apply();
     S->pending = 0;
     S->result = 1;

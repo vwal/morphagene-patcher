@@ -1,20 +1,20 @@
 # Settings (`options.txt`)
 
-**Development 5:** trusted-card reload and `mlop 0/1`; see [the live workflow](DEVELOPMENT_5_LIVE_OPTIONS.md). Card contents are not verified.
+**mg204+c2:** return to 1:1, all-control preset recall and trusted-card settings reload. See [the current release guide](RELEASE_MG204_C2.md). Card contents are not verified.
 
 The Morphagene keeps its settings in `options.txt` at the root of the SD card.
 Normal mounting reads the file and then writes it back, including at power-up.
-The Development 5 reload reads it without writing; normal persistence resumes
+The settings-only reload reads it without writing; normal persistence resumes
 after reconnect. With the mods
-installed, a **Morphagene Study mods** section is added at the end of the file
+installed, a **Morphagene extended mods** section is added at the end of the file
 the first time you power on. You don't have to create it.
 
 **To change a setting:** edit the number after the key, save, put the card
-back and mount it normally, or use Development 5's settings-only gesture to
+back and mount it normally, or use the settings-only gesture to
 preserve the live reel. This checkout's `web/` settings editor can also load your
 `options.txt`, let you pick values from menus, and give the file back with
 your stock settings kept. The published upstream editor does not include
-these development options.
+these extended options.
 
 In the editor, **Recall density on settings-only reload** includes `dstr` when
 checked and removes it automatically when unchecked. Importing a file sets the
@@ -25,12 +25,38 @@ check it again. Normal mounting and firmware options saves add `dstr` back;
 review the file again before using it as a preserve-density card.
 
 Leave the file's **first line** as it is; the Morphagene keeps its own state
-there.
+there. Both editor and module rewrites add `// firmware version 204+c2` as a
+comment after it. This identifies extended firmware, not stock mg204.
 
 ## The settings
 
+All twelve preset keys below are optional and absent by default. Each has an
+independent checkbox. Explicit values recall at startup and settings-only reload;
+omitted values remain live on reload and stay omitted on future saves. Saves
+keep configured presets, not later knob movements. Density has its separate,
+previously documented rewrite behavior.
+
+**Percentages are virtual knob positions:** 0% fully CCW, 50% noon, 100% fully CW.
+They follow the existing curves, not linear percentages of duration, speed or
+DSP strength. Included controls hold until their combined knob/CV input reaches
+or crosses the recalled position; secondary effects use their SHIFT gesture.
+
 | Key | Values | Default | What it does |
 |---|---|---|---|
+| `mpos` | Integer 0–100 | Omitted | Recall Morph; 10% (9-11%) selects stock seamless looping with unclocked scheduling/dens 0. 0% gaps with mlop 0 |
+| `gpos` | Integer 0–100 | Omitted | Recall Gene Size: 0% and 1% full-splice/longest; 100% shortest. Nonlinear, not a length percentage |
+| `spos` | Integer 0–100 | Omitted | Recall virtual Slide position with pickup |
+| `splc` | Integer 1–300 | Omitted | Recall splice selection, obeying omod; above count selects the last while retaining the configured number |
+| `vpos` | Integer 0–100 | Omitted | Calibrated Varispeed position before vsop/vrng/vctr; 50% is +1x with vctr 1 |
+| `sosp` | Integer 0–100 | Omitted | Main S.O.S. mix: 0% input, 100% Gene playback; separate from feedback |
+| `srrp` | Integer 0–100 | Omitted | SHIFT + Morph SRR position: 0 off, higher stronger; fxsl 1 |
+| `wrbp` | Integer 0–100 | Omitted | SHIFT + Morph warble position: 0 off, higher stronger; fxsl 2; separate bank from SRR |
+| `jitp` | Integer 0–100 | Omitted | SHIFT + Slide jitter/Turing spread: 0 off, higher wider scatter |
+| `fbkp` | Integer 0–100 | Omitted | SHIFT + S.O.S. feedback: 0 none, 100 maximum; tape selects mode |
+| `evop` | Integer 0–100 | Omitted | SHIFT + Organize Turing evolution: 0 locked, 100 fresh; nonlinear curve |
+| `trst` | 1, 2, 3, 4, 6, 8, 12, 16 | Omitted | Turing Genes per step; independent density gesture keeps priority |
+| `vuni` | 0, 1 | 0 | Hold SHIFT alone at least 0.5 seconds and release to recall forward +1× with automatic pickup. Use with SHIFT input unpatched; other controls cancel |
+| `vctr` | 0, 1 | 0 | Exact +1× at calibrated noon, all layouts/ranges/scales; 48–52% explicit notch and centered unity cell only when vctr 1; preserves endpoints and compresses reverse/stop into the left half |
 | `mlop` | 0, 1 | 0 | **0** stock Morph gaps; **1** seamless loop at minimum Morph. Included in Full |
 | `dens` | 0, 1 | 0 | Independent density: startup rate from `dstr` (default 8 Genes/sec). Hold SHIFT and turn Gene Size to adjust 0.1–128 Genes/sec. Knob changes remain until adjusted again, recalled by dstr reload or powered off; they are not saved across power cycles. Takes priority over Turing rate |
 | `dstr` | 0.1-128, at most one decimal | 8 | Startup/reload density in Genes/sec. Explicit `dstr` recalls the rate on settings-only reload, even if unchanged; omit to preserve the live rate. Requires `dens 1`; external clock takes priority. The configured value stays in options.txt |
@@ -48,9 +74,9 @@ there.
 | `mono` | 0, 1, 2 | 0 | Mono input: **2** auto, copies the left input onto the right only while nothing is playing into R in, so a mono source in L is heard and recorded on both channels and a stereo source stays stereo; **1** always copies L onto R (R in is ignored); **0** stereo, as stock ([details](../modules/mono_in/README.md)) |
 
 At startup, invalid mod values are ignored and defaults remain. During a
-Development 5 dedicated reload, an invalid recognized value rejects the whole
-transaction; missing keys retain their current values. SHIFT + Slide
-(jitter) has no setting: it's off until you turn it up.
+dedicated settings-only reload, an invalid recognized value rejects the whole
+transaction; missing keys retain their current values. SHIFT + Slide jitter starts
+off unless recalled with jitp or adjusted manually.
 
 ## What the section looks like
 

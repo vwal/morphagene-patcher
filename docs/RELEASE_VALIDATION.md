@@ -1,3 +1,42 @@
+# mg204+c2 release validation
+
+Release preparation: 2026-11-15. Public name: `mg204+c2`.
+The owner confirmed the unity and all-control preset features on hardware.
+The released raw image differs from the tested Development 8 image by exactly
+one byte: the options header comment changes `204+c1` to `204+c2`.
+
+Raw application: 198,656 bytes; SHA-256
+`5dd01fb87b3f514a61663aa0f9dc393ca3a986836e874a0b7c38c5f3f6527488`.
+
+## Confirmed results
+
+- Complete local firmware suite: **201 tests, no skips**, 238.548 seconds.
+  Includes real audio playback/recording comparisons, unity mapping and reset,
+  all twelve optional recalls, parser/writer behavior and trusted-card reload.
+- Both `full` and `full_morph_loop` reproduce the same release hash with
+  Arm GNU 14.2.rel1. The two CLI names are compatibility aliases.
+- Browser option tests pass, including 1,310 percentage/splice values, all
+  density values, Turing steps, checkbox omission, round trips and c2 headers.
+- The official WAV decodes correctly; browser-generated raw and SD data match
+  the local build. Its `mg204+c2.wav` download decodes back to that same image.
+  Corrupted input is rejected.
+- Browser UI checked: grouped controls, numeric selection, independent recall
+  omission, c2 snippet header and collapsed version history. Narrow layout fits
+  without horizontal overflow.
+- Letter/A4 manuals (11 pages each) and quick cards (1 page each) rendered and
+  visually reviewed. Each embeds the complete combined license as `LICENSE.txt`.
+- Existing experimental packages remain untouched. Original public mg204+c
+  remains in Git history. Vendor-containing firmware stays outside Git.
+
+## Limits
+
+Hardware reports confirm the tested behavior; they do not establish worst-case
+latency, every CV/clock/dense-patch combination or power-loss behavior. Trusted
+matching cards remain the user's responsibility. See the
+[release guide](RELEASE_MG204_C2.md) for controls, pickup and card requirements.
+
+---
+
 # mg204+c release validation
 
 Release preparation: 2026-11-14. Public name: `mg204+c`.

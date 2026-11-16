@@ -55,14 +55,67 @@
     .type RATE_NEXT, %function  @ 0x08027882; defined in shift_gestures.targets.S
     .type RATE_FULL, %function  @ 0x08028824; defined in shift_gestures.targets.S
     .type GLIDE_NEXT, %function  @ 0x08027be4; defined in shift_gestures.targets.S
+    .type PRESET_VS_INPUT_NEXT, %function
+    .include "../preset_recall/preset_asm.inc"
+    .include "../preset_recall/varispeed_asm.inc"
 
     .text
     .global p1_session, p3_state14, p4_record_tap, p5_octave, p6_glide
+
+@ Stock's Varispeed motion detector runs before its pitch lookup. The preset
+@ must supply the same virtual input to both, without touching physical ADC.
+    .global preset_vs_input
+    .thumb_func
+preset_vs_input:
+    ldr r1, [r0, #12]
+    preset_post preset_varispeed_prepare, 4, 4
+    ldr r0, =0x200220a4
+    b.w PRESET_VS_INPUT_NEXT
+    .ltorg
+
+@ Stock initializes accepted-control caches after Organize changes, and later
+@ consults raw Varispeed for playhead adjustment direction. Both must agree
+@ with the virtual input used by the pitch lookup and movement history.
+    .type PRESET_VS_CACHE_NEXT, %function
+    .type PRESET_VS_DIRECTION_NEXT, %function
+    .global preset_vs_cache, preset_vs_direction
+    .thumb_func
+preset_vs_cache:
+    preset_vs_cached r6
+    adds r6, #100
+    adds r4, #100
+    b.w PRESET_VS_CACHE_NEXT
+    .thumb_func
+preset_vs_direction:
+    ldr r4, [r7, #12]
+    preset_vs_cached r4
+    ldr r0, =0x20021de4
+    b.w PRESET_VS_DIRECTION_NEXT
+    .ltorg
 
 @ P1 (hook at 0x0802486a, TIM2 control ISR, after debounce, before dispatch).
 @ Live: ip = SHIFT integrator, r2 = REC, r3 = SPLICE, lr = now.
     .thumb_func
 p1_session:
+    push    {r0-r2,lr}                  @ LR is the live stock sample timestamp
+    ldr     r0, =0x2002A618
+    ldrb    r1, [r0]
+    cmp     r1, #1
+    bne     unity_buttons_off
+    cmp     ip, #0
+    bne     unity_buttons_call
+    ldr     r0, =0x2002A620
+    ldr     r0, [r0]
+    cbz     r0, unity_buttons_done
+unity_buttons_call:
+    bl      unity_button_hook
+    b       unity_buttons_done
+unity_buttons_off:
+    ldr     r0, =0x2002A620
+    movs    r1, #0
+    str     r1, [r0]
+unity_buttons_done:
+    pop     {r0-r2,lr}
     push    {r0-r4}
     ldr     r4, =MOD
     ldr     r1, [r4]
@@ -319,6 +372,24 @@ p4_record_tap:
 p5_octave:
     push    {r0-r10, lr}
     vpush   {s0-s1}
+    ldr     r0, =0x2002A660             @ presets can map Varispeed with unity options off
+    ldr     r0, [r0]
+    ldr     r1, =0x54535250
+    cmp     r0, r1
+    beq     unity_map_call
+    ldr     r0, =0x2002A618
+    ldrh    r0, [r0]
+    cbnz    r0, unity_map_call
+    ldr     r0, =0x2002A654             @ enabled-config marker: process disabling once
+    ldr     r0, [r0]
+    cbz     r0, unity_map_done
+unity_map_call:
+    bl      unity_map_hook
+    ldr     r0, =0x2002A65C             @ unity override, independent of quantization
+    ldr     r0, [r0]
+    cmp     r0, #0
+    bne.w   p5_done
+unity_map_done:
     ldr     r3, =MOD
     ldr     r8, =RANGE
     ldrb    r8, [r8]
@@ -537,7 +608,11 @@ allowed:
 p6_glide:
     ldr     r0, =MOD
     ldrb    r0, [r0, #7]
+    cbnz    r0, unity_glide
+    ldr     r0, =0x2002A658
+    ldr     r0, [r0]
     cbz     r0, 1f
+unity_glide:
     vmov.f32 s1, #1.0
     vstr    s1, [sp, #192]
 1:  vldr    s1, k0p02                   @ replaced instructions
@@ -600,4 +675,55 @@ range_reverse:
     b.w     RANGE_REVERSE_NEXT
     .ltorg
 
+@ Matching bidirectional lookup copies for Gene Size <= 199. These use
+@ different registers and return to the stock full-splice/reel engine path.
+    .global range_index_full, range_forward_full, range_reverse_full
+    .type RANGE_FULL_INDEX_NEXT, %function
+    .type RANGE_FULL_FORWARD_NEXT, %function
+    .type RANGE_FULL_REVERSE_NEXT, %function
+    .thumb_func
+range_index_full:
+    push    {r0}
+    ldr     r0, =RANGE
+    ldrb    r0, [r0]
+    cmp     r0, #1
+    it      eq
+    biceq   r3, r1, #1
+    pop     {r0}
+    ldr     r7, =0x200220e8             @ replaced literal load + stack store
+    str     r7, [sp, #128]
+    b.w     RANGE_FULL_INDEX_NEXT
+
+    .thumb_func
+range_forward_full:
+    ldr     r5, [r3]                   @ replaced table load
+    push    {r0}
+    ldr     r0, =RANGE
+    ldrb    r0, [r0]
+    cmp     r0, #1
+    bne     1f
+    vpush   {s0-s1}
+    vmov    s0, r5
+    vmul.f32 s0, s0, s0
+    vmov    r5, s0
+    vpop    {s0-s1}
+1:  pop     {r0}
+    str     r5, [r7]                   @ replaced target store
+    b.w     RANGE_FULL_FORWARD_NEXT
+
+    .thumb_func
+range_reverse_full:
+    vldr    s25, [r6]                  @ stock negates the loaded value next
+    push    {r0}
+    ldr     r0, =RANGE
+    ldrb    r0, [r0]
+    cmp     r0, #1
+    it      eq
+    vmuleq.f32 s25, s25, s25
+    pop     {r0}
+    b.w     RANGE_FULL_REVERSE_NEXT
+    .ltorg
+
     .include "forward.inc"
+
+    .include "unity.inc"

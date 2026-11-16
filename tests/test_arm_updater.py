@@ -15,7 +15,10 @@ def raw_card(data):
 class UpdaterHooks(unittest.TestCase):
     def run_update(self,data,rename_result=0):
         a=Arm('sd_updater','upd_hook');events=[]
-        a.uc.mem_write(0x2002A610,b'\xff'*8)
+        a.uc.mem_write(0x2002A610,b'\xff'*12)
+        a.uc.mem_write(0x2002A660,b'\xff'*160)
+        a.uc.mem_write(0x2002AE10,b'\xff'*128)
+        a.uc.mem_write(0x2002AE90,b'\xff'*288)
         def result(code):
             def f(a):a.uc.reg_write(UC_ARM_REG_R0,code)
             return f
@@ -61,6 +64,10 @@ class UpdaterHooks(unittest.TestCase):
         self.assertEqual(a.get(0x2002A0F0),0x5354504F)
         self.assertEqual(a.uc.mem_read(0x2002A606,2),b'\0\0')
         self.assertEqual(a.uc.mem_read(0x2002A610,2),b'\0\0')
+        self.assertEqual(a.uc.mem_read(0x2002A618,2),b'\0\0')
+        self.assertEqual(a.uc.mem_read(0x2002A660,160),bytes(160))
+        self.assertEqual(a.uc.mem_read(0x2002AE10,128),bytes(128))
+        self.assertEqual(a.uc.mem_read(0x2002AE90,288),bytes(288))
         a,events=self.run_update(card_file(image()),rename_result=7)
         self.assertEqual(a.uc.reg_read(UC_ARM_REG_PC),0x0802328C)
 
