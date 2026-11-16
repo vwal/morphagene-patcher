@@ -293,9 +293,9 @@ articles=''.join(f'<article><p class="control-path">{group}</p><h3>{title}</h3><
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Morphagene mg204+c2: return to 1:1, unity at noon, optional control presets, WAV/SD firmware patcher and local options editor.">
 <meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>Morphagene mg204+c2 / firmware patcher</title><link rel="stylesheet" href="styles.css"><script defer src="remixes.js"></script><script defer src="app.js"></script></head>
+<title>Morphagene mg204+c2 / firmware patcher</title><script src="theme.js"></script><link rel="stylesheet" href="styles.css"><script defer src="remixes.js"></script><script defer src="app.js"></script></head>
 <body><a class="skip-link" href="#patcher">Skip to patcher</a><div class="page-shell">
-<header class="site-header"><a class="brand" href="./"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Morphagene <span class="brand-subtitle">/ mg204+c2</span></span></a><span class="local-badge">Browser-local</span></header>
+<header class="site-header"><a class="brand" href="./"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Morphagene <span class="brand-subtitle">/ mg204+c2</span></span></a><div class="header-actions"><span class="local-badge">Browser-local</span><button class="theme-toggle" id="theme-toggle" type="button" role="switch" aria-label="Night mode" aria-checked="false" title="Switch to night mode" hidden><svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg><svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.7 13.2A8.8 8.8 0 0 1 10.8 3.3a8.8 8.8 0 1 0 9.9 9.9Z"/></svg><span id="theme-label">Day</span></button></div></header>
 <main><section class="intro"><p class="eyebrow">MORPHAGENE / EXTENDED FIRMWARE</p><h1>Find your way<br>back to 1:1.</h1><p class="intro-copy">Return to original playback speed, put +1x at noon, and recall just the controls you choose. Expanded Varispeed, independent Gene density, switchable Morph Loop and live settings reload. Built on <a href="https://briskcat.github.io/morphagene-mods/">Briskcat’s Morphagene mods</a>.</p><nav class="intro-links" aria-label="On this page"><a href="#installation">First install</a><a href="#patcher">Patch firmware</a><a href="#features">Features</a><a href="#options">Options editor</a><a href="#guides">PDF guides</a></nav><div class="version-path"><span><small>OFFICIAL</small><strong>mg204</strong></span><span aria-hidden="true">→</span><span><small>EXTENDED</small><strong>mg204+c2</strong></span></div></section>
 <section class="installation-note first-install" id="installation" aria-labelledby="first-install-title">
 <div class="card-heading first-install-heading"><span class="section-number">01</span><h2 id="first-install-title">The first time</h2><span class="install-required">Required</span></div>
@@ -360,6 +360,34 @@ with (W/'styles.css').open('a') as f:f.write('''\n/* Morphagene form additions. 
 textarea{font:12px/1.6 ui-monospace,monospace;resize:vertical;margin:12px 0}input[type=file]{display:block;max-width:100%;margin:12px 0}.feature-grid h3{margin:0;font-size:20px}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--orange);outline-offset:3px}
 [data-kind=error]{color:var(--red)}[data-kind=ok]{color:var(--green)}
 @media(max-width:650px){.options-grid{grid-template-columns:1fr}.intro{padding-right:0}.feature-grid h3{font-size:19px}}
+/* Day/night mode shares the same layout and accessible controls. */
+:root{--input-bg:#ffffff;--field-wash:#f5f7f1;--control-line:#aab7a9}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#141c19;--card:#1d2823;--ink:#e5ece5;--muted:#aebdb2;
+  --line:#3b4d42;--green:#9bceb0;--green-light:#24372c;
+  --orange:#eeab83;--orange-light:#3c2b23;--red:#f3aaa0;--red-light:#442824;
+  --input-bg:#141f19;--field-wash:#1c2e23;--control-line:#687e6d;
+}
+.header-actions{display:flex;align-items:center;gap:16px;flex-shrink:0}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;min-width:84px;padding:8px 12px;border:1px solid var(--control-line);border-radius:24px;background:var(--card);color:var(--ink);font-size:12px;font-weight:600}
+.theme-toggle:hover{background:var(--green-light);border-color:var(--green)}
+.theme-toggle svg{width:17px;height:17px;flex:none}
+.theme-moon{display:none}
+[data-theme="dark"] .theme-sun{display:none}
+[data-theme="dark"] .theme-moon{display:block}
+.backup-reminder,.file-zone{background:var(--field-wash);border-color:var(--control-line)}
+.file-zone.is-dragging{background:var(--orange-light);border-color:var(--orange)}
+select,.option-field input,textarea{background:var(--input-bg);border-color:var(--control-line)}
+.option-field input:disabled,.option-field select:disabled{background:var(--card)}
+.paper-choices a,.install-required,.installation-note .filename-note{border-color:var(--control-line)}
+.skip-link{color:var(--paper)}
+[data-theme="dark"] .primary-button,[data-theme="dark"] .download-button{color:var(--paper)}
+[data-theme="dark"] .primary-button:hover:not(:disabled),[data-theme="dark"] .download-button:hover{background:#b7e2c7;border-color:#b7e2c7}
+[data-theme="dark"] .primary-button:disabled{background:var(--line);border-color:var(--line);color:var(--muted)}
+@media(max-width:460px){.site-header{gap:12px}.brand{font-size:14px;gap:8px}.header-actions{gap:10px}.theme-toggle{min-width:74px;padding:8px}}
+@media(max-width:340px){.site-header{flex-wrap:wrap;padding:16px 0;gap:12px}.header-actions{margin-left:auto}}
+
 ''')
 shutil.copy2(S/'LICENSE',W/'LICENSE.txt')
 shutil.copy2(S/'LICENSES/Briskcat-MIT.txt',W/'Briskcat-MIT.txt')
