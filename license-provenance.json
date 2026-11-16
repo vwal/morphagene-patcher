@@ -506,7 +506,7 @@
     },
     "tools/make_site.py": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
-      "sha256": "e8df051f81137a958e1bb47414b006d56065f63a8080ac01ee60f3ad080167e0"
+      "sha256": "e6c8dcb855a33e5e849d37a747f7257d736450ff7ebcb88d73b9f819ac56430f"
     },
     "tools/package_dev5.py": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
@@ -546,7 +546,7 @@
     },
     "web/index.html": {
       "provenance": "modified-from-upstream; MIT for original portions, no-sale-with-Make-Noise-exception for our additions",
-      "sha256": "4331d1088ad8f5051424a67da1a775bb778df1d32e02c97d410bb3c594b69266"
+      "sha256": "af9a0ef9f8c71eb0c9878f3ae360a811d1e89ccc1227764e11f040227c6d9edf"
     },
     "web/morphagene-manual-a4.pdf": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
