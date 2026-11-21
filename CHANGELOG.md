@@ -1,6 +1,6 @@
 # Version history
 
-## mg204+c3 — Settings-file correction
+## mg204+c3 — 2026-11-21
 
 - Fixed normal card mounts and startup changing `vsop 0` or `vsop 1` to
   forward-only playback. The options reader now skips wrapped portions of a
@@ -11,6 +11,9 @@
   stray NUL byte.
 - The module and editor identify rewritten files with `// firmware version 204+c3`.
   If an older release already saved `vsop 2`, select the desired layout once.
+
+In hardware testing, `vsop 1` survived two consecutive power cycles and the
+module wrote the `204+c3` header.
 
 ## mg204+c2 — 2026-11-15
 

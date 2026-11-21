@@ -18,7 +18,7 @@
     },
     "CHANGELOG.md": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
-      "sha256": "37cc54640422ad9414223928f010561ac7a0aae7028975d99281c013f339221d"
+      "sha256": "45fad0c0c7ab0d856e1d96d8639b594c4a2d00edf74ba7f9957e406a94f6bd3e"
     },
     "LICENSE": {
       "provenance": "modified-from-upstream; MIT for original portions, no-sale-with-Make-Noise-exception for our additions",
@@ -98,7 +98,7 @@
     },
     "docs/RELEASE_VALIDATION.md": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
-      "sha256": "8efa284035b5aeb472b614ab74cd3ecfc7c7ebadc9960d515fcb8cbca4537087"
+      "sha256": "7ffdb524a15ec6d0b92feaa084e47a28b0c212b94e024a285204144a7eaaf607"
     },
     "docs/TESTING.md": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",

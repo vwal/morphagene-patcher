@@ -3,6 +3,9 @@
 The 198,656-byte application built with Arm GNU 14.2.rel1 has SHA-256
 `6fa86c9c4af564f75fa724780cfb504d95db8a562f3d88071ea84344552bceed`.
 
+- On November 21, 2026, the owner confirmed that `vsop 1` survived two
+  consecutive power cycles on a Morphagene and that the module wrote
+  `// firmware version 204+c3` in `options.txt`.
 - All 208 automated firmware tests passed with the stock and private reference
   images available. The browser editor and firmware download checks also passed.
 - On normal mounts and live reloads, ARM emulation checked 4,863 inputs
