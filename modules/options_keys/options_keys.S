@@ -697,8 +697,9 @@ fmt_vctr: .asciz "vctr %d //0 original mapping; 1 +1x at calibrated knob noon wi
     pop {r0-r3,r12,lr}
 .endm
 .align 2
-.global opt_preset_begin, opt_preset_chunk, opt_preset_end
+.global opt_preset_begin, opt_prepare_read, opt_preset_chunk, opt_preset_end
 .type PRESET_BEGIN_RETURN, %function
+.type OPTIONS_GETS_CALL, %function
 .type PRESET_CHUNK_RETURN, %function
 .type PRESET_END_RETURN, %function
 .thumb_func
@@ -709,6 +710,19 @@ opt_preset_begin:
     ldr r6, =0x726d6f64
     ldr r5, =0x73746570
     b.w PRESET_BEGIN_RETURN
+.thumb_func
+opt_prepare_read:
+    @ FatFs returns a pointer, with no byte count. Fill the word-aligned
+    @ options buffer so its last NUL after fgets identifies its actual end.
+    mov r0, fp
+    mov.w r1, #-1
+    add.w r3, fp, #64
+1:  str r1, [r0], #4
+    cmp r0, r3
+    bne 1b
+    movs r1, #64
+    mov r0, fp                         @ r2 still points to the options FIL
+    b.w OPTIONS_GETS_CALL
 .thumb_func
 opt_preset_chunk:
     preset_io_save
@@ -740,4 +754,4 @@ opt_version:
     addw r0, sp, #1396
     b.w VERSION_RETURN
 fmt_version:
-    .asciz "// firmware version 204+c2\n"
+    .asciz "// firmware version 204+c3\n"

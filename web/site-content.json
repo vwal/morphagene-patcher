@@ -3,7 +3,7 @@
     [
       "vsop",
       "Varispeed layout",
-      "Classic (0) is the original bidirectional response with smooth braking around stop. V/oct (1) is the alternate bidirectional pitch response: with the input attenuverter carefully adjusted, CV can track volts per octave. Forward only (2) runs from stop at fully CCW to maximum forward speed. Extended range and Unity at noon reshape these responses; V/oct is not a promise of calibrated tracking in every modified layout.",
+      "Classic (0) is the original bidirectional response with smooth braking around stop. V/oct (1) is the alternate bidirectional pitch response: with the input attenuverter carefully adjusted, CV can track volts per octave. Forward only (2) runs from stop at fully CCW to maximum forward speed. Extended range and Unity at noon reshape these responses; V/oct is not a promise of calibrated tracking in every modified layout. If an older build changed your layout to forward only, select your preferred layout here and save options.txt after upgrading.",
       [
         "0: Bidirectional \u2014 classic",
         "1: Bidirectional \u2014 V/oct",

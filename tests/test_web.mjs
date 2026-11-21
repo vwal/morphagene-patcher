@@ -7,7 +7,7 @@ const element=id=>elements[id]??={value:'',dataset:{},options:[],hidden:false,ad
 const context=vm.createContext({TextEncoder,window:{MGMOD_REMIXES:[]},document:{getElementById:element,addEventListener:(event,fn)=>{handlers[event]=fn},createElement:()=>({})}});
 vm.runInContext(source,context);
 handlers.DOMContentLoaded();
-assert.match(elements['options-text'].value,/^\/\/ firmware version 204\+c2\n/);
+assert.match(elements['options-text'].value,/^\/\/ firmware version 204\+c3\n/);
 assert.equal(elements['recall-dstr'].checked,true);
 assert.equal(elements['opt-dstr'].disabled,false);
 assert.match(elements['options-text'].value,/^dstr 8 /m);
@@ -21,7 +21,11 @@ for(const key of allPresetKeys) {
 }
 assert.match(elements['options-text'].value,/^vuni 0 /m);
 assert.match(elements['options-text'].value,/^vctr 0 /m);
-async function load(text){await handlers['options-file:change']({target:{files:text===null?[]:[{text:async()=>text}]}});return elements['options-text'].value;}
+async function load(text) {
+  const files = text === null ? [] : [{size: Buffer.byteLength(text), text: async () => text}];
+  await handlers['options-file:change']({target: {files}});
+  return elements['options-text'].value;
+}
 let out=await load('6 46345 0\r\nroot 37 // retained\r\nvsop 1\r\nvrng 1\r\nmcr1 2.00000 // untouched\r\nunknown line\r\n');
 assert.match(out,/^root 37 \/\/ retained$/m);
 assert.match(out,/^vsop 1$/m);
@@ -45,8 +49,8 @@ assert.match(out,/^octl 4$/m);assert.match(out,/^scal 3,5,7,10$/m);
 out=await load('6 0 0\nvqnt 2\n');assert.match(out,/^vqnt 0$/m);
 await load('6 0 0\nvqnt 1\n');out=await load('6 0 0\n');assert.match(out,/^vqnt 0 /m);
 await load(null);assert.equal(elements['opt-root'].value,'50');
-out=await load('6 46345 0\n// firmware version 204\n// firmware version 155b\nvsop 1\n');
-assert.ok(out.startsWith('6 46345 0\n// firmware version 204+c2\n'));
+out=await load('6 46345 0\n// firmware version 204+c2\n// firmware version 155b\nvsop 1\n');
+assert.ok(out.startsWith('6 46345 0\n// firmware version 204+c3\n'));
 assert.equal((out.match(/^\/\/ firmware version /gm)||[]).length,1);
 out=await load(out);assert.equal((out.match(/^\/\/ firmware version /gm)||[]).length,1);
 assert.match(out,/^vsop 1$/m);
@@ -187,7 +191,7 @@ for(const key of presetKeys) {
   assert.equal(elements['recall-'+key].checked,false);
   assert.deepEqual(activeKey(out,key),[]);
 }
-console.log('PASS mg204+c2 presets: all 1310 percentage/splice values, invalid/missing omission, duplicates, headers and retained values');
+console.log('PASS presets: all 1310 percentage/splice values, invalid/missing omission, duplicates, headers and retained values');
 
 for(const n of [1,2,3,4,6,8,12,16]) {
   out=await load(`6 0 0\ntrst ${n}\n`);
@@ -254,7 +258,7 @@ for(const key of allPresetKeys) {
   assert.equal(elements['opt-'+key].value,['splc','trst'].includes(key)?'1':'0');
   assert.deepEqual(activeKey(out,key),[]);
 }
-console.log('PASS mg204+c2 preset selection: independent checkboxes, saved-file round trip, absent keys stay omitted and reset defaults');
+console.log('PASS preset selection: independent checkboxes, saved-file round trip, absent keys stay omitted and reset defaults');
 
 // Mode changes retain separate effect amounts and primary/secondary controls.
 out=await load('6 46345 0\nsrrp 12\nwrbp 34\njitp 56\nfbkp 78\nevop 90\ntrst 6\nsosp 43\nvpos 65\nsplc 300\n');
@@ -279,7 +283,7 @@ for(const key of ['fbkp','srrp']) {
 for(const key of ['wrbp','jitp','evop','trst','sosp','vpos','splc'])
   assert.equal(elements['recall-'+key].checked,true);
 assert.deepEqual(activeKey(out,'splc'),['splc 300']);
-console.log('PASS mg204+c2 independent recalls: effect modes, feedback versus main mix, Turing priority and unchanged configured splice number');
+console.log('PASS independent recalls: effect modes, feedback versus main mix, Turing priority and unchanged configured splice number');
 
 for(const key of ['vuni','vctr']) {
   for(const n of [0,1]) {
@@ -300,7 +304,21 @@ for(const key of ['vuni','vctr']) {
 const legacyRangeComment = '//Varispeed range: 0 stock, 1 extended: vsop 0/1 +/-4x; vsop 2 forward stop to 8x with scale lock';
 const shortRangeComment = '//0 stock, 1 +/-4x bidirectional or 0-8x forward';
 const stockKeys = new Set('vsop pmod omod rmod cvop ckop rsop pmin inop gnsm mcr1 mcr2 mcr3 step'.split(' '));
-const editorKeys = new Set(vm.runInContext('FIELDS',context));
+const editorFields = Array.from(vm.runInContext('FIELDS',context));
+const recognizedKeys = new Set([...stockKeys, ...editorFields]);
+function checkContinuationBytes(line) {
+  const bytes = Buffer.from(line.replaceAll('\r',''), 'utf8'); // FatFs drops CR.
+  let continuations = 0;
+  for (let offset = 63; offset < bytes.length; offset += 63) {
+    continuations++;
+    const key = bytes.toString('latin1', offset, offset + 4);
+    // The legacy root/tlen handlers require a digit at index 5, including
+    // when the first four letters happen to start an ordinary word in a note.
+    if ((key === 'root' || key === 'tlen') && !(bytes[offset+5] >= 48 && bytes[offset+5] <= 57)) continue;
+    assert.ok(!recognizedKeys.has(key), `Unexpected ${key} in ${line} at byte ${offset}`);
+  }
+  return continuations;
+}
 for (const range of [0, 1]) {
   const legacyLine = `vrng ${range} ${legacyRangeComment}`;
   assert.ok(legacyLine.slice(63).startsWith('vsop 2'));
@@ -312,13 +330,7 @@ for (const range of [0, 1]) {
   const saved = new TextDecoder().decode(context.saved.at(-1).bytes);
   assert.deepEqual(activeKey(saved,'vsop'), ['vsop 1']);
   assert.deepEqual(activeKey(saved,'vrng'), [`vrng ${range} ${shortRangeComment}`]);
-  for (const line of saved.split('\n')) {
-    for (let i = 63; i < line.length; i += 63) {
-      const chunk = line.slice(i);
-      assert.ok(!stockKeys.has(chunk.slice(0,4)), line);
-      assert.ok(!(editorKeys.has(chunk.slice(0,4)) && /^....[ \t]\d/.test(chunk)), line);
-    }
-  }
+  for (const line of saved.split('\n')) checkContinuationBytes(line);
   assert.equal(await load(saved), saved);
 }
 out = await load('6 0 0\nvrng 1 // my performance note\n');
@@ -326,6 +338,68 @@ assert.deepEqual(activeKey(out,'vrng'), ['vrng 1 // my performance note']);
 out = await load(null);
 assert.match(out, /^vrng 0 \/\/0 stock, 1 \+\/-4x bidirectional or 0-8x forward$/m);
 console.log('PASS older firmware compatibility: correct range comments on import, export and fresh snippets');
+
+// Render each editable field independently. FatFs starts a fresh chunk at
+// every LF, so earlier fields and checkbox omissions cannot change the offsets.
+const limits = vm.runInContext('LIMITS',context);
+function* fieldValues(key) {
+  if (key === 'scal') {
+    for (let mask = 0; mask < 2048; mask++) {
+      const notes = [];
+      for (let n = 1; n <= 11; n++) if (mask & (1 << (n-1))) notes.push(n);
+      yield notes.join(',') || '0';
+    }
+  } else if (key === 'dstr') {
+    for (let tenths = 1; tenths <= 1280; tenths++) yield String(tenths/10);
+  } else if (key === 'trst') {
+    yield* [1,2,3,4,6,8,12,16].map(String);
+  } else {
+    const [minimum,maximum] = limits[key];
+    for (let n = minimum; n <= maximum; n++) yield String(n);
+  }
+}
+await load('6 46345 0\n');
+for (const key of ['dstr', ...allPresetKeys]) elements['recall-'+key].checked = true;
+let fieldCases = 0, continuationCount = 0;
+for (const key of editorFields) {
+  for (const value of fieldValues(key)) {
+    elements['opt-'+key].value = value;
+    handlers['opt-'+key+':change']();
+    handlers['options-save:click']();
+    const saved = Buffer.from(context.saved.pop().bytes).toString('utf8');
+    const line = saved.split('\n').find(line => line.startsWith(key+' '));
+    const prefix = key+' '+value+' //';
+    assert.ok(line?.startsWith(prefix), key+' '+value);
+    assert.ok(Buffer.byteLength(prefix) <= 63, prefix);
+    assert.ok(Buffer.byteLength(saved) <= 16384);
+    continuationCount += checkContinuationBytes(line);
+    fieldCases++;
+  }
+}
+console.log(`PASS generated options: ${editorFields.length} fields, ${fieldCases} values, ${continuationCount} wrapped chunks checked`);
+
+// Imported stock-only values and user-authored comments are passed through:
+// the firmware must handle arbitrary comment alignment on these cards.
+const note = '//'+'x'.repeat(52)+'vsop 2';
+const stockLines = [
+  'mcr1 -0.06250000', 'mcr2 +16.00000000', 'mcr3 1.23456789',
+  'pmod 2', 'omod 1', 'cvop 1', 'ckop 2', 'rsop 1', 'pmin 1', 'inop 1',
+  'step 0', 'rmod 1'
+];
+await load(['6 0 0',...stockLines,'mpos 9 '+note,'vsop 1',''].join('\r\n'));
+elements['opt-mpos'].value = '100';
+handlers['opt-mpos:change']();
+handlers['options-save:click']();
+out = Buffer.from(context.saved.pop().bytes).toString('utf8');
+for (const line of stockLines) assert.ok(out.split('\n').includes(line));
+assert.deepEqual(activeKey(out,'vsop'), ['vsop 1']);
+assert.deepEqual(activeKey(out,'mpos'), ['mpos 100 '+note]);
+assert.equal(Buffer.from(activeKey(out,'mpos')[0]).subarray(63).toString(), 'vsop 2');
+for (const invalid of ['6 0 0\n// café\n','6 0 0\n// NUL\0\n','6 0 0\n//'+'x'.repeat(16384)]) {
+  await load(invalid);
+  assert.equal(elements['options-save-row'].hidden, true);
+  assert.match(elements['options-status'].textContent, /plain-text|16 KiB/);
+}
 
 // Generated markup exposes native, labelled controls with firmware bounds.
 const html=fs.readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
@@ -362,11 +436,14 @@ assert.match(html,/dens 1 takes priority over the Turing rate/);
 const content=JSON.parse(fs.readFileSync(new URL('../web/site-content.json',import.meta.url),'utf8'));
 assert.deepEqual(content.fields.map(field=>field[0]).sort(),Array.from(vm.runInContext('FIELDS',context)).sort());
 assert.match(html,/no extra flat zone is added/);
-assert.match(html,/Morphagene mg204\+c2/);
+assert.match(html,/Morphagene mg204\+c3/);
 assert.doesNotMatch(html,/PRIVATE|EXPERIMENTAL|upcoming|await.*hardware/);
 for(const id of ['firmware','remix','build-card','build-wav']) assert.ok(htmlIds.includes(id));
-assert.match(html,/mg204\+c2\.wav/);
+assert.match(html,/mg204\+c3\.wav/);
 assert.match(html,/<details><summary>Version by version<\/summary>/);
+const history = html.match(/<section[^>]+id="versions"[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
+assert.match(history,/<h3>mg204\+c3\b/);
+assert.match(history,/<h3>mg204\+c2\b/);
 assert.doesNotMatch(html,/<details[^>]*\bopen\b/);
 assert.match(html,/This project contains carefully tested AI-generated code\./);
 assert.match(html,/Independent customization\. Not an official Make Noise release\./);
@@ -382,4 +459,4 @@ assert.match(html,/100% gives the shortest Genes/);
 assert.match(html,/Bidirectional — classic/);
 assert.match(html,/Bidirectional — V\/oct/);
 assert.match(html,/attenuverter carefully adjusted/);
-console.log('PASS mg204+c2 editor: grouped controls, percentage guidance, version history, disclosures and patcher');
+console.log('PASS mg204+c3 editor: grouped controls, percentage guidance, version history, disclosures and patcher');

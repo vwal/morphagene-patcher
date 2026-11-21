@@ -1,13 +1,16 @@
-# Morphagene mg204+c2
+# Morphagene mg204+c3
 
 [Open the firmware patcher and options editor](https://vwal.github.io/morphagene-patcher/).
 
 An unofficial Morphagene mg204 extension by vwal, built on
 [Briskcat’s Morphagene mods](https://github.com/briskcat/morphagene-mods).
 The browser patches your own official `mg204.wav` locally and downloads
-`mg204+c2.wav` for audio installation or `mgmod.bin` for an existing SD updater.
+`mg204+c3.wav` for audio installation or `mgmod.bin` for an existing SD updater.
 No firmware is uploaded. This repository contains source and patch data only.
 
+- c3 fixes the Varispeed layout reverting to forward only on a normal card
+  mount or power-up. If an older release saved `vsop 2`, restore your preferred
+  layout once. See the [c3 update instructions](docs/RELEASE_MG204_C3.md).
 - Optional SHIFT hold/release return to exact forward +1x, with soft pickup.
 - Optional +1x at calibrated noon, across all layouts/ranges/scales, with a 48-52% notch.
 - Optional presets for every dialable control plus splice selection; independent
@@ -32,18 +35,14 @@ Normal mounting still loads a card’s reel in the usual way.
 ## Guides
 
 The website includes Letter/A4 manuals and quick cards. Source documentation:
-[mg204+c2 release guide](docs/RELEASE_MG204_C2.md),
+[mg204+c3 release guide](docs/RELEASE_MG204_C3.md),
 [options](docs/OPTIONS.md), [controls](docs/USING.md),
 [installation/recovery](docs/INSTALLING.md), and [build/tests](docs/TESTING.md).
 
-The owner confirmed the unity and preset features on hardware. **201 automated
-firmware tests pass with no skips**, including combined playback/recording
-comparisons. Browser options and firmware generation are checked separately.
-Exact SD latency and every performance combination remain unmeasured.
-
-See [the mg204+c2 release guide](docs/RELEASE_MG204_C2.md) and
-[version history](CHANGELOG.md). Earlier Development guides are retained as
-historical engineering records; use the release guide for current behavior.
+The owner confirmed the unity and preset features on hardware. The firmware
+suite exercises card reads and rewrites alongside playback and recording.
+Separate browser checks cover the options editor and generated firmware.
+The [version history](CHANGELOG.md) records changes since the original release.
 
 This project contains carefully tested AI-generated code.  
 Independent customization. Not an official Make Noise release.
@@ -51,7 +50,7 @@ Independent customization. Not an official Make Noise release.
 ## Development and publication
 
 Use the pinned Arm GNU 14.2.rel1 toolchain; see the test guide. The `full` and
-`full_morph_loop` CLI names are compatibility aliases for the same mg204+c2 image.
+`full_morph_loop` CLI names are compatibility aliases for the same mg204+c3 image.
 CLI files retain their internal `mg204-full.*` names. Keep generated firmware
 private; it contains Make Noise code and must not be committed here.
 

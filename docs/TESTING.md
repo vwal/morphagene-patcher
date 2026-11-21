@@ -195,3 +195,21 @@ for the options version comment changing from `204+c1` to `204+c2`. Rebuild,
 compare the raw images, regenerate `web/remixes.js`, and run `mgmod check` before
 publishing. Generated filenames are `mg204+c2.wav` and `mgmod.bin` in the browser;
 CLI artifacts keep `mg204-full.*` names.
+
+## mg204+c3 settings regression checks
+
+`tests/test_option_isolation.py` instruments the ARM settings writes for the
+ordinary reader and settings-only reload. It checks the destination, width
+and resulting value across all 42 settings. Include the official firmware
+when running the tests to exercise the stock dispatch as well.
+
+`tests/test_preset_chunks.py` exercises the 63-byte read boundary with old
+card comments, embedded NULs and unterminated final lines. The editor suite
+checks generated text at each boundary across every setting value the UI
+can emit, including all scale masks and density tenths.
+
+To check the browser downloads against a separately staged build, set
+`MGMOD_BUILD_DIR` to its directory before running
+`node tests/test_web_firmware.mjs`. The default is `build/release`. The check
+compares the browser SD update and raw image to the CLI files and verifies
+the release manifest and download names.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the printable references for Morphagene mg204+c2."""
+"""Build the printable references for Morphagene mg204+c3."""
 import argparse
 import os
 from datetime import datetime, timezone
@@ -27,7 +27,7 @@ width, height = paper
 right = width-44
 content_width = right-44
 top_shift = height-letter[1]
-os.environ.setdefault('SOURCE_DATE_EPOCH', str(int(datetime(2026,11,15,tzinfo=timezone.utc).timestamp())))
+os.environ.setdefault('SOURCE_DATE_EPOCH', str(int(datetime(2026,11,21,tzinfo=timezone.utc).timestamp())))
 for name, file in [('Guide','Regular'),('GuideB','Bold')]:
     pdfmetrics.registerFont(TTFont(name,str(args.font_dir/f'LiberationSans-{file}.ttf')))
 pdfmetrics.registerFontFamily('Guide',normal='Guide',bold='GuideB',italic='Guide',boldItalic='GuideB')
@@ -41,7 +41,7 @@ class Guide:
     def __init__(self,path,card=False):
         path.parent.mkdir(parents=True,exist_ok=True)
         self.c=canvas.Canvas(str(path),pagesize=paper,pageCompression=1,invariant=1)
-        self.c.setCreator('vwal | Morphagene firmware reference');self.c.setAuthor('vwal');self.c.setTitle('Morphagene mg204+c2 | '+('Quick reference card' if card else 'Firmware reference guide')+' | '+paper_name+' | Extended firmware'+(' | DRAFT' if args.draft else ''))
+        self.c.setCreator('vwal | Morphagene firmware reference');self.c.setAuthor('vwal');self.c.setTitle('Morphagene mg204+c3 | '+('Quick reference card' if card else 'Firmware reference guide')+' | '+paper_name+' | Extended firmware'+(' | DRAFT' if args.draft else ''))
         self.card=card;self.n=0
     def text(self,txt,x,y,size=11,font='Guide',color=ink):
         c=self.c;c.setFont(font,size);c.setFillColor(color);c.drawString(x,y,txt)
@@ -53,7 +53,7 @@ class Guide:
         c.translate(0,top_shift)
         self.text('MORPHAGENE   /   CUSTOM FIRMWARE',44,751,9,'GuideB',green)
         c.setFillColor(green);c.roundRect(right-86,743,86,20,5,fill=1,stroke=0)
-        self.text('mg204+c2',right-65,749,10,'GuideB',colors.white)
+        self.text('mg204+c3',right-65,749,10,'GuideB',colors.white)
         c.setStrokeColor(rule);c.line(44,731,right,731)
         self.text(tag.upper(),44,706,9,'GuideB',rust)
         self.text(title,44,669,title_size,'GuideB')
@@ -88,9 +88,9 @@ class Guide:
 
 
 g=Guide(args.output)
-g.start('Return to your sound','Morphagene extended firmware / mg204+c2','Return to 1:1, prepared control presets and the extended mg204 features. Independent customization built on Briskcat’s Morphagene mods.')
+g.start('Return to your sound','Morphagene extended firmware / mg204+c3','Return to 1:1, prepared control presets and the extended mg204 features. Independent customization built on Briskcat’s Morphagene mods.')
 g.section('One build, selectable features')
-g.body('The <b>mg204+c2</b> build adds optional SHIFT return to exact forward +1x, +1x at noon, and presets for every dialable control. All recalls are optional. Start with the defaults, then enable what you need. <b>mlop 0</b> keeps the original Morph gaps; <b>mlop 1</b> enables seamless looping at minimum Morph. No separate firmware is needed.')
+g.body('This build keeps your chosen Varispeed layout when you mount the card. It includes the optional SHIFT return to exact forward +1x, +1x at noon and control presets introduced in mg204+c2. <b>mlop 0</b> keeps the original Morph gaps; <b>mlop 1</b> enables seamless looping at minimum Morph. No separate firmware is needed.')
 g.rows([('Return to 1:1 / 3','A half-second SHIFT hold/release resets to original forward playback speed, with soft pickup. Separately place +1x at calibrated noon with an easy-to-find notch.'),('Pitch and timing / 4','Expanded +/-4x or forward 8x Varispeed, quantization, independent density and Morph Loop.'),('Sound and motion / 5','Tape/TLA feedback, SRR, warble, jitter and Turing patterns.'),('Live settings / 6','Matching-card settings reload keeps the live reel and card mounted. Included presets apply; omitted values stay live.'),('Presets / 7-8','All dialable values can be included in prepared options. Understand percentages, pickup, splice selection and saving.'),('Reference / 9-11','Options tables, testing, credits and release history. First installation and recovery are on page 2.')],left=130,pad=5)
 
 g.note('<b>Defaults:</b> extended range, independent density, normal quantization, Turing mode and Morph Loop are all off. Unity options and all twelve new preset keys are also off unless enabled. Tape mode and SRR are selected; gestures or explicit presets activate their amounts.')
@@ -98,7 +98,7 @@ g.finish()
 
 g.start('Install and recover','Audio first / SD thereafter','Back up the entire SD card before installing. Keep your original Make Noise update WAV for recovery.')
 g.section('Build from official mg204.wav')
-g.body('On '+link('https://vwal.github.io/morphagene-patcher/','the mg204+c2 patcher')+', choose the original <b>mg204.wav</b> downloaded from Make Noise. The builder verifies its contents, applies the extended patch and verifies the result. Download <b>mg204+c2.wav</b> for a first install, or <b>mgmod.bin</b> for later SD updates. Processing stays in your browser.')
+g.body('On '+link('https://vwal.github.io/morphagene-patcher/','the mg204+c3 patcher')+', choose the original <b>mg204.wav</b> downloaded from Make Noise. The builder verifies its contents, applies the extended patch and verifies the result. Download <b>mg204+c3.wav</b> for a first install, or <b>mgmod.bin</b> for later SD updates. Processing stays in your browser.')
 g.section('First installation by audio')
 g.rows([('1 / Prepare','Remove the SD card. Connect the player to <b>Left Signal IN</b>, starting at about 80% volume. Disable effects, EQ, sound enhancements and notifications.'),('2 / Bootloader','Power on holding <b>REC</b>. Only the SPLICE window lights green. Release REC.'),('3 / Play the WAV','Play the generated update WAV without interruption. Windows flash during loading; all lights flash on completion. Keep power stable.'),('4 / Calibrate','Follow Make Noise’s update instructions: power on holding <b>SPLICE</b>, turn Varispeed fully both ways, press SPLICE, then power-cycle.')],left=100,pad=5)
 g.section('Later SD updates and stock recovery')
@@ -107,7 +107,7 @@ g.body('If audio loading fails, adjust player level and retry with an unprocesse
 g.note('Installation procedure follows '+link(SITE,'Briskcat’s upstream guide')+' and '+link(MANUAL,'Make Noise’s official instructions')+'. Generated firmware contains Make Noise code; keep it for personal use.')
 g.finish()
 
-g.start('Return to 1:1','New in mg204+c2 / two optional controls','Exact forward +1x means playback at the original recorded speed. Both options are disabled by default and can be enabled independently.')
+g.start('Return to 1:1','Introduced in mg204+c2 / two optional controls','Exact forward +1x means playback at the original recorded speed. Both options are disabled by default and can be enabled independently.')
 g.section('SHIFT hold and release: vuni 1')
 g.rows([('1 / Hold','Hold SHIFT alone for at least <b>0.5 seconds</b>. Keep knobs still and do not press another button.'),('2 / Release','Release SHIFT to return immediately to exact forward <b>+1x</b>, regardless of the parked Varispeed knob position, layout, range or scale.'),('3 / Pick up','Speed holds at +1x until the combined Varispeed knob/CV input reaches or crosses its pickup position. Then normal control resumes.')],left=100,pad=6)
 g.body('Short SHIFT taps retain ordinary splice navigation, with no added delay. Knob movement, another button, a changed card state or settings-reload activity cancels the reset. Existing SHIFT + knob gestures remain available. Keep the SHIFT input unpatched: the button and jack share a firmware signal.')
@@ -137,24 +137,24 @@ g.body('Missing or differently sized current-reel files, invalid recognized sett
 g.body('No full-reel hash or background scan runs. Mounting, reading options and reopening/seeking the reel still require SD access. Hardware testing confirmed changed options applying without an audible playback interruption. Exact latency and all performance combinations remain unmeasured.')
 g.finish()
 
-g.start('Presets: main controls','New in mg204+c2 / all recalls optional','Check only the values you want in the browser editor. Explicit keys apply after startup/reel load and on settings-only reload; omitted keys keep their live values during reload.')
+g.start('Presets: main controls','Introduced in mg204+c2 / all recalls optional','Check only the values you want in the browser editor. Explicit keys apply after startup/reel load and on settings-only reload; omitted keys keep their live values during reload.')
 g.section('Percentages are virtual knob positions')
 g.body('<b>0% is fully counterclockwise, 50% is noon, 100% is fully clockwise.</b> Whole percentages follow the existing control curves. They are not percentages of duration, speed or effect strength. Varispeed uses its calibrated range; physical pointer alignment may vary slightly.')
 g.rows([('mpos / Morph','<b>0-100.</b> With Morph Loop off, <b>10%</b> selects the stock seamless-loop setting (9-11%); <b>0%</b> leaves a scheduling gap. Higher values add overlap and eventually pitch/pan variation. Clock and independent density can change spacing.'),('gpos / Gene Size','<b>0-100.</b> <b>0% and 1%</b> play the full splice, the longest Genes. Turning up shortens Genes; <b>100%</b> gives the shortest. This is nonlinear, not a percentage of splice length.'),('spos / Slide','<b>0-100.</b> Positions the Gene window from the beginning toward the end of the splice. Gene Size affects which portion is heard; this is not an absolute timestamp.'),('vpos / Varispeed','<b>0-100.</b> Position before vsop/vrng/vctr mapping. <b>50%</b> gives forward +1x with <b>vctr 1</b>; otherwise it depends on layout and quantization. Explicit vpos replaces an active unity hold; a later vuni gesture replaces the preset hold.'),('sosp / S.O.S.','<b>0-100.</b> 0% is incoming audio, 100% is Gene playback; intermediate positions blend them. Separate from feedback. Stock inop still determines the recorded signal.'),('splc / Splice','<b>1-300.</b> Counts from 1. Above the reel count selects the last splice while retaining the configured number: splc 300 is a useful last-splice preset. omod 0 switches at a normal boundary; omod 1 switches immediately.')],left=112,size=10.3,leading=14.2,pad=5)
 g.note('Preset values are applied only when explicitly present. Missing or invalid optional keys are unchecked by the editor. On dedicated live reload, an invalid or duplicated recognized key rejects the whole transaction. Selecting a splice intentionally changes playback location; it does not load another reel.')
 g.finish()
 
-g.start('Presets: effects and pickup','New in mg204+c2 / continue from the recalled value','Each key below is optional. Amounts use the existing SHIFT control curves, and the corresponding mode switch still determines which feature is active.')
+g.start('Presets: effects and pickup','Introduced in mg204+c2 / continue from the recalled value','Each key below is optional. Amounts use the existing SHIFT control curves, and the corresponding mode switch still determines which feature is active.')
 g.rows([('srrp / SRR','<b>0-100.</b> 0% bypasses; increasing strengthens sample-rate reduction. Active with fxsl 1. Not a bit-depth or sample-rate percentage.'),('wrbp / Warble','<b>0-100.</b> 0% is no warble; higher values add wow/flutter. Active with fxsl 2. Separate amount from SRR; only the selected effect runs, and fxsl 0 bypasses both.'),('jitp / Jitter','<b>0-100.</b> 0% is no jitter; higher values widen start scatter. With sldm 1 this is repeating Turing spread.'),('fbkp / Feedback','<b>0-100.</b> 0% gives no retained feedback; 100% gives maximum retention. The nonlinear knob curve applies. tape selects tape overdub or classic TLA; separate from sosp.'),('evop / Evolution','<b>0-100.</b> 0% locks the Turing pattern; 100% gives fresh randomness. Intermediate values follow the nonlinear knob curve. Requires sldm 1.'),('trst / Genes per step','<b>1, 2, 3, 4, 6, 8, 12, 16.</b> Actual Turing rate, not a percentage. dens 1 retains priority over the SHIFT + Gene Size gesture.')],left=118,size=10.3,leading=14,pad=4)
 g.section('Soft pickup, reload and saving')
 g.body('A recalled main control holds until its combined knob/CV input comes near or crosses the preset position. Secondary effects use the same pickup idea during their matching <b>SHIFT + knob</b> gesture. The primary control stays at its effective value during that gesture. Organize picks up at the selected splice, and ordinary SHIFT navigation remains available.')
 g.body('An explicit value recalls again even when identical to the previous file. Omitted keys preserve live values and pickup. Saves retain the <b>configured numbers, not later knob movements</b>; omitted preset keys remain omitted. No gesture captures the live knobs into options.txt.')
-g.note('Density and input gain were already configurable with <b>dstr</b> and <b>ingn</b>. Density is the exception to omission persistence: the module adds dstr back on a normal options rewrite. Both editor and module now identify <b>firmware version 204+c2</b> in a comment; keep the first numeric state line unchanged.')
+g.note('Density and input gain were already configurable with <b>dstr</b> and <b>ingn</b>. Density is the exception to omission persistence: the module adds dstr back on a normal options rewrite. Both editor and module identify <b>firmware version 204+c3</b> in a comment; keep the first numeric state line unchanged.')
 g.finish()
 
 g.start('Options: pitch and timing','Reference / file format','Use the browser editor to load the module’s options.txt, choose values and save it back to the card root. Keep the first line unchanged; it stores the module’s own state.')
 g.body('Boot parsing retains defaults for invalid mod values. Dedicated live reload rejects the whole transaction for an invalid or duplicated recognized key. Missing keys during reload keep their live values. The editor normalizes editable duplicates and replaces invalid editable values with defaults; review its generated preview.')
-g.rows([('vrng / 0','0 stock; 1 extended +/-4x in vsop 0/1, or forward stop-to-8x in vsop 2.'),('vqnt / 0','0 SHIFT-to-lock; 1 normally quantized with SHIFT + Varispeed temporarily continuous.'),('vuni / 0','1 enables SHIFT alone for at least 0.5 seconds, then release for exact forward +1x with pickup; see page 3.'),('vctr / 0','1 puts +1x at calibrated noon with a 48-52% notch, across layouts, ranges and scales; see page 3.'),('octl / 1','0 off; 1 octaves; 2 octaves + fifths; 3 semitones; 4 custom.'),('scal / 0','Custom semitones 1-11, separated by commas or spaces. 0 means no added intervals. Root and octaves remain.'),('dens / 0','0 off; 1 on. SHIFT + turning Gene Size adjusts 0.1-128 Genes/sec. Knob changes are <b>not saved across power cycles</b>; startup uses dstr.'),('dstr / 8','Startup/reload density: <b>0.1-128 Genes/sec</b>, in 0.1 steps. Explicit dstr recalls on settings-only reload, even if unchanged; omit to keep the live rate. Existing Genes finish; the next unclocked Gene waits one new interval. Stored in options.txt.'),('mlop / 0','0 original Morph gaps; 1 seamless loop at minimum Morph. Included in mg204+c2.'),('vsop / stock','0 classic bidirectional; 1 alternate bidirectional V/oct; 2 forward-only. See page 3 for tracking and modified-map limits.'),('gnsm / stock','Stock envelope: 0 original, 1 smooth. Preserve your existing preference.')],left=100,size=10.3,leading=14,pad=4)
+g.rows([('vrng / 0','0 stock; 1 extended +/-4x in vsop 0/1, or forward stop-to-8x in vsop 2.'),('vqnt / 0','0 SHIFT-to-lock; 1 normally quantized with SHIFT + Varispeed temporarily continuous.'),('vuni / 0','1 enables SHIFT alone for at least 0.5 seconds, then release for exact forward +1x with pickup; see page 3.'),('vctr / 0','1 puts +1x at calibrated noon with a 48-52% notch, across layouts, ranges and scales; see page 3.'),('octl / 1','0 off; 1 octaves; 2 octaves + fifths; 3 semitones; 4 custom.'),('scal / 0','Custom semitones 1-11, separated by commas or spaces. 0 means no added intervals. Root and octaves remain.'),('dens / 0','0 off; 1 on. SHIFT + turning Gene Size adjusts 0.1-128 Genes/sec. Knob changes are <b>not saved across power cycles</b>; startup uses dstr.'),('dstr / 8','Startup/reload density: <b>0.1-128 Genes/sec</b>, in 0.1 steps. Explicit dstr recalls on settings-only reload, even if unchanged; omit to keep the live rate. Existing Genes finish; the next unclocked Gene waits one new interval. Stored in options.txt.'),('mlop / 0','0 original Morph gaps; 1 seamless loop at minimum Morph. Included since the original mg204+c.'),('vsop / stock','0 classic bidirectional; 1 alternate bidirectional V/oct; 2 forward-only. See page 3 for tracking and modified-map limits.'),('gnsm / stock','Stock envelope: 0 original, 1 smooth. Preserve your existing preference.')],left=100,size=10.3,leading=14,pad=4)
 g.note('Example: <b>vsop 2</b>, <b>vrng 1</b>, <b>vqnt 1</b>, <b>octl 3</b> gives forward 8x with normal semitone quantization. Add <b>mlop 1</b> if you also want the bottom of Morph to loop seamlessly.')
 g.finish()
 
@@ -165,12 +165,13 @@ g.body('The editor preserves other stock lines, including <b>pmod, omod, cvop, c
 g.note('When no options file is loaded, the editor produces a <b>snippet</b>, not a complete card file. Add mod lines to the existing file and replace existing vsop/gnsm lines. Do not duplicate keys or remove the first state line.')
 g.finish()
 
-g.start('Testing, limits and credits','Read before performance use','Owner hardware testing confirmed the unity and preset controls, plus armed settings reload without an audible playback interruption. All 201 automated firmware tests passed, including combined playback and recording comparisons. Exact latency and every patch combination remain unmeasured.')
+g.start('Testing, limits and credits','Read before performance use','Hardware tests covered unity, presets and uninterrupted armed reload. Automated tests cover card mounts, playback and recording. Exact latency depends on the card and patch.')
 g.section('Version by version')
-g.body('<b>mg204+c2:</b> optional SHIFT return to +1x and +1x at noon, all dialable-control presets with pickup, splice recall/last-splice fallback, separate SRR/warble levels, reliable effect bypass, and updated editor/guides.')
-g.body('<b>mg204+c:</b> initial release with extended range, normal/SHIFT quantization, independent 0.1-128 Genes/sec density and dstr recall, switchable Morph Loop, trusted-card reload, and Briskcat’s upstream features.')
+g.rows([('mg204+c3','Fixes a wrapped options.txt comment switching Varispeed to forward only on startup or card mount. If this happened, restore <b>vsop 0</b> or <b>vsop 1</b> once in the file.'),
+        ('mg204+c2','Optional SHIFT return to +1x and +1x at noon, all dialable-control presets with pickup, splice recall/last-splice fallback, separate SRR/warble levels, reliable effect bypass, and updated editor/guides.'),
+        ('mg204+c','Initial release with extended range, normal/SHIFT quantization, independent 0.1-128 Genes/sec density and dstr recall, switchable Morph Loop, trusted-card reload, and Briskcat’s upstream features.')],left=74,size=10.2,leading=13,pad=2)
 g.section('Performance and card matching')
-g.body('Audition your own clock, CV, recording and dense patches. High Morph, short Genes, overdubbing and SRR can exhaust CPU headroom; reduce density/overlap or retain the tape Morph cap. Trusted-card reload does <b>not</b> compare audio, splice metadata or reel inventory. Re-copy changed reels/sidecars after recording or edits, and keep a separate backup. Use at your own risk.')
+g.body('Audition dense patches before performing. Short Genes, high Morph, overdubbing and SRR can exhaust CPU headroom. Reduce density or overlap, or use the tape Morph cap. Trusted-card reload assumes identical reels and splice data. Synchronize copies after edits and keep a backup. Use at your own risk.')
 g.body('This project contains carefully tested AI-generated code. Independent customization. Not an official Make Noise release.')
 g.section('Credits and license')
 g.body('<b>Copyright (c) 2026 vwal</b> for our original additions. Upstream: <b>Copyright (c) 2026 the morphagene-mods contributors</b>, under MIT. Briskcat created the upstream mods, patcher and fixed Morph Loop edits. Audio encoding follows Emilie Gillet’s '+link('https://github.com/pichenettes/stm-audio-bootloader','stm-audio-bootloader')+'.')
@@ -180,7 +181,7 @@ g.note('Full terms and upstream MIT notice are embedded as <b>LICENSE.txt</b>. R
 g.finish();g.c.save()
 
 g=Guide(args.card,card=True)
-g.start('Quick reference','Morphagene extended / mg204+c2','Return to 1:1, recall only what you choose, then continue with soft pickup. Manual page numbers below.')
+g.start('Quick reference','Morphagene extended / mg204+c3','If an older build changed your Varispeed layout to forward only, restore vsop 0 or 1 in options.txt once after upgrading. Manual page numbers below.')
 g.rows([
 ('Return to 1:1 / 3','<b>vuni 1:</b> hold SHIFT alone at least <b>0.5 s</b>, release for exact forward <b>+1x</b>. Short taps still navigate. Knobs/buttons/card activity cancel. Keep SHIFT input unpatched. Knob/CV picks up from unity.'),
 ('1:1 at noon / 3','<b>vctr 1:</b> +1x at calibrated noon in every layout/range/scale, with a <b>48-52% notch</b>. Bidirectional stop/reverse fit left of noon. Both unity options default off; vctr 0 adds no flat zone.'),
@@ -191,7 +192,7 @@ g.rows([
 ('Pickup / saving / 8','All new recalls are optional. Explicit values reapply at startup/reload; omitted values stay live on reload. Reach/cross the preset with its knob (or matching SHIFT gesture) to take over; CV can trigger pickup. Saves keep configured numbers, not knob edits; omitted preset keys stay omitted.'),
 ('Density / loop / 4','<b>dens 1:</b> SHIFT + Gene Size adjusts <b>0.1-128 Genes/sec</b>. Startup uses <b>dstr</b>, default 8/sec; live knob edits are not saved. Reload explicit dstr to recall; omit to preserve (module rewrites add it back). Clock has priority. <b>mlop 1</b> loops at minimum Morph; 0 retains gaps.'),
 ('Live cards / 6','Finish writes; remove idle card; wait for SHIFT light out. Hold SHIFT alone <b>1 s</b> until steady; insert matching card while held. <b>2 flashes</b> success/mounted; <b>3</b> failure/unmounted. Release. No mounted-card arming. Identical WAVs/splices/reel names are your responsibility; no verification. Synchronize copies after edits.'),
-('Install / input / 2,10','First install/recovery: WAV into Left IN, power on holding REC; follow calibration instructions. Later: <b>mgmod.bin</b> on SD, reboot; success becomes mgmod.ok. <b>ingn 0-3:</b> gain; <b>mono 0/1/2:</b> stereo / L copy / auto. Header: firmware version <b>204+c2</b>; retain first numeric line.')
+('Install / input / 2,10','First install/recovery: WAV into Left IN, power on holding REC; follow calibration instructions. Later: <b>mgmod.bin</b> on SD, reboot; success becomes mgmod.ok. <b>ingn 0-3:</b> gain; <b>mono 0/1/2:</b> stereo / L copy / auto. Header: firmware version <b>204+c3</b>; retain first numeric line.')
 ],left=102,size=9.3,leading=12.1,pad=3)
 g.note('<b>(c) 2026 vwal</b>; upstream <b>(c) 2026 morphagene-mods contributors</b> / Briskcat (MIT). Free use/share with notices; no sales, paid bundles/products/services, except Make Noise official integration. Full terms: embedded LICENSE.txt. Carefully tested AI-generated code. Independent customization; not an official Make Noise release. <b>vwal.github.io/morphagene-patcher/</b>')
 g.finish();g.c.save()

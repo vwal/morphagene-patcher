@@ -173,7 +173,7 @@ function updateWav(image) {
 }
 
 // ---------- options.txt ----------
-const VERSION_HEADER = '// firmware version 204+c2';
+const VERSION_HEADER = '// firmware version 204+c3';
 const MOD_HEADER = '//Morphagene extended mods';
 // In older builds this comment put "vsop 2" at the start of a 63-byte read.
 const LEGACY_RANGE_COMMENT = '//Varispeed range: 0 stock, 1 extended: vsop 0/1 +/-4x; vsop 2 forward stop to 8x with scale lock';
@@ -359,8 +359,8 @@ function init() {
       } else {
         status('build-status', 'Encoding the audio update…');
         await new Promise((res) => setTimeout(res, 20));
-        download('mg204+c2.wav', updateWav(image), 'audio/wav');
-        status('build-status', 'mg204+c2.wav saved. Follow the first-time audio installation steps above.', 'ok');
+        download('mg204+c3.wav', updateWav(image), 'audio/wav');
+        status('build-status', 'mg204+c3.wav saved. Follow the first-time audio installation steps above.', 'ok');
       }
     } catch (err) {
       status('build-status', err.message, 'error');

@@ -1,6 +1,6 @@
 # Settings (`options.txt`)
 
-**mg204+c2:** return to 1:1, all-control preset recall and trusted-card settings reload. See [the current release guide](RELEASE_MG204_C2.md). Card contents are not verified.
+**mg204+c3** fixes a settings-file read error that could change the Varispeed layout on a normal mount or at startup. See [the c3 release guide](RELEASE_MG204_C3.md).
 
 The Morphagene keeps its settings in `options.txt` at the root of the SD card.
 Normal mounting reads the file and then writes it back, including at power-up.
@@ -25,7 +25,7 @@ check it again. Normal mounting and firmware options saves add `dstr` back;
 review the file again before using it as a preserve-density card.
 
 Leave the file's **first line** as it is; the Morphagene keeps its own state
-there. Both editor and module rewrites add `// firmware version 204+c2` as a
+there. Both editor and module rewrites add `// firmware version 204+c3` as a
 comment after it. This identifies extended firmware, not stock mg204.
 
 ## The settings
@@ -111,6 +111,9 @@ On those releases, edit the existing `vsop` line to `vsop 1` for bidirectional
 keep `vrng 0` or `vrng 1` and delete the trailing comment. Save the file and
 mount the card. The workaround applies to that read. Those releases write the
 old comment back, so remove it again before another normal mount or power-up.
+
+With c3, set the desired layout once if the file already says `vsop 2`. The
+module accepts the existing comment and replaces it on its next rewrite.
 
 ## Troubleshooting: the CPU log (`cpul`)
 

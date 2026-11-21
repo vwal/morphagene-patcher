@@ -10,6 +10,7 @@ MODULE = Module(
         (0x080243bc, '84490df27450', 'opt_version'),
         (0x08024568, '39490df27450', 'opt_version'),
         (0x080232f4, '7d4e7e4d', 'opt_preset_begin'),
+        (0x08023300, '40215846', 'opt_prepare_read'),
         (0x08023308, '09f10109', 'opt_preset_chunk'),
         (0x080236c8, '81460df27450', 'opt_preset_end'),
         (0x08023326, '9bf801c0', 'opt_parse'),                 # parser: our keys first

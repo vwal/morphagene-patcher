@@ -11,6 +11,7 @@ BUFFER = 0x20028000
 NEXT = 0x080232FC
 STOCK = 0x0802332A
 AFTER_GETS = 0x0802330C
+GETS_CALL = 0x08023304
 VSOP = 0x200012A8
 VRNG = 0x2002A606
 # Emitted by both the module and options editor in mg204+c/c2.
@@ -41,9 +42,9 @@ def chunks(text):
 def feed(a, text, run_stock=False):
     forwarded = []
     for chunk in chunks(text):
-        a.uc.mem_write(BUFFER, chunk.encode() + b'\0')
         a.uc.reg_write(UC_ARM_REG_R11, BUFFER)
-        a.uc.reg_write(UC_ARM_REG_R0, BUFFER)
+        a.run('opt_prepare_read', [GETS_CALL])
+        a.uc.mem_write(BUFFER, chunk.encode() + b'\0')
         a.run('opt_preset_chunk', [AFTER_GETS])
         # Stock routes only its first fgets chunk to the state-line parser.
         if a.uc.reg_read(UC_ARM_REG_R9) != 1:
@@ -106,6 +107,37 @@ class NormalPresetChunks(unittest.TestCase):
                 begin(self.a)
                 feed(self.a, 'header\n' + comment + 'spos 27\n')
                 self.assertEqual(self.a.get(NORMAL), 4)
+
+    def test_prepare_read_sets_only_stock_buffer_and_preserves_file_pointer(self):
+        a = self.a
+        a.uc.mem_write(BUFFER-4, b'A'*72)
+        a.uc.reg_write(UC_ARM_REG_R11, BUFFER)
+        a.uc.reg_write(UC_ARM_REG_R2, 0x20024000)
+        a.run('opt_prepare_read', [GETS_CALL])
+        self.assertEqual(bytes(a.uc.mem_read(BUFFER-4,72)), b'AAAA' + b'\xff'*64 + b'AAAA')
+        self.assertEqual(a.uc.reg_read(UC_ARM_REG_R0), BUFFER)
+        self.assertEqual(a.uc.reg_read(UC_ARM_REG_R1), 64)
+        self.assertEqual(a.uc.reg_read(UC_ARM_REG_R2), 0x20024000)
+
+    def test_embedded_nul_preserves_next_real_option(self):
+        for length in (11, 62, 63, 64, 125, 126, 127):
+            with self.subTest(length=length):
+                begin(self.a)
+                malformed = ('spos 99\0' + 'x'*length)[:length]
+                feed(self.a, 'header\nspos 17\n' + malformed + '\r\ngpos 42')
+                self.assertEqual(self.a.get(NORMAL), 6)
+                self.assertEqual(self.a.get(NORMAL+12), 17)
+                self.assertEqual(self.a.get(NORMAL+8), 42)
+
+    def test_embedded_nul_in_wrapped_header_and_comments_keeps_continuations_hidden(self):
+        for prefix in ('header\0', '//\0', '//' + 'x'*61 + 'note\0'):
+            with self.subTest(prefix=prefix):
+                begin(self.a)
+                wrapped = prefix.ljust(63 if len(prefix) < 63 else 126, 'x')
+                following = feed(self.a, ('header\n' if prefix.startswith('/') else '') +
+                                 wrapped + 'vsop 2\nspos 31\nvsop 1')
+                self.assertEqual([chunk for chunk in following if chunk.startswith('vsop')], ['vsop 1'])
+                self.assertEqual(self.a.get(NORMAL+12), 31)
 
     def test_legacy_range_comment_does_not_override_real_options(self):
         for mode in (0, 1, 2):

@@ -14,25 +14,31 @@ void presets_normal_begin(void) {
 
 /* Stock fgets reads at most 63 characters, so one logical line can occupy
  * several parser iterations. Observe every read, including the header and
- * EOF, without changing the stock parser's chunk counter or buffer. Only the
+ * EOF, without changing the stock parser's chunk counter. Only the
  * first chunk of an option line can dispatch keys. Presets additionally need
  * a complete significant value. Bit 0 identifies the header, bit 1 a
  * continuation of the previous chunk. */
 void presets_normal_chunk(const char *line, unsigned present) {
     PRESET_NORMAL->parse_mode = ORDINARY_KEYS;
     if (!present) return;
-    unsigned length = 0, comment = 0;
-    while (length < 63 && line[length] && line[length] != '\n') {
-        if (line[length] == '/' && length && line[length-1] == '/')
-            comment = 1;
-        ++length;
-    }
+    /* opt_prepare_read fills all 64 bytes with 0xff. FatFs appends a NUL
+     * after the bytes it read, even when some of those bytes are NUL too. */
+    unsigned length = 63;
+    while (length && line[length]) --length;
     unsigned state = PRESET_NORMAL->scan_state;
-    unsigned complete = length < 63;
+    unsigned complete = length < 63 || line[62] == '\n';
     PRESET_NORMAL->scan_state = complete ? 0 : state | 2u;
     if (state) {
         PRESET_NORMAL->parse_mode = SKIP_CHUNK;
         return;
+    }
+    unsigned comment = 0;
+    for (unsigned i=0; i<length; ++i) {
+        if (!line[i]) {
+            PRESET_NORMAL->parse_mode = SKIP_CHUNK;
+            return;
+        }
+        if (i && line[i] == '/' && line[i-1] == '/') comment = 1;
     }
     if (complete || comment) {
         PRESET_NORMAL->parse_mode = INCLUDE_PRESETS;

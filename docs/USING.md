@@ -1,6 +1,6 @@
 # Using the mods
 
-See [the mg204+c2 guide](RELEASE_MG204_C2.md) for trusted-card reload and the switchable `mlop` option. Armed insertion and changed options were confirmed on hardware without an audible playback interruption.
+See the [c3 update guide](RELEASE_MG204_C3.md) for the Varispeed fix and [settings reference](OPTIONS.md) for trusted-card reload and the switchable `mlop` option. Armed insertion and changed options were confirmed on hardware without an audible playback interruption.
 
 Most performance gestures use **SHIFT**: hold SHIFT and turn a knob. When you
 let go of SHIFT after a turn, the module **doesn't** jump to the next splice,

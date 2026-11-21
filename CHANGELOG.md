@@ -1,12 +1,16 @@
 # Version history
 
-## Unreleased
+## mg204+c3 — Settings-file correction
 
 - Fixed normal card mounts and startup changing `vsop 0` or `vsop 1` to
   forward-only playback. The options reader now skips wrapped portions of a
   line, including the old `vrng` comment that contained `vsop 2`. The module
   and editor write a shorter comment, and the editor replaces the old generated
   comment when a card file is imported and saved.
+- The normal reader also keeps its place across wrapped comments containing a
+  stray NUL byte.
+- The module and editor identify rewritten files with `// firmware version 204+c3`.
+  If an older release already saved `vsop 2`, select the desired layout once.
 
 ## mg204+c2 — 2026-11-15
 
