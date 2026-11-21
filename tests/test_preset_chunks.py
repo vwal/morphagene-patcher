@@ -1,6 +1,8 @@
 """Execute the normal options hooks with stock's 63-character fgets chunks."""
+import os
 import unittest
 
+from mgmod import stock
 from tests.arm import *
 
 NORMAL = 0x2002AE10
@@ -9,6 +11,11 @@ BUFFER = 0x20028000
 NEXT = 0x080232FC
 STOCK = 0x0802332A
 AFTER_GETS = 0x0802330C
+VSOP = 0x200012A8
+VRNG = 0x2002A606
+# Emitted by both the module and options editor in mg204+c/c2.
+LEGACY_RANGE = ('vrng {} //Varispeed range: 0 stock, 1 extended: '
+                'vsop 0/1 +/-4x; vsop 2 forward stop to 8x with scale lock\n')
 
 
 def call(a, symbol, *args):
@@ -31,7 +38,8 @@ def chunks(text):
         yield pending
 
 
-def feed(a, text):
+def feed(a, text, run_stock=False):
+    forwarded = []
     for chunk in chunks(text):
         a.uc.mem_write(BUFFER, chunk.encode() + b'\0')
         a.uc.reg_write(UC_ARM_REG_R11, BUFFER)
@@ -39,9 +47,13 @@ def feed(a, text):
         a.run('opt_preset_chunk', [AFTER_GETS])
         # Stock routes only its first fgets chunk to the state-line parser.
         if a.uc.reg_read(UC_ARM_REG_R9) != 1:
-            a.run('opt_parse', [NEXT, STOCK])
+            a.uc.reg_write(UC_ARM_REG_R10, ord(chunk[0]))  # stock loads sl = fp[0]
+            a.run('opt_parse', [NEXT] if run_stock else [NEXT, STOCK])
+            if a.uc.reg_read(UC_ARM_REG_PC) == STOCK:
+                forwarded.append(chunk)
     a.uc.reg_write(UC_ARM_REG_R0, 0)
     a.run('opt_preset_chunk', [AFTER_GETS])
+    return forwarded
 
 
 def begin(a):
@@ -95,6 +107,45 @@ class NormalPresetChunks(unittest.TestCase):
                 feed(self.a, 'header\n' + comment + 'spos 27\n')
                 self.assertEqual(self.a.get(NORMAL), 4)
 
+    def test_legacy_range_comment_does_not_override_real_options(self):
+        for mode in (0, 1, 2):
+            for extended in (0, 1):
+                with self.subTest(mode=mode, extended=extended):
+                    begin(self.a)
+                    layout = f'vsop {mode}\n'
+                    legacy = LEGACY_RANGE.format(extended)
+                    self.assertTrue(legacy[63:].startswith('vsop 2'))
+                    # Also exercise an ordinary mod key in a header continuation
+                    # and in the third chunk of an unrelated comment.
+                    self.a.uc.mem_write(VRNG, bytes([1 - extended]))
+                    self.a.uc.mem_write(0x2002A0F4, b'\0')
+                    header = 'x'*63 + 'tape 1\n'
+                    comment = '//' + 'x'*124 + 'tape 1\n'
+                    forwarded = feed(self.a, header + layout + legacy + comment + 'omod 0\n')
+                    self.assertEqual([line for line in forwarded if not line.startswith('//')],
+                                     [layout, 'omod 0\n'])
+                    self.assertEqual(self.a.uc.mem_read(VRNG, 1), bytes([extended]))
+                    self.assertEqual(self.a.uc.mem_read(0x2002A0F4, 1), b'\0')
+
+    @unittest.skipUnless(os.environ.get('MGMOD_FIRMWARE'), 'set MGMOD_FIRMWARE to run stock option dispatch')
+    def test_stock_dispatch_reads_selected_layout_from_legacy_files(self):
+        a = self.a
+        a.uc.mem_write(0x08020000, stock.load(os.environ['MGMOD_FIRMWARE']))
+        # Three fixed key constants kept in registers by stock's normal read loop.
+        for reg, key in ((UC_ARM_REG_R4, b'vsop'), (UC_ARM_REG_R5, b'step'),
+                         (UC_ARM_REG_R6, b'rmod')):
+            a.uc.reg_write(reg, int.from_bytes(key, 'big'))
+        for mode in (0, 1, 2):
+            for extended in (0, 1):
+                with self.subTest(mode=mode, extended=extended):
+                    begin(a)
+                    a.put(VSOP, 99)
+                    a.uc.mem_write(VRNG, bytes([1 - extended]))
+                    feed(a, f'6 46345 0\nvsop {mode}\n' + LEGACY_RANGE.format(extended),
+                         run_stock=True)
+                    self.assertEqual(a.get(VSOP), mode)
+                    self.assertEqual(a.uc.mem_read(VRNG, 1), bytes([extended]))
+
     def test_valid_prefix_and_long_comment_is_kept_once(self):
         feed(self.a, 'header\nmpos 44 //'+' '*52+'mpos 99\n' +
              'gpos 55 //'+ 'x'*180+'\nsplc 300 //'+ 'z'*250+'\nspos 12\n')
@@ -131,7 +182,7 @@ class NormalPresetChunks(unittest.TestCase):
         call(self.a, 'presets_normal_parse', BUFFER)
         self.assertEqual(self.a.get(NORMAL), 1)
         self.assertEqual(self.a.get(NORMAL+4), 83)
-        # The new permission gate governs presets only, not older mod options.
+        # An ordinary first chunk may reach older mod keys without preset parsing.
         self.a.put(NORMAL+60, 0)
         self.a.uc.mem_write(BUFFER, b'tape 0\0')
         self.a.uc.mem_write(0x2002A0F4, b'\1')

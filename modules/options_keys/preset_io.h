@@ -8,7 +8,7 @@
 #include "../preset_recall/preset.h"
 typedef struct {
     uint32_t mask, values[PRESET_COUNT], ready;
-    uint32_t scan_state, parse_allowed; /* normal fgets logical-line tracking */
+    uint32_t scan_state, parse_mode; /* normal fgets logical-line tracking */
 } PresetStage;
 _Static_assert(sizeof(PresetStage) == 64, "preset stage allocation");
 #define PRESET_NORMAL ((volatile PresetStage *)0x2002ae10)

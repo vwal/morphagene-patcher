@@ -175,6 +175,8 @@ function updateWav(image) {
 // ---------- options.txt ----------
 const VERSION_HEADER = '// firmware version 204+c2';
 const MOD_HEADER = '//Morphagene extended mods';
+// In older builds this comment put "vsop 2" at the start of a 63-byte read.
+const LEGACY_RANGE_COMMENT = '//Varispeed range: 0 stock, 1 extended: vsop 0/1 +/-4x; vsop 2 forward stop to 8x with scale lock';
 // Extended option keys and explanatory comments for generated files.
 const KEYS = {
   mpos: '//Morph virtual knob preset: 0-100 percent. 10 selects the stock seamless loop (unclocked/dens 0); 0 gaps with mlop 0. Omit to use the panel at startup and preserve the live position on settings-only reload.',
@@ -194,7 +196,7 @@ const KEYS = {
   mlop: '//Morph Loop: 0 stock gaps (default), 1 seamless loop at minimum Morph',
   dstr: '//Startup/reload Gene density: 0.1-128 Genes/sec, at most one decimal, default 8. Explicit dstr recalls on settings-only reload; omit to preserve live rate. Knob changes are temporary.',
   dens: '//Independent Gene density: 0 off, 1 on: startup rate from dstr (default 8 Genes/sec); hold SHIFT and turn Gene Size for 0.1-128 Genes/sec; knob rate remains until adjusted again, recalled by dstr reload or powered off, not saved across power cycles; overrides Turing rate; external clock takes priority',
-  vrng: '//Varispeed range: 0 stock, 1 extended: vsop 0/1 +/-4x; vsop 2 forward stop to 8x with scale lock',
+  vrng: '//0 stock, 1 +/-4x bidirectional or 0-8x forward',
   vqnt: '//Varispeed quantization: 0 SHIFT+Varispeed locks, 1 quantized normally and SHIFT+Varispeed temporarily free; release snaps back; scale from octl/scal',
   tape: '//SHIFT+S.O.S.: 0 classic TLA feedback (input + feedback x Gene playback), 1 tape mode (Varispeed tape head in the Slide/Gene Size window)',
   octl: '//Varispeed scale: 0 off, 1 octaves, 2 octaves + fifths, 3 semitones, 4 custom scale (scal); vqnt selects gesture behavior',
@@ -278,7 +280,9 @@ function renderOptions() {
       if (i>0 && m && FIELDS.includes(m.key)) {
         if (!(m.key in values) || seen.has(m.key)) return [];
         seen.add(m.key);
-        return [m.key+' '+values[m.key]+m.comment];
+        const comment = m.key === 'vrng' && m.comment.trim() === LEGACY_RANGE_COMMENT
+          ? ' ' + KEYS.vrng : m.comment;
+        return [m.key+' '+values[m.key]+comment];
       }
       return [line];
     });

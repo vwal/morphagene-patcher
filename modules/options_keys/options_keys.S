@@ -90,8 +90,10 @@
 @ Live: fp = line buffer, r9 = line number, sl = fp[0]. Free: r0-r3, ip, lr.
     .thumb_func
 opt_parse:
-    ldr     r0, =0x2002AE4C             @ only a permitted logical preset line
+    ldr     r0, =0x2002AE4C             @ PRESET_NORMAL->parse_mode
     ldr     r0, [r0]
+    cmp     r0, #2                      @ SKIP_CHUNK: header or continuation
+    beq.w   PARSE_NEXT
     cbz     r0, opt_parse_ordinary
     push    {r4, lr}
     mov     r0, fp
@@ -663,7 +665,7 @@ fmt_ingn: .asciz "ingn %d //Input gain 0-3 (REC held + SHIFT taps); saved automa
     .align 2
 fmt_dens: .asciz "dens %d //Independent Gene density: 0 off, 1 SHIFT+Gene Size = 0.1-128 Genes/sec (takes priority over Turing rate); startup rate from dstr; bypassed with clock\n"
     .align 2
-fmt_vrng: .asciz "vrng %d //Varispeed range: 0 stock, 1 extended: vsop 0/1 +/-4x; vsop 2 forward stop to 8x with scale lock\n"
+fmt_vrng: .asciz "vrng %d //0 stock, 1 +/-4x bidirectional or 0-8x forward\n"
     .align 2
 fmt_vqnt: .asciz "vqnt %d //Varispeed quantization: 0 SHIFT+Varispeed locks, 1 quantized normally and SHIFT+Varispeed temporarily free; release snaps back; scale from octl/scal\n"
     .align 2

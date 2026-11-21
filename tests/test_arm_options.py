@@ -39,7 +39,12 @@ class OptionHooks(unittest.TestCase):
         for enabled in (0,1):
             a.uc.mem_write(0x2002A606,bytes([enabled]));a.uc.mem_write(0x2002A607,bytes([enabled]));a.uc.mem_write(0x2002A610,bytes([enabled]));a.uc.mem_write(0x2002A611,bytes([enabled]));calls.clear()
             a.run('opt_write',[0x08024566])
-            self.assertEqual([value for fmt,value in calls if fmt.startswith('vrng ')],[enabled])
+            range_lines = [fmt % value for fmt, value in calls if fmt.startswith('vrng ')]
+            self.assertEqual(len(range_lines), 1)
+            self.assertTrue(range_lines[0].startswith(f'vrng {enabled} //'))
+            self.assertTrue(range_lines[0].endswith('\n'))
+            # Cards rewritten by this firmware may also be read by an older version.
+            self.assertLessEqual(len(range_lines[0].encode('ascii')), 63)
             self.assertEqual([value for fmt,value in calls if fmt.startswith('dens ')],[enabled])
             self.assertEqual([value for fmt,value in calls if fmt.startswith('vqnt ')],[enabled])
             self.assertEqual([value for fmt,value in calls if fmt.startswith('mlop ')],[enabled])

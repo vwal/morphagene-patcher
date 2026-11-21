@@ -1,5 +1,13 @@
 # Version history
 
+## Unreleased
+
+- Fixed normal card mounts and startup changing `vsop 0` or `vsop 1` to
+  forward-only playback. The options reader now skips wrapped portions of a
+  line, including the old `vrng` comment that contained `vsop 2`. The module
+  and editor write a shorter comment, and the editor replaces the old generated
+  comment when a card file is imported and saved.
+
 ## mg204+c2 — 2026-11-15
 
 - Optional return to exact forward 1:1: hold SHIFT alone for at least half a

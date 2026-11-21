@@ -18,7 +18,7 @@
     },
     "CHANGELOG.md": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
-      "sha256": "899074395930302d585800403b41115beb3f0bb7bc5efc57991bfa12fedfe0be"
+      "sha256": "b21367d4f208497b11d2c45faf4a8bcdaf7d1c3fa99105469333b26987484d6d"
     },
     "LICENSE": {
       "provenance": "modified-from-upstream; MIT for original portions, no-sale-with-Make-Noise-exception for our additions",
@@ -86,7 +86,7 @@
     },
     "docs/OPTIONS.md": {
       "provenance": "modified-from-upstream; MIT for original portions, no-sale-with-Make-Noise-exception for our additions",
-      "sha256": "b206280e2bf89ff79be9150124be118a46b18e3961d13e1479b2e0bbba4b8a32"
+      "sha256": "adb43864498d21b7533987b4b0197e150cf91310192309032e4e6e242054a970"
     },
     "docs/RELEASE_MG204_C2.md": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
@@ -222,11 +222,11 @@
     },
     "modules/options_keys/options_keys.S": {
       "provenance": "modified-from-upstream; MIT for original portions, no-sale-with-Make-Noise-exception for our additions",
-      "sha256": "f595080877e969c6b1755e01dceaca9707e5689386549fe202ce268bffaa58db"
+      "sha256": "9021ba679cc0d2b0f5b80b4575e946e152ea24167baa05955f7848a5d9ba03f3"
     },
     "modules/options_keys/options_keys.c": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
-      "sha256": "89e2536095aec16d16aa0134bf267e9d9017fe77c981a40657e0590801a6ce12"
+      "sha256": "cdb17433ba571fb211cecd2d388f618b466b26ff0ce824d9b9a7b7c3f7781eb3"
     },
     "modules/options_keys/options_keys.targets.S": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
@@ -234,7 +234,7 @@
     },
     "modules/options_keys/preset_io.h": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
-      "sha256": "d1808412af9f434093b00ef09781789446cb58bec1fefe5e7fa9a0dbe1db4c00"
+      "sha256": "ef327ca139c11842b285b9ee956575e713381e85e3dc0bda2901415c2fd29e69"
     },
     "modules/preset_recall/effects.h": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
@@ -358,7 +358,7 @@
     },
     "remixes/full.py": {
       "provenance": "modified-from-upstream; MIT for original portions, no-sale-with-Make-Noise-exception for our additions",
-      "sha256": "a829ae5ce6910e9e98fbbd09b6ec6e120477c50607976fa13369c680ca2dbd92"
+      "sha256": "da429810028cc183473afa974bb9f981ed3c8756e70c662cd14a987896c7d2ac"
     },
     "remixes/full_morph_loop.py": {
       "provenance": "modified-from-upstream; MIT for original portions, no-sale-with-Make-Noise-exception for our additions",
@@ -386,7 +386,7 @@
     },
     "tests/test_arm_options.py": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
-      "sha256": "9ece75659ad56cc27818b7426d1d19daf51eaa6436a291d2ed23d4d026b905d9"
+      "sha256": "4c425e2b3e95992a1738114d8a76580351ef5dd32991b8d50f338e9287d6c3ac"
     },
     "tests/test_arm_range.py": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
@@ -418,7 +418,7 @@
     },
     "tests/test_preset_chunks.py": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
-      "sha256": "750634f2f060e5438efa5e051a80633fb1ce3a49a7f3be387e5eaba8e07f18d7"
+      "sha256": "fb2856c12d073e5ff1d19db950044db3eeea9332a0cc8abcb13f44a916921ec6"
     },
     "tests/test_preset_combined.py": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
@@ -478,7 +478,7 @@
     },
     "tests/test_web.mjs": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
-      "sha256": "dffb9768224aa1663ffc893e263a68b5406414123b01799f7f32b9106e325858"
+      "sha256": "69f51977b328d7b84b937089f84a600a8e4e527b58584bb479355ea85f23eefe"
     },
     "tests/test_web_firmware.mjs": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",
@@ -542,7 +542,7 @@
     },
     "web/app.js": {
       "provenance": "modified-from-upstream; MIT for original portions, no-sale-with-Make-Noise-exception for our additions",
-      "sha256": "6ab7eb82da326877a264e2460ba331be8bfcdf3518f12644700a902edd650b9d"
+      "sha256": "bfdb91863320ec1b2be1a32fd467843d07b603e4ecf8d4329b3ad929696acb0a"
     },
     "web/index.html": {
       "provenance": "modified-from-upstream; MIT for original portions, no-sale-with-Make-Noise-exception for our additions",
@@ -570,7 +570,7 @@
     },
     "web/remixes.js": {
       "provenance": "modified-from-upstream; MIT for original portions, no-sale-with-Make-Noise-exception for our additions",
-      "sha256": "cebc60364a7a2510c3cb25ed40f07aa9bcd9f7553a69437f9966b3a6b7ae9a82"
+      "sha256": "0098890a2f1fb7fdcf2ebc2bc1f5343a735d26e7b5d7debe8b6e5c1416333c6d"
     },
     "web/site-content.json": {
       "provenance": "added-or-generated; no-sale-with-Make-Noise-exception for our own portions, retained third-party rights for others",

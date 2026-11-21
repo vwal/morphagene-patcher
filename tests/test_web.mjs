@@ -296,6 +296,37 @@ for(const key of ['vuni','vctr']) {
   assert.deepEqual(activeKey(out,key),[`${key} 0`]);
 }
 
+// An older normal mount dispatches each 63-byte FatFs chunk independently.
+const legacyRangeComment = '//Varispeed range: 0 stock, 1 extended: vsop 0/1 +/-4x; vsop 2 forward stop to 8x with scale lock';
+const shortRangeComment = '//0 stock, 1 +/-4x bidirectional or 0-8x forward';
+const stockKeys = new Set('vsop pmod omod rmod cvop ckop rsop pmin inop gnsm mcr1 mcr2 mcr3 step'.split(' '));
+const editorKeys = new Set(vm.runInContext('FIELDS',context));
+for (const range of [0, 1]) {
+  const legacyLine = `vrng ${range} ${legacyRangeComment}`;
+  assert.ok(legacyLine.slice(63).startsWith('vsop 2'));
+  await load(`6 46345 0\r\nvsop 2\r\n${legacyLine}\r\n`);
+  for (const key of ['dstr', ...allPresetKeys]) elements['recall-'+key].checked = true;
+  elements['opt-vsop'].value = '1';
+  handlers['opt-vsop:change']();
+  handlers['options-save:click']();
+  const saved = new TextDecoder().decode(context.saved.at(-1).bytes);
+  assert.deepEqual(activeKey(saved,'vsop'), ['vsop 1']);
+  assert.deepEqual(activeKey(saved,'vrng'), [`vrng ${range} ${shortRangeComment}`]);
+  for (const line of saved.split('\n')) {
+    for (let i = 63; i < line.length; i += 63) {
+      const chunk = line.slice(i);
+      assert.ok(!stockKeys.has(chunk.slice(0,4)), line);
+      assert.ok(!(editorKeys.has(chunk.slice(0,4)) && /^....[ \t]\d/.test(chunk)), line);
+    }
+  }
+  assert.equal(await load(saved), saved);
+}
+out = await load('6 0 0\nvrng 1 // my performance note\n');
+assert.deepEqual(activeKey(out,'vrng'), ['vrng 1 // my performance note']);
+out = await load(null);
+assert.match(out, /^vrng 0 \/\/0 stock, 1 \+\/-4x bidirectional or 0-8x forward$/m);
+console.log('PASS older firmware compatibility: correct range comments on import, export and fresh snippets');
+
 // Generated markup exposes native, labelled controls with firmware bounds.
 const html=fs.readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
 const htmlIds=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);

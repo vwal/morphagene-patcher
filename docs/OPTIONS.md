@@ -83,7 +83,7 @@ off unless recalled with jitp or adjusted manually.
 ```
 //Morphagene extended mods
 mlop 0 //0 stock gaps; 1 seamless loop at minimum Morph
-vrng 0 //0 stock; 1 extended +/-4x (vsop 0/1), forward 8x (vsop 2)
+vrng 0 //0 stock, 1 +/-4x bidirectional or 0-8x forward
 vqnt 0 //0 SHIFT-to-lock; 1 quantized normally, SHIFT+Varispeed temporarily continuous
 dens 0 //1: SHIFT+Gene Size controls independent density (0.1-128 Genes/sec)
 tape 1 //SHIFT+S.O.S.: 0 classic TLA feedback (input + feedback x Gene playback), 1 tape mode (Varispeed tape head in the Slide/Gene Size window)
@@ -99,6 +99,18 @@ tlen 8 //Turing loop length in steps, 1-16
 ingn 0 //Input gain 0-3 (REC held + SHIFT taps); saved automatically a few seconds after a change
 mono 0 //Mono input: 0 off (stereo), 1 left input copied to the right (heard and recorded on both channels; R in is ignored), 2 auto: only while nothing is playing into R in
 ```
+
+## Varispeed changes back to forward only
+
+The original `mg204+c` and `mg204+c2` releases can read `vsop 2` inside the
+generated `vrng` comment as a second setting during a normal mount or at
+power-up. This can overwrite either bidirectional layout in `options.txt`.
+
+On those releases, edit the existing `vsop` line to `vsop 1` for bidirectional
+1 V/oct or `vsop 0` for classic bidirectional. On the existing `vrng` line,
+keep `vrng 0` or `vrng 1` and delete the trailing comment. Save the file and
+mount the card. The workaround applies to that read. Those releases write the
+old comment back, so remove it again before another normal mount or power-up.
 
 ## Troubleshooting: the CPU log (`cpul`)
 
