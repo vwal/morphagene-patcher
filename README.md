@@ -1,13 +1,15 @@
-# Morphagene mg204+c3
+# Morphagene mg204+c4
 
 [Open the firmware patcher and options editor](https://vwal.github.io/morphagene-patcher/).
 
 An unofficial Morphagene mg204 extension by vwal, built on
 [Briskcat’s Morphagene mods](https://github.com/briskcat/morphagene-mods).
 The browser patches your own official `mg204.wav` locally and downloads
-`mg204+c3.wav` for audio installation or `mgmod.bin` for an existing SD updater.
+`mg204+c4.wav` for audio installation or `mgmod.bin` for an existing SD updater.
 No firmware is uploaded. This repository contains source and patch data only.
 
+- **New in c4.** Use a wet-only mixer return with the usual recording controls (`dryk 1`) or use S.O.S. to fade older layers (`dryk 2`). Overdubs can keep their length or extend the last splice. Both switches default to zero. [Recording and settings](docs/OPTIONS.md)
+- Drop the official WAV or your options file into the patcher. Download the standalone HTML editor for offline use. Both editors cover stock and enhanced controls and can reset to defaults after confirmation.
 - c3 fixes the Varispeed layout reverting to forward only on a normal card
   mount or power-up. If an older release saved `vsop 2`, restore your preferred
   layout once. See the [c3 update instructions](docs/RELEASE_MG204_C3.md).
@@ -35,11 +37,11 @@ Normal mounting still loads a card’s reel in the usual way.
 ## Guides
 
 The website includes Letter/A4 manuals and quick cards. Source documentation:
-[mg204+c3 release guide](docs/RELEASE_MG204_C3.md),
+[c4 recording guide, pp. 12–13](web/morphagene-manual-letter.pdf#page=12),
 [options](docs/OPTIONS.md), [controls](docs/USING.md),
 [installation/recovery](docs/INSTALLING.md), and [build/tests](docs/TESTING.md).
 
-The owner confirmed the unity and preset features on hardware. The firmware
+The owner tested the c4 recording modes on a Morphagene, following earlier hardware tests of unity recall and presets. The firmware
 suite exercises card reads and rewrites alongside playback and recording.
 Separate browser checks cover the options editor and generated firmware.
 The [version history](CHANGELOG.md) records changes since the original release.
@@ -50,11 +52,16 @@ Independent customization. Not an official Make Noise release.
 ## Development and publication
 
 Use the pinned Arm GNU 14.2.rel1 toolchain; see the test guide. The `full` and
-`full_morph_loop` CLI names are compatibility aliases for the same mg204+c3 image.
+`full_morph_loop` CLI names are compatibility aliases for the same mg204+c4 image.
 CLI files retain their internal `mg204-full.*` names. Keep generated firmware
 private; it contains Make Noise code and must not be committed here.
 
-`web/` is the static site. `tools/make_site.py` regenerates its HTML/CSS;
+`web/` is the static site. Run `python3 tools/make_site.py` after changing
+the editor or release version. It rebuilds the site and the downloadable
+[single-file options editor](web/morphagene-options-editor.html). The standalone
+includes the form, editor scripts, theme, styles and license for offline use.
+The generator reads `tools/offline_editor.html.in`.
+Run `node tests/test_web.mjs` to verify that both editions match.
 `tools/make_manual.py` generates the printable guides with Liberation Sans,
 ReportLab and pypdf. GitHub Pages deploys `web/` on pushes to `main`.
 Local development packaging scripts also reference preserved development

@@ -754,4 +754,5 @@ opt_version:
     addw r0, sp, #1396
     b.w VERSION_RETURN
 fmt_version:
-    .asciz "// firmware version 204+c3\n"
+    .asciz "// firmware version 204+c4\n"
+    .space 34 - (. - fmt_version), 0   @ preserve the hardware-tested image layout

@@ -1,3 +1,16 @@
+# mg204+c4 release validation
+
+The owner tested the new recording modes on a Morphagene. The release image matches the tested revision byte for byte outside the fixed-size string that writes `// firmware version 204+c4` to `options.txt`.
+
+- Arm GNU 14.2.rel1 produced the same application for both release aliases. The 201,728-byte raw image has SHA-256 `8ae6bf2aefe8061efdf06d5063d05fb058571d891be076b8b866d3e127e0bb31`.
+- All 235 local firmware tests passed with the stock and private reference images available. Recording checks cover wet-only output, feedback endpoints, fixed-length overdubs and the contents and splice markers of saved extended takes.
+- The browser patched the official mg204 WAV locally. The SD update matched the CLI build byte for byte and the decoded update WAV matched the release image.
+- The options tests covered all 44 controls, 4,853 field/value pairs and 10,624 wrapped chunks. Both the module writer and editor produce the c4 header.
+- Browser checks exercised both file drop areas, rejected invalid input and downloaded the standalone HTML without navigating away. The downloaded editor worked offline, including import, reset confirmation and export.
+- The 13-page guides and one-page quick cards were rendered and reviewed in both US Letter and A4.
+
+---
+
 # mg204+c3 release validation
 
 The 198,656-byte application built with Arm GNU 14.2.rel1 has SHA-256

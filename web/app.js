@@ -3,7 +3,6 @@
 'use strict';
 
 const STOCK_SHA256 = '44037eb2cf24b5fc411135e487a6fa226498a8478db981659bb53341cb967609';
-const $ = (id) => document.getElementById(id);
 let stockImage = null;
 
 // ---------- helpers ----------
@@ -32,23 +31,6 @@ function hex(s) {
   const out = new Uint8Array(s.length / 2);
   for (let i = 0; i < out.length; i++) out[i] = parseInt(s.substr(i * 2, 2), 16);
   return out;
-}
-
-function download(name, bytes, type) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: type || 'application/octet-stream' }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-}
-
-function status(id, text, kind) {
-  const el = $(id);
-  el.textContent = text;
-  el.dataset.kind = kind || '';
 }
 
 // ---------- read the official firmware ----------
@@ -172,145 +154,8 @@ function updateWav(image) {
   return out;
 }
 
-// ---------- options.txt ----------
-const VERSION_HEADER = '// firmware version 204+c3';
-const MOD_HEADER = '//Morphagene extended mods';
-// In older builds this comment put "vsop 2" at the start of a 63-byte read.
-const LEGACY_RANGE_COMMENT = '//Varispeed range: 0 stock, 1 extended: vsop 0/1 +/-4x; vsop 2 forward stop to 8x with scale lock';
-// Extended option keys and explanatory comments for generated files.
-const KEYS = {
-  mpos: '//Morph virtual knob preset: 0-100 percent. 10 selects the stock seamless loop (unclocked/dens 0); 0 gaps with mlop 0. Omit to use the panel at startup and preserve the live position on settings-only reload.',
-  gpos: '//Gene Size virtual knob preset: 0-100 percent. 0 and 1 = longest/full splice; 100 = shortest, not a length percentage. Omit to use the panel at startup and preserve the live position on settings-only reload.',
-  spos: '//Slide virtual knob preset: integer 0-100 percent. Omit to use the panel at startup and preserve the live position on settings-only reload.',
-  vpos: '//Varispeed virtual knob preset: integer 0-100 percent before vsop/vrng/vctr mapping, not a speed ratio. vuni remains the +1x recall gesture.',
-  sosp: '//Primary S.O.S. mix virtual knob preset: integer 0-100 percent. Separate from the SHIFT+S.O.S. feedback preset fbkp.',
-  splc: '//Splice recall: integer 1-300, 1 is the first splice. Above the reel count selects its last splice; the configured number is retained. Omit to preserve selection on settings-only reload.',
-  srrp: '//Sample-rate reduction virtual knob preset: integer 0-100 percent. Used with fxsl 1; retained separately from warble. SRR and warble cannot run together.',
-  jitp: '//Jitter / Turing spread virtual knob preset: integer 0-100 percent for SHIFT+Slide.',
-  wrbp: '//Warble virtual knob preset: integer 0-100 percent. Used with fxsl 2; retained separately from SRR. SRR and warble cannot run together.',
-  fbkp: '//SHIFT+S.O.S. feedback virtual knob preset: integer 0-100 percent. tape selects feedback mode; separate from primary S.O.S. mix sosp.',
-  evop: '//Turing evolution virtual knob preset: integer 0-100 percent. Used with sldm 1.',
-  trst: '//Turing Genes per step preset: 1,2,3,4,6,8,12,16. Used with sldm 1; dens 1 takes priority over the Turing rate.',
-  vuni: '//Unity recall: 0 off, 1 hold SHIFT alone >=0.5 seconds and release for forward +1x with pickup. Use with SHIFT jack unpatched.',
-  vctr: '//Noon unity mapping: 0 original mapping, 1 +1x at calibrated noon with a 48-52 percent unity notch. The notch is enabled only with vctr 1.',
-  mlop: '//Morph Loop: 0 stock gaps (default), 1 seamless loop at minimum Morph',
-  dstr: '//Startup/reload Gene density: 0.1-128 Genes/sec, at most one decimal, default 8. Explicit dstr recalls on settings-only reload; omit to preserve live rate. Knob changes are temporary.',
-  dens: '//Independent Gene density: 0 off, 1 on: startup rate from dstr (default 8 Genes/sec); hold SHIFT and turn Gene Size for 0.1-128 Genes/sec; knob rate remains until adjusted again, recalled by dstr reload or powered off, not saved across power cycles; overrides Turing rate; external clock takes priority',
-  vrng: '//0 stock, 1 +/-4x bidirectional or 0-8x forward',
-  vqnt: '//Varispeed quantization: 0 SHIFT+Varispeed locks, 1 quantized normally and SHIFT+Varispeed temporarily free; release snaps back; scale from octl/scal',
-  tape: '//SHIFT+S.O.S.: 0 classic TLA feedback (input + feedback x Gene playback), 1 tape mode (Varispeed tape head in the Slide/Gene Size window)',
-  octl: '//Varispeed scale: 0 off, 1 octaves, 2 octaves + fifths, 3 semitones, 4 custom scale (scal); vqnt selects gesture behavior',
-  scal: '//Custom scale for octl 4: semitones 1-11 above the root, e.g. 3,5,7,10 = minor pentatonic (root and octaves always on)',
-  fxsl: '//SHIFT+Morph effect: 0 off (Morph stays stock), 1 SRR (sample-rate reduction), 2 warble (tape wow and flutter on the Gene playback)',
-  cpul: '//CPU log, for troubleshooting only: 0 off, 1 on (writes cpulog.txt every 10 s; turn it off again afterwards)',
-  mcap: '//Morph cap while tape-dubbing: 0 none, 1-9 = Morph limited to 0.1-0.9 (CPU safety; 3 = 0.3)',
-  sldm: "//Turing mode: 0 off, 1 on: a loop of random seeds decides each Gene's chord ratio, scatter and stereo. SHIFT+Organize = evolution (left = locked loop, right = normal randomness), SHIFT+Gene Size = Genes per step (1-16), SHIFT+Slide = spread (start jitter, repeats when locked)",
-  root: '//Turing: chance in percent that a step plays the root rather than a chord ratio (mcr1-mcr3)',
-  tlen: '//Turing loop length in steps, 1-16',
-  ingn: '//Input gain 0-3 (REC held + SHIFT taps); saved automatically a few seconds after a change',
-  mono: '//Mono input: 0 off (stereo), 1 left input copied to the right (heard and recorded on both channels; R in is ignored), 2 auto: only while nothing is playing into R in',
-};
-const FIELDS = [...Object.keys(KEYS), 'gnsm', 'vsop'];
-const PRESET_KEYS = Object.freeze(['mpos', 'gpos', 'spos', 'vpos', 'sosp', 'splc', 'srrp', 'jitp', 'wrbp', 'fbkp', 'evop', 'trst']);
-const TURING_STEPS = Object.freeze([1,2,3,4,6,8,12,16]);
-const DEFAULTS = Object.freeze({mpos:'0', gpos:'0', spos:'0', vpos:'0', sosp:'0', splc:'1', srrp:'0', jitp:'0', wrbp:'0', fbkp:'0', evop:'0', trst:'1', vuni:'0', vctr:'0', dstr:'8', mlop:'0', vsop:'0', vqnt:'0', dens:'0', vrng:'0', tape:'1', octl:'1', scal:'0', fxsl:'1', cpul:'0',
-  mcap:'3', sldm:'0', root:'50', tlen:'8', ingn:'0', mono:'0', gnsm:'0'});
-const LIMITS = {mpos:[0,100], gpos:[0,100], spos:[0,100], vpos:[0,100], sosp:[0,100], splc:[1,300], srrp:[0,100], jitp:[0,100], wrbp:[0,100], fbkp:[0,100], evop:[0,100], vuni:[0,1], vctr:[0,1], mlop:[0,1], vsop:[0,2], vqnt:[0,1], dens:[0,1], vrng:[0,1], tape:[0,1], octl:[0,4], fxsl:[0,2], cpul:[0,1],
-  mcap:[0,9], sldm:[0,1], root:[0,100], tlen:[1,16], ingn:[0,3], mono:[0,2], gnsm:[0,1]};
-function optionValue(key, raw) {
-  if (key === 'dstr') return /^\d{1,3}(?:\.\d)?$/.test(raw) && Number(raw)>=0.1 && Number(raw)<=128 ? String(Number(raw)) : null;
-  if (key === 'trst') return /^\d+$/.test(raw) && TURING_STEPS.includes(Number(raw)) ? String(Number(raw)) : null;
-  if (key === 'scal') return scaleList(raw);
-  const n = Number(raw), [lo, hi] = LIMITS[key];
-  return /^\d+$/.test(raw) && Number.isInteger(n) && n >= lo && n <= hi ? String(n) : null;
-}
-const LINE = /^\s*([a-z0-9]{4})(?:[ \t]+(.*))?$/;
-function parsedLine(line) {
-  const m = line.match(LINE);
-  if (!m) return null;
-  const body = m[2] || '', index = body.indexOf('//');
-  return {key:m[1], raw:(index<0?body:body.slice(0,index)).trim(),
-    comment:index<0?'':' //'+body.slice(index+2)};
-}
-function parseOptions(text) {
-  const values = {...DEFAULTS};
-  for (const line of text.split(/\r?\n/).slice(1)) {
-    const m=parsedLine(line);
-    if (!m || !FIELDS.includes(m.key)) continue;
-    values[m.key] = optionValue(m.key,m.raw) ?? DEFAULTS[m.key];
-  }
-  return values;
-}
-function scaleList(text) {
-  if (text.trim()==='0') return '0';
-  if (!/^\s*(?:[1-9]|1[01])(?:[ ,]+(?:[1-9]|1[01]))*\s*$/.test(text)) return null;
-  return [...new Set(text.trim().split(/[ ,]+/).map(Number))].sort((a,b)=>a-b).join(',');
-}
-
-function chosenOptions() {
-  const values = Object.fromEntries(FIELDS.map((k) => {
-    const el = $('opt-' + k);
-    const value = optionValue(k, el.value) ?? DEFAULTS[k];
-    el.value = value;
-    return [k, value];
-  }));
-  for (const k of ['dstr', ...PRESET_KEYS]) {
-    if (!$('recall-'+k).checked) delete values[k];
-  }
-  return values;
-}
-
-function modLines(values) {
-  return [VERSION_HEADER, MOD_HEADER, ...Object.keys(KEYS).filter((k) => k in values).map((k) => `${k} ${values[k]} ${KEYS[k]}`)];
-}
-
-let loadedOptions = null;
-
-function renderOptions() {
-  const recallDensity = $('recall-dstr').checked;
-  for (const k of ['dstr', ...PRESET_KEYS]) $('opt-'+k).disabled = !$('recall-'+k).checked;
-  const values = chosenOptions();
-  let text;
-  if (loadedOptions) {
-    const lines = loadedOptions.split(/\r?\n/);
-    const seen = new Set();
-    const out = lines.flatMap((line, i) => {
-      if (i>0 && /^\s*\/\/\s*firmware version\b/i.test(line)) return [];
-      const m=parsedLine(line);
-      if (i>0 && m && FIELDS.includes(m.key)) {
-        if (!(m.key in values) || seen.has(m.key)) return [];
-        seen.add(m.key);
-        const comment = m.key === 'vrng' && m.comment.trim() === LEGACY_RANGE_COMMENT
-          ? ' ' + KEYS.vrng : m.comment;
-        return [m.key+' '+values[m.key]+comment];
-      }
-      return [line];
-    });
-    // Preserve the numeric first state line verbatim; version identification is a comment.
-    out.splice(1, 0, VERSION_HEADER);
-    while (out.length && out[out.length - 1] === '') out.pop();
-    const missing = Object.keys(values).filter((k) => !seen.has(k));
-    if (missing.length) {
-      if (!out.includes(MOD_HEADER)) out.push('//', MOD_HEADER);
-      for (const k of missing) out.push(`${k} ${values[k]} ${KEYS[k] || "//Stock setting"}`);
-    }
-    text = out.join('\n') + '\n';
-    $('options-save-row').hidden = false;
-    $('options-note').textContent = 'Your options.txt with these values. Copy it back to the card root. ' +
-      (recallDensity ? 'Settings-only reload recalls the selected density.' : 'Settings-only reload preserves the current density; dstr is omitted.');
-  } else {
-    text = [...modLines(values), `vsop ${values.vsop} //Replace the existing stock vsop line`, `gnsm ${values.gnsm} //Replace the existing stock gnsm line`].join('\n') + '\n';
-    $('options-save-row').hidden = true;
-    $('options-note').textContent = `Add the mod lines to your existing options.txt; replace its vsop/gnsm lines with the values below. Do not duplicate keys. Load the file above to remove unchecked preset keys automatically. ` +
-      (recallDensity ? 'Or load your options.txt above to get a complete file.' :
-        'Load your options.txt above to create a complete file with dstr removed automatically.');
-  }
-  $('options-note').textContent += ' Unchecked preset recalls are omitted; checked presets apply at startup and settings-only reload. Effect and Turing presets use their selected modes.';
-  $('options-text').value = text;
-}
-
 // ---------- page ----------
-function init() {
+function initPatcher() {
   const remixes = (window.MGMOD_REMIXES || []).filter(r=>r.name==='full');
   const select = $('remix');
   for (const r of remixes) {
@@ -333,83 +178,58 @@ function init() {
   select.addEventListener('change', describe);
   describe();
 
-  $('firmware').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  let firmwareSequence = 0;
+  function clearFirmware() {
+    ++firmwareSequence;
     stockImage = null;
     $('build-buttons').hidden = true;
+    status('build-status', '');
+  }
+  bindFileDrop('firmware', 'firmware-drop', async file => {
+    if (!file) return;
+    clearFirmware();
+    const sequence = firmwareSequence;
     status('firmware-status', 'Reading ' + file.name + '…');
     try {
-      stockImage = await readFirmware(file);
+      const image = await readFirmware(file);
+      if (sequence !== firmwareSequence) return;
+      stockImage = image;
       status('firmware-status', 'Official mg204 firmware recognised.', 'ok');
       $('build-buttons').hidden = false;
     } catch (err) {
+      if (sequence !== firmwareSequence) return;
       status('firmware-status', err.message, 'error');
     }
+  }, () => {
+    clearFirmware();
+    status('firmware-status', 'Drop a single official mg204.wav file here.', 'error');
   });
 
   const build = async (kind) => {
+    if (!stockImage) return;
+    const sequence = firmwareSequence;
     const r = remixes.find((x) => x.name === select.value);
     status('build-status', 'Building…');
     try {
       const image = await buildRemix(r);
+      if (sequence !== firmwareSequence) return;
       if (kind === 'card') {
         download('mgmod.bin', cardFile(image));
         status('build-status', 'mgmod.bin saved. Copy it to the root of the Morphagene card and power on.', 'ok');
       } else {
         status('build-status', 'Encoding the audio update…');
         await new Promise((res) => setTimeout(res, 20));
-        download('mg204+c3.wav', updateWav(image), 'audio/wav');
-        status('build-status', 'mg204+c3.wav saved. Follow the first-time audio installation steps above.', 'ok');
+        if (sequence !== firmwareSequence) return;
+        download('mg204+c4.wav', updateWav(image), 'audio/wav');
+        status('build-status', 'mg204+c4.wav saved. Follow the first-time audio installation steps above.', 'ok');
       }
     } catch (err) {
+      if (sequence !== firmwareSequence) return;
       status('build-status', err.message, 'error');
     }
   };
   $('build-card').addEventListener('click', () => build('card'));
   $('build-wav').addEventListener('click', () => build('wav'));
-
-  $('recall-dstr').checked = true;
-  $('recall-dstr').addEventListener('change', renderOptions);
-  for (const k of PRESET_KEYS) {
-    $('recall-'+k).checked = false;
-    $('recall-'+k).addEventListener('change', renderOptions);
-  }
-  for (const k of FIELDS) {
-    $('opt-'+k).value=DEFAULTS[k];
-    $('opt-'+k).addEventListener('change', renderOptions);
-  }
-  $('options-file').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    try {
-      if (file && file.size>16384) throw new Error('options.txt must be no larger than 16 KiB.');
-      const text=file ? await file.text() : null;
-      if (text && (/[^\x09\x0a\x0d\x20-\x7e]/.test(text) || !text.includes('\n')))
-        throw new Error('Choose a plain-text options.txt created by your Morphagene, including its first state line.');
-      loadedOptions=text;
-      $('recall-dstr').checked = !loadedOptions || loadedOptions.split(/\r?\n/).slice(1)
-        .some((line) => parsedLine(line)?.key === 'dstr');
-      const values=loadedOptions ? parseOptions(loadedOptions) : {...DEFAULTS};
-      const lines = loadedOptions ? loadedOptions.split(/\r?\n/).slice(1).map(parsedLine).filter(Boolean) : [];
-      for (const k of PRESET_KEYS) {
-        const entry = lines.filter((line) => line.key === k).at(-1);
-        const value = entry ? optionValue(k, entry.raw) : null;
-        $('recall-'+k).checked = value !== null;
-        // Missing/invalid optional recalls must not silently become presets.
-        // Keep the visible numeric choice for a later explicit re-enable.
-        if (loadedOptions && value === null) values[k] = optionValue(k, $('opt-'+k).value) ?? DEFAULTS[k];
-      }
-      for (const k of FIELDS) $('opt-'+k).value=values[k];
-      status('options-status', text?'Loaded. Review the values and generated file before saving.':'No file loaded; showing a settings snippet.');
-      renderOptions();
-    } catch(err) {
-      loadedOptions=null;
-      renderOptions();
-      status('options-status',err.message,'error');
-    }
-  });
-  $('options-save').addEventListener('click', () => download('options.txt', new TextEncoder().encode($('options-text').value), 'text/plain'));
-  renderOptions();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', initPatcher);

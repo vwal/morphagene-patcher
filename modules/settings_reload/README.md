@@ -43,7 +43,7 @@ State ABI at 0x2002A820: phase/start/owned/pending/result/finish/absent at +0..2
 seen mask +28; original 26 option values +32..135; valid +136; reel +140;
 reels +144; data_start +148; size +152; cluster +156; position +160;
 CID +164..179; directory sector +180; directory offset +184; reserved former
-digest +188..219; snapshot_ready +220; live FIL pointer +224; reserved scanning
+digest +188..215; dlen staging +216; snapshot_ready +220; live FIL pointer +224; reserved scanning
 +228 (always zero); mlop staged value +232, dstr +236, mount_ready +240 (1 owned fresh mount,
 2 normal load in progress). Preserving the earlier offsets avoids
 changing the assembly ABI. Scratch FIL starts 0x2002A920, 512-byte buffer at

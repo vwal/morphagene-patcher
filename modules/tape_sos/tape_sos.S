@@ -73,6 +73,13 @@
     .equ TARGET,     0x200220e8         @ Varispeed target rate (stock, per block)
     .equ WARBLE,     0x2002A700         @ warble state (MOD + 0x700)
     .equ WARBLE_MAGIC, 0x4c425257       @ "WRBL"
+    .equ LENGTH_TAKE,   0x2002A720      @ index, start, old end, next frame, capacity
+    .type LENGTH_START_RETURN, %function
+    .type LENGTH_STOP_RETURN, %function
+    .type STOCK_RECORD_STOP, %function
+    .equ DRYK_OPTION,  0x2002A61A
+    .equ DRYK_BLOCK,   234             @ validated once per block, shared with wet monitor
+    .equ DRYK_GAIN,    236             @ primary S.O.S. retention, separate from SHIFT bank
     .include "../preset_recall/preset_asm.inc"
 
     .text
@@ -92,7 +99,12 @@
     pop     {r3, lr}
 76: movs    r0, #0
     strb    r0, [r3, #COUNT]
-    strb    r0, [r3, #56]               @ engine recomputes its block cache
+    ldr     r1, =LENGTH_TAKE
+    ldr     r1, [r1]
+    cmp     r1, #0
+    it      ne
+    movne   r0, #3                     @ linear take stays latched until native REC stop
+    strb    r0, [r3, #56]
     ldr     r0, =REC_ACTIVE
     ldr     r0, [r0]
     cbnz    r0, 77f
@@ -245,17 +257,19 @@ p11_mix_a:
     vmoveq.f32 s3, s14
     vmoveq.f32 s4, s13
     b.w     A_SKIP
-3:  pop     {r1}
+3:  cmp     r1, #2                      @ mode 2 always records fresh input
+    pop     {r1}
     vsub.f32 s8, s16, s4
     vsub.f32 s7, s19, s3
     vmov.f32 s13, s4
     vmov.f32 s14, s3
     vfma.f32 s14, s2, s7
     vfma.f32 s13, s8, s2                @ monitor mix L
+    beq     6f
     TAPE_ON
     TAPE_SETTING
     bne     7f
-    vstr    s21, [r7]                   @ tape: record raw input, skip the splice filter
+6:  vstr    s21, [r7]                   @ tape: record raw input, skip the splice filter
     vmov.f32 s30, s14
     b.w     A_AFTER_FILTER
 7:  cmp     r0, #0                      @ feedback: Input Only stays stock
@@ -313,17 +327,19 @@ p12_mix_b:
     vmoveq.f32 s6, s14
     vmoveq.f32 s7, s30
     b.w     B_SKIP
-3:  pop     {r1}
+3:  cmp     r1, #2
+    pop     {r1}
     vsub.f32 s1, s27, s7
     vsub.f32 s17, s24, s6
     vmov.f32 s30, s7
     vmov.f32 s14, s6
     vfma.f32 s14, s19, s17
     vfma.f32 s30, s1, s19               @ monitor mix L
+    beq     6f
     TAPE_ON
     TAPE_SETTING
     bne     7f
-    vstr    s25, [r0]                   @ tape: record raw input, skip the splice filter
+6:  vstr    s25, [r0]                   @ tape: record raw input, skip the splice filter
     vmov.f32 s22, s14
     b.w     B_AFTER_FILTER
 7:  cmp     r4, #0                      @ feedback: Input Only stays stock
@@ -341,6 +357,8 @@ p12_mix_b:
 8:  cmp     r4, #0
     b.w     B_STOCK
     .ltorg
+
+    .include "dry_length.inc"
 
 @ WA / WB: write-block entries (recording active). The tape engine runs from
 @ SRAM (copied by P7_EXTRA). It returns r0 = 1 when it handled the sample;
@@ -361,7 +379,9 @@ p12_mix_b:
     strb    r3, [r2, #COUNT]
 6:  pop     {r1-r3}
     b.w     \done
-3:  cmp     r3, #2
+3:  cmp     r3, #3
+    beq     9f
+    cmp     r3, #2
     beq     8f
     ldr     r3, [r2, #RAMFLAG]          @ first sample of the block: decide
     ldr     r1, =RAM_MAGIC
@@ -381,6 +401,7 @@ p12_mix_b:
     ldr     r4, =HEAD                   @ replaced instructions
     ldr     r5, =CAPACITY
     b.w     \stock
+9:  LINEAR_SAMPLE \lreg, \rreg, \done
     .endm
 
 @ P10 (0x08027984, once per block): Morph cap while tape-dubbing. Stock high
@@ -532,6 +553,9 @@ p10_morph_cap:
     vstr    s1, [r3, #112]
     @ --- Morph cap while tape-dubbing.
 90: ldr     r0, =MOD
+    ldrb    r1, [r0, #DRYK_BLOCK]
+    cmp     r1, #2
+    beq     91f                         @ mode 2 uses the same tape-dub CPU cap
     ldrb    r1, [r0, #16]
     cmp     r1, #1
     bne     99f
@@ -539,11 +563,11 @@ p10_morph_cap:
     ldr     r0, =MAGIC
     cmp     r1, r0
     bne     99f
-    ldr     r0, =REC_ACTIVE
-    ldr     r0, [r0]
-    cbz     r0, 99f
     TAPE_SETTING
     bne     99f
+91: ldr     r0, =REC_ACTIVE
+    ldr     r0, [r0]
+    cbz     r0, 99f
     ldr     r0, =SETTINGS               @ mcap (+9): 0 = no cap, 1-9 = 0.1-0.9
     ldr     r1, [r0]
     ldr     r2, =SETTINGS_MAGIC
@@ -578,6 +602,11 @@ p10_morph_cap:
     itt     ne
     movne   r1, #0
     movne   r2, #0
+    ldrb    r3, [r0, #DRYK_BLOCK]
+    cmp     r3, #2
+    itt     eq
+    moveq   r1, #2                     @ raw capture also works before the first timer tick
+    moveq   r2, #2                     @ dedicated fade takes priority over legacy latch
     strb    r1, [r0, #232]
     strb    r2, [r0, #233]
     vpop    {s0-s2}
@@ -1061,6 +1090,9 @@ e_setup:
     ldr     r3, e_magic
     cmp     r2, r3
     bne     9f
+    ldrb    r2, [r7, #DRYK_BLOCK]
+    cmp     r2, #2
+    beq     8f                          @ always use tape on a valid existing splice
     ldrb    r2, [r7, #16]
     cmp     r2, #1
     bne     9f
@@ -1170,7 +1202,11 @@ e_setup:
     vmov.f32 s4, #1.0
     vdiv.f32 s3, s4, s3
 5:  vstr    s3, [r7, #64]
-    vldr    s3, [r7, #20]               @ retention
+    ldrb    r2, [r7, #DRYK_BLOCK]
+    cmp     r2, #2
+    ite     eq
+    vldreq  s3, [r7, #DRYK_GAIN]       @ main S.O.S. in fade mode
+    vldrne  s3, [r7, #20]              @ independent legacy gesture / preset bank
     vstr    s3, [r7, #68]
     vmov.f32 s4, #1.0
     vcmpe.f32 s3, s4

@@ -96,9 +96,30 @@
       "0"
     ],
     [
+      "mcr1",
+      "Gene 2 chord ratio",
+      "Sets the playback speed of Gene 2 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. The magnitude can range from 0.0625 to 16, with up to eight decimal places.",
+      null,
+      "2"
+    ],
+    [
+      "mcr2",
+      "Gene 3 chord ratio",
+      "Sets the playback speed of Gene 3 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. The magnitude can range from 0.0625 to 16, with up to eight decimal places.",
+      null,
+      "1.5"
+    ],
+    [
+      "mcr3",
+      "Gene 4 chord ratio",
+      "Sets the playback speed of Gene 4 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. The magnitude can range from 0.0625 to 16, with up to eight decimal places.",
+      null,
+      "1.33333"
+    ],
+    [
       "gnsm",
       "Gene smoothing",
-      "Stock option: choose the original or smoother Gene envelope.",
+      "Choose the original or smoother Gene envelope.",
       [
         "0: Original",
         "1: Smooth"
@@ -144,9 +165,71 @@
       "8"
     ],
     [
+      "ckop",
+      "Clock input",
+      "In hybrid mode, Morph selects Gene shifting or time stretching. Choose a fixed mode to use the clock for one function across the Morph range.",
+      [
+        "0: Hybrid",
+        "1: Gene shift only",
+        "2: Time stretch only"
+      ],
+      "0"
+    ],
+    [
+      "cvop",
+      "CV output",
+      "Send the signal envelope or a ramp timed to the current Gene Size.",
+      [
+        "0: Envelope follower",
+        "1: Gene ramp"
+      ],
+      "0"
+    ],
+    [
+      "rsop",
+      "Record buttons",
+      "Choose which button gesture starts a recording into the current splice and which creates a new splice.",
+      [
+        "0: REC current / REC + SPLICE new",
+        "1: REC new / REC + SPLICE current"
+      ],
+      "0"
+    ],
+    [
+      "inop",
+      "Recording source",
+      "For ordinary recording, S.O.S. blends the input with Gene playback. Choose input only to capture the live input at any S.O.S. position. Dry kill mode 2 uses its own overdub routing.",
+      [
+        "0: S.O.S. mix",
+        "1: Input only"
+      ],
+      "0"
+    ],
+    [
+      "dryk",
+      "Dry kill",
+      "0 keeps the usual output mix. Modes 1 and 2 send only Gene playback to both outputs. Mode 1 keeps the current recording controls. In mode 2, S.O.S. and its CV set tape retention during overdubs. Fully CCW replaces the last pass, noon gives fading repeats, and fully CW retains the pass and adds fresh input. The first recording captures the input at normal level throughout the knob range.",
+      [
+        "0: Normal monitoring",
+        "1: Wet only, current recording controls",
+        "2: Wet only, S.O.S. controls feedback"
+      ],
+      "0"
+    ],
+    [
+      "dlen",
+      "Overdub length at fully CCW",
+      "With dryk 2, Fixed keeps the loop length and overdubs inside the Slide and Gene Size window. Extend checks S.O.S. when REC starts. On the last or only splice, fully CCW (the lowest 4.5% of the effective knob/CV range, including a recalled S.O.S. preset) starts a replacement at the splice beginning. Input records forward at 1\u00d7, independent of Varispeed, Slide and Gene Size. Stop REC to set a longer end. A shorter take keeps the old length and tail. The selected recording mode lasts until REC stops. Earlier splices and takes started above the CCW zone use fixed-length overdubs with normal feedback.",
+      [
+        "0: Fixed (default)",
+        "1: Extend the last splice at fully CCW"
+      ],
+      "0"
+    ],
+    [
       "tape",
       "SHIFT + S.O.S. mode",
-      "Selects the feedback mode used by SHIFT + S.O.S. and fbkp: tape overdub or classic TLA feedback. The primary S.O.S. mix is separate (sosp).",
+      "Selects the feedback mode used by SHIFT + S.O.S. and fbkp: tape overdub or classic TLA feedback. The primary S.O.S. mix is separate (sosp). In dryk 2, primary S.O.S. controls overdub feedback.",
       [
         "0: Classic TLA feedback",
         "1: Tape mode"
@@ -156,14 +239,14 @@
     [
       "fbkp",
       "Feedback preset (%)",
-      "SHIFT + S.O.S. virtual knob position, 0-100%. 0% gives no retained feedback; 100% gives maximum retention. This is the existing knob curve, not a linear gain percentage. tape selects overdub or classic TLA behavior; recalling it activates feedback control separately from the main mix.",
+      "SHIFT + S.O.S. virtual knob position, 0-100%. 0% gives no retained feedback; 100% gives maximum retention. This is the existing knob curve, not a linear gain percentage. tape selects overdub or classic TLA behavior. This control is used in dryk 0 and 1. Mode 2 uses the primary S.O.S. position instead.",
       null,
       "0"
     ],
     [
       "sosp",
       "S.O.S. mix preset (%)",
-      "Primary S.O.S. virtual knob position: 0% is incoming audio, 100% is recorded Gene playback; middle positions blend them. This is separate from SHIFT + S.O.S. feedback (fbkp). Stock inop still determines what is recorded.",
+      "Primary S.O.S. virtual knob position: 0% is incoming audio, 100% is recorded Gene playback; middle positions blend them. This is separate from SHIFT + S.O.S. feedback (fbkp). Stock inop still determines what is recorded in normal routing. With dryk 2 this preset sets the retention position. Fresh input continues to record at every setting.",
       null,
       "0"
     ],
@@ -258,6 +341,27 @@
       "50"
     ],
     [
+      "pmod",
+      "Play input",
+      "Classic checks the gate at the end of each Gene or splice. Momentary starts and stops with the gate. Trigger loop keeps playing and jumps to the start set by Slide and Organize on each rising edge.",
+      [
+        "0: Classic",
+        "1: Momentary gate",
+        "2: Trigger loop"
+      ],
+      "0"
+    ],
+    [
+      "omod",
+      "Organize response",
+      "Choose when a splice selected with Organize or SHIFT takes over.",
+      [
+        "0: At Gene or splice end",
+        "1: Immediately"
+      ],
+      "0"
+    ],
+    [
       "splc",
       "Splice to recall",
       "Splice number, integer 1-300; 1 is the first splice. A number above the loaded reel count selects its last splice while keeping your configured number. Unchecked keeps normal startup selection and preserves the current splice on settings-only reload.",
@@ -288,6 +392,16 @@
       "0"
     ],
     [
+      "pmin",
+      "Right input phase modulation",
+      "Enable this to use the right signal input to modulate playback position while the left input has no signal.",
+      [
+        "0: Normal audio input",
+        "1: Phase modulation"
+      ],
+      "0"
+    ],
+    [
       "cpul",
       "CPU troubleshooting log",
       "Writes cpulog.txt periodically. Leave off for normal performance.",
@@ -299,6 +413,16 @@
     ]
   ],
   "features": [
+    [
+      "New in mg204+c4",
+      "Wet-only mixer returns",
+      "Set <code>dryk 1</code> to hear only Gene playback while keeping your usual recording controls. With <code>dryk 2</code>, fresh input records on every pass and S.O.S. controls how much of the previous layer survives. <code>dryk 0</code> keeps normal operation."
+    ],
+    [
+      "New in mg204+c4",
+      "Fixed or growing overdubs",
+      "Keep a beat loop at its original length with <code>dlen 0</code>. With <code>dryk 2</code> and <code>dlen 1</code>, start REC fully counterclockwise on S.O.S. to replace the last or only splice from its start. A longer take extends it. A shorter take keeps its old end."
+    ],
     [
       "New in mg204+c2",
       "Return to 1:1",

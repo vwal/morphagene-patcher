@@ -301,7 +301,11 @@ input:disabled + span { cursor:default; }
 .first-install .install-aside{margin-top:6px}
 .secondary-button{padding:12px 18px;margin-top:12px;border:1px solid var(--green);border-radius:5px;background:var(--card);color:var(--green)}
 .options-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin:26px 0}.option-field{padding:20px;background:var(--card);border:1px solid var(--line);border-radius:8px}
-.option-field label{display:block;font-weight:650;margin-bottom:10px}.option-field code{float:right;color:var(--orange)}
+.option-field label{display:block;font-weight:650;margin-bottom:10px}.option-field code{color:var(--orange)}
+.option-field .option-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;align-items:baseline}
+.option-origin,.optional-marker{font-size:.75rem;color:var(--muted);font-weight:500}
+.option-origin{grid-column:1/-1}.optional-marker{letter-spacing:.03em}
+.option-field .field-error{color:var(--red)}
 .option-field p{font-size:13px;color:var(--muted);margin-bottom:0}select,.option-field input,textarea{font:inherit;width:100%;padding:10px;border:1px solid #aab7a9;border-radius:5px;background:white;color:var(--ink)}
 .option-field .density-recall{display:flex;align-items:flex-start;gap:10px;margin:16px 0 0;line-height:1.4;cursor:pointer}
 .option-field input[type=checkbox]{width:18px;height:18px;flex:0 0 18px;padding:0;margin:2px 0 0;accent-color:var(--green);cursor:pointer}
@@ -327,6 +331,14 @@ textarea{font:12px/1.6 ui-monospace,monospace;resize:vertical;margin:12px 0}inpu
 [data-theme="dark"] .theme-moon{display:block}
 .backup-reminder,.file-zone{background:var(--field-wash);border-color:var(--control-line)}
 .file-zone.is-dragging{background:var(--orange-light);border-color:var(--orange)}
+.file-drop{position:relative;gap:10px;cursor:pointer;text-align:center}
+.file-drop:focus-within{outline:3px solid var(--orange);outline-offset:3px}
+#options-status,#firmware-status{overflow-wrap:anywhere}
+#options-reset-dialog{box-sizing:border-box;width:min(28rem,calc(100% - 32px));padding:24px;background:var(--card);color:var(--ink);border:1px solid var(--control-line);border-radius:10px}
+#options-reset-dialog::backdrop{background:rgb(0 0 0 / .5)}
+#options-reset-dialog p{margin:12px 0 20px}
+.reset-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px}
+.reset-actions button{width:auto;margin:0}
 select,.option-field input,textarea{background:var(--input-bg);border-color:var(--control-line)}
 .option-field input:disabled,.option-field select:disabled{background:var(--card)}
 .paper-choices a,.install-required,.installation-note .filename-note{border-color:var(--control-line)}
@@ -336,4 +348,20 @@ select,.option-field input,textarea{background:var(--input-bg);border-color:var(
 [data-theme="dark"] .primary-button:disabled{background:var(--line);border-color:var(--line);color:var(--muted)}
 @media(max-width:460px){.site-header{gap:12px}.brand{font-size:14px;gap:8px}.header-actions{gap:10px}.theme-toggle{min-width:74px;padding:8px}}
 @media(max-width:340px){.site-header{flex-wrap:wrap;padding:16px 0;gap:12px}.header-actions{margin-left:auto}}
+
+.offline-download a{font-weight:650}
+.offline-editor main{padding:40px 0}
+.offline-instructions{max-width:66ch;color:var(--muted)}
+.offline-file{max-width:42rem;margin:24px 0 16px}
+.offline-file p:empty{display:none}
+.offline-file p{margin:8px 0 0}
+.offline-shortcuts{display:flex;align-items:baseline;flex-wrap:wrap;gap:12px 26px}
+.offline-editor summary{cursor:pointer;color:var(--green);font-weight:600}
+.offline-shortcuts nav{display:grid;gap:5px;margin:9px 0 4px 16px}
+.offline-help{margin-top:12px;max-width:76ch}
+.offline-editor h1{font-size:clamp(32px,5vw,48px);margin-bottom:12px}
+.offline-editor .option-group{margin-top:12px;scroll-margin-top:14px}
+.offline-editor footer{padding:20px 0 32px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.offline-editor footer p{margin:0 0 8px}
+.offline-license pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;max-width:85ch}
 

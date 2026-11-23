@@ -173,6 +173,10 @@ cpu_block:
     cmp     r11, r12
     bne     41f
     ldrb    r11, [r9, #16]              @ tape mode on
+    ldrb    r12, [r9, #234]             @ dryk 2 also uses the tape head
+    cmp     r12, #2
+    it      eq
+    moveq   r11, #1
     cmp     r11, #0
     it      ne
     orrne   r10, r10, #2

@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-const source=fs.readFileSync(new URL('../web/app.js',import.meta.url),'utf8');
 const elements={},handlers={};
 const element=id=>elements[id]??={value:'',dataset:{},options:[],hidden:false,addEventListener:(event,fn)=>{handlers[id+':'+event]=fn},appendChild:()=>{}};
 const context=vm.createContext({TextEncoder,window:{MGMOD_REMIXES:[]},document:{getElementById:element,addEventListener:(event,fn)=>{handlers[event]=fn},createElement:()=>({})}});
-vm.runInContext(source,context);
+for (const name of ['page.js', 'options.js']) {
+  vm.runInContext(fs.readFileSync(new URL('../web/'+name,import.meta.url),'utf8'),context);
+}
 handlers.DOMContentLoaded();
-assert.match(elements['options-text'].value,/^\/\/ firmware version 204\+c3\n/);
+assert.match(elements['options-text'].value,/^\/\/ firmware version 204\+c4\n/);
 assert.equal(elements['recall-dstr'].checked,true);
 assert.equal(elements['opt-dstr'].disabled,false);
 assert.match(elements['options-text'].value,/^dstr 8 /m);
@@ -50,7 +51,7 @@ out=await load('6 0 0\nvqnt 2\n');assert.match(out,/^vqnt 0$/m);
 await load('6 0 0\nvqnt 1\n');out=await load('6 0 0\n');assert.match(out,/^vqnt 0 /m);
 await load(null);assert.equal(elements['opt-root'].value,'50');
 out=await load('6 46345 0\n// firmware version 204+c2\n// firmware version 155b\nvsop 1\n');
-assert.ok(out.startsWith('6 46345 0\n// firmware version 204+c3\n'));
+assert.ok(out.startsWith('6 46345 0\n// firmware version 204+c4\n'));
 assert.equal((out.match(/^\/\/ firmware version /gm)||[]).length,1);
 out=await load(out);assert.equal((out.match(/^\/\/ firmware version /gm)||[]).length,1);
 assert.match(out,/^vsop 1$/m);
@@ -285,7 +286,23 @@ for(const key of ['wrbp','jitp','evop','trst','sosp','vpos','splc'])
 assert.deepEqual(activeKey(out,'splc'),['splc 300']);
 console.log('PASS independent recalls: effect modes, feedback versus main mix, Turing priority and unchanged configured splice number');
 
-for(const key of ['vuni','vctr']) {
+for (const n of [0,1,2]) {
+  out=await load(`6 0 0\ndryk ${n}\n`);
+  assert.equal(elements['opt-dryk'].value,String(n));
+  handlers['opt-dryk:change']();
+  handlers['options-save:click']();
+  const saved=Buffer.from(context.saved.pop().bytes).toString('utf8');
+  assert.deepEqual(activeKey(saved,'dryk'),[`dryk ${n}`]);
+  assert.equal(await load(saved),saved);
+}
+for (const bad of ['3','02','-1','1.5','1 trailing','']) {
+  out=await load(`6 0 0\ndryk ${bad}\n`);
+  assert.equal(elements['opt-dryk'].value,'0');
+}
+out=await load('6 0 0\n');
+assert.match(out,/^dryk 0 \/\//m);
+
+for(const key of ['vuni','vctr','dlen']) {
   for(const n of [0,1]) {
     out=await load(`6 0 0\n${key} ${n}\n`);
     assert.equal(elements['opt-'+key].value,String(n));
@@ -353,6 +370,8 @@ function* fieldValues(key) {
     for (let tenths = 1; tenths <= 1280; tenths++) yield String(tenths/10);
   } else if (key === 'trst') {
     yield* [1,2,3,4,6,8,12,16].map(String);
+  } else if (['mcr1','mcr2','mcr3'].includes(key)) {
+    yield* ['-16.00000000', '-1.25', '-0.06250', '+0.06250000', '1', '1.33333333', '+16.00000000'];
   } else {
     const [minimum,maximum] = limits[key];
     for (let n = minimum; n <= maximum; n++) yield String(n);
@@ -378,7 +397,7 @@ for (const key of editorFields) {
 }
 console.log(`PASS generated options: ${editorFields.length} fields, ${fieldCases} values, ${continuationCount} wrapped chunks checked`);
 
-// Imported stock-only values and user-authored comments are passed through:
+// Imported stock values and user-authored comments survive editing:
 // the firmware must handle arbitrary comment alignment on these cards.
 const note = '//'+'x'.repeat(52)+'vsop 2';
 const stockLines = [
@@ -395,16 +414,82 @@ for (const line of stockLines) assert.ok(out.split('\n').includes(line));
 assert.deepEqual(activeKey(out,'vsop'), ['vsop 1']);
 assert.deepEqual(activeKey(out,'mpos'), ['mpos 100 '+note]);
 assert.equal(Buffer.from(activeKey(out,'mpos')[0]).subarray(63).toString(), 'vsop 2');
+for (const heading of ['//Morphagene Study mods', '//Morphagene extended mods']) {
+  out = await load(['6 45875 0', '// my clock setup', 'ckop 2 // always stretch', heading, 'dens 1', ''].join('\r\n'));
+  assert.deepEqual(activeKey(out, 'pmin'), []);
+  assert.deepEqual(activeKey(out, 'mcr3'), []);
+  elements['opt-pmin'].value = '1';
+  handlers['opt-pmin:change']();
+  elements['opt-mcr3'].value = '-2.000';
+  handlers['opt-mcr3:input']();
+  out = elements['options-text'].value;
+  const lines = out.trimEnd().split('\n');
+  assert.equal(lines.filter(line => /Morphagene (Study|extended) mods/.test(line)).length, 1);
+  for (const key of ['ckop', 'vsop', 'gnsm', 'pmin', 'mcr3']) {
+    const [line] = activeKey(out, key);
+    assert.equal(activeKey(out, key).length, 1);
+    assert.ok(lines.indexOf(line) < lines.indexOf(heading));
+  }
+  assert.ok(lines.includes('ckop 2 // always stretch'));
+  assert.deepEqual(activeKey(out, 'inop'), []);
+  assert.equal(await load(out), out);
+}
+await load('6 0 0\nmcr3 -1.5 // reverse\n');
+for (const bad of ['', '0', '-0.06249', '+16.0001', '1.123456789', '2e0', 'invalid']) {
+  const count = context.saved.length;
+  elements['opt-mcr3'].value = bad;
+  handlers['opt-mcr3:input']();
+  assert.equal(elements['opt-mcr3'].ariaInvalid, 'true');
+  assert.equal(elements['error-mcr3'].hidden, false);
+  assert.equal(elements['opt-mcr3'].value, bad);
+  assert.equal(elements['options-text'].value, '');
+  handlers['options-save:click']();
+  assert.equal(context.saved.length, count);
+}
+elements['opt-mcr3'].value = '-0.06250000';
+handlers['opt-mcr3:input']();
+assert.equal(elements['opt-mcr3'].ariaInvalid, 'false');
+assert.equal(elements['error-mcr3'].hidden, true);
+handlers['options-save:click']();
+assert.match(Buffer.from(context.saved.pop().bytes).toString('utf8'), /^mcr3 -0\.06250000 \/\/ reverse$/m);
 for (const invalid of ['6 0 0\n// café\n','6 0 0\n// NUL\0\n','6 0 0\n//'+'x'.repeat(16384)]) {
   await load(invalid);
   assert.equal(elements['options-save-row'].hidden, true);
   assert.match(elements['options-status'].textContent, /plain-text|16 KiB/);
 }
 
+// A slow read from the card must never replace a newer file or clear its status.
+for (const rejected of [false,true]) {
+  const delayed = Promise.withResolvers();
+  const changing = handlers['options-file:change']({
+    target: {files: [{size:20, text:() => delayed.promise}]}
+  });
+  assert.equal(elements['options-save-row'].hidden,true);
+  const downloads = context.saved.length;
+  handlers['options-save:click']();
+  assert.equal(context.saved.length,downloads);
+  const latest = await load('7 1234 0\ndryk 2\n');
+  if (rejected) delayed.reject(new Error('Card removed'));
+  else delayed.resolve('1 3333 0\ndryk 1\n');
+  await changing;
+  assert.equal(elements['options-text'].value,latest);
+  assert.equal(elements['options-save-row'].hidden,false);
+  assert.equal(elements['options-status'].dataset.kind,'');
+}
+
 // Generated markup exposes native, labelled controls with firmware bounds.
 const html=fs.readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
 const htmlIds=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(new Set(htmlIds).size,htmlIds.length);
+const stockControls = 'vsop inop pmin omod gnsm rsop pmod ckop cvop mcr1 mcr2 mcr3'.split(' ');
+const optionalControls = new Set(['dstr', ...allPresetKeys]);
+const headers = [...html.matchAll(/<label class="option-header" for="opt-([^"]+)">(.*?)<\/label>/g)];
+assert.equal(headers.length, editorFields.length);
+for (const [, key, header] of headers) {
+  const origin = stockControls.includes(key) ? 'Stock' : 'Enhancement';
+  assert.ok(header.includes('<small class="option-origin">'+origin+'</small>'), key);
+  assert.equal(header.includes('OPTIONAL:'), optionalControls.has(key), key);
+}
 for(const key of presetKeys) {
   const checkbox=html.match(new RegExp(`<input id="recall-${key}"[^>]*>`))?.[0];
   const input=html.match(new RegExp(`<input id="opt-${key}"[^>]*>`))?.[0];
@@ -418,7 +503,7 @@ for(const key of presetKeys) {
   assert.ok(html.includes(`for="recall-${key}"`));
   assert.ok(html.includes(`id="help-${key}"`));
 }
-for(const key of ['vuni','vctr']) {
+for(const key of ['vuni','vctr','dlen']) {
   assert.ok(html.includes(`<select id="opt-${key}" aria-describedby="help-${key}">`));
   assert.ok(html.includes(`for="opt-${key}"`));
 }
@@ -436,18 +521,20 @@ assert.match(html,/dens 1 takes priority over the Turing rate/);
 const content=JSON.parse(fs.readFileSync(new URL('../web/site-content.json',import.meta.url),'utf8'));
 assert.deepEqual(content.fields.map(field=>field[0]).sort(),Array.from(vm.runInContext('FIELDS',context)).sort());
 assert.match(html,/no extra flat zone is added/);
-assert.match(html,/Morphagene mg204\+c3/);
-assert.doesNotMatch(html,/PRIVATE|EXPERIMENTAL|upcoming|await.*hardware/);
+assert.match(html,/Morphagene mg204\+c4/);
+assert.doesNotMatch(html,/EXPERIMENTAL BUILD|private patcher/i);
 for(const id of ['firmware','remix','build-card','build-wav']) assert.ok(htmlIds.includes(id));
-assert.match(html,/mg204\+c3\.wav/);
+assert.match(html,/mg204\+c4\.wav/);
 assert.match(html,/<details><summary>Version by version<\/summary>/);
 const history = html.match(/<section[^>]+id="versions"[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
+assert.match(history,/<h3>mg204\+c4\b/);
 assert.match(history,/<h3>mg204\+c3\b/);
 assert.match(history,/<h3>mg204\+c2\b/);
 assert.doesNotMatch(html,/<details[^>]*\bopen\b/);
 assert.match(html,/This project contains carefully tested AI-generated code\./);
 assert.match(html,/Independent customization\. Not an official Make Noise release\./);
 const order=content.fields.map(field=>field[0]);
+assert.equal(order.indexOf('dlen'),order.indexOf('dryk')+1);
 assert.equal(order.indexOf('mpos'),order.indexOf('mlop')+1);
 assert.equal(order.indexOf('gpos'),order.indexOf('gnsm')+1);
 assert.equal(order.indexOf('fbkp'),order.indexOf('tape')+1);
@@ -459,4 +546,21 @@ assert.match(html,/100% gives the shortest Genes/);
 assert.match(html,/Bidirectional — classic/);
 assert.match(html,/Bidirectional — V\/oct/);
 assert.match(html,/attenuverter carefully adjusted/);
-console.log('PASS mg204+c3 editor: grouped controls, percentage guidance, version history, disclosures and patcher');
+console.log('PASS released mg204+c4 editor: grouped controls, percentage guidance, version history, disclosures and patcher');
+
+// Release check: a stale standalone file can look correct while exporting
+// settings for earlier firmware. Both editions must ship the current editor.
+const asset = name => fs.readFileSync(new URL('../web/'+name, import.meta.url), 'utf8');
+const offline = asset('morphagene-options-editor.html');
+assert.equal(fs.readFileSync(new URL('../tools/offline_editor.html', import.meta.url), 'utf8'), offline,
+  'Opening tools/offline_editor.html must give the same ready-to-copy editor as the website');
+const {release} = JSON.parse(asset('release.json'));
+assert.equal('mg' + vm.runInContext('VERSION_HEADER', context).split(' ').at(-1), release);
+assert.ok(offline.includes('Morphagene options editor · ' + release + '</title>'));
+for (const name of ['theme.js', 'page.js', 'options.js']) {
+  assert.ok(offline.includes('<script>' + asset(name) + '</script>'), 'Regenerate offline copy of ' + name);
+}
+assert.ok(offline.includes('<style>' + asset('styles.css') + '</style>'));
+const grid = html.match(/<div class="options-grid">[\s\S]*?<p id="options-note"/)[0];
+assert.ok(offline.includes(grid), 'Regenerate offline option controls');
+console.log('PASS standalone HTML matches the staged release, editor, theme and controls');

@@ -213,3 +213,19 @@ To check the browser downloads against a separately staged build, set
 `node tests/test_web_firmware.mjs`. The default is `build/release`. The check
 compares the browser SD update and raw image to the CLI files and verifies
 the release manifest and download names.
+
+## mg204+c4 recording tests
+
+Use the firmware and private reference variables above. The c3 comparison reads
+`rollback-mg204+c3/mgmod.bin` from the experimental package (or a directory
+selected via `MGMOD_REFERENCE_DIR`). `tests/test_dry_fade.py` measures the
+retention curve, first/new takes, and the stored samples across passes.
+`tests/test_dry_monitor.py` compares the stereo return and capture buffers,
+including c3 with dry kill disabled. Separate cases check card parsing,
+persistence, live mode changes during playback, and audio output before the
+first gesture timer tick.
+
+To rebuild the local SD update and WAV, use the pinned compiler with
+`python3 -m mgmod build full --firmware "$MGMOD_FIRMWARE" --output ../build-work`.
+Use `python3 -m mgmod check --firmware "$MGMOD_FIRMWARE"` to compare the raw
+image with its recorded SHA-256. See [the guide, pages 12–13](../web/morphagene-manual-letter.pdf#page=12) for recording examples.

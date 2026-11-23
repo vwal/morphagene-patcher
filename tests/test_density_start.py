@@ -74,7 +74,8 @@ class DensityStart(unittest.TestCase):
             p=a.uc.reg_read(UC_ARM_REG_R1)
             fmt=bytes(a.uc.mem_read(p,512)).split(b'\0')[0].decode()
             args=[a.uc.reg_read(UC_ARM_REG_R2),a.uc.reg_read(UC_ARM_REG_R3)]
-            output.append(fmt % tuple(args[:fmt.count('%d')]))
+            nargs = fmt.count('%d') + fmt.count('%u')
+            output.append(fmt % tuple(args[:nargs]))
             a.uc.reg_write(UC_ARM_REG_R0,len(output[-1]))
         a.calls={0x08034804:printf,0x080327a8:lambda a:a.uc.reg_write(UC_ARM_REG_R0,0)}
         for n in (1,2,3,4,5,25,80,1279,1280):

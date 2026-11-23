@@ -52,17 +52,21 @@ density_prepare:
     beq 2f
     str r0, [r3, #4]
     movs r2, #4
-    ldr r1, =MOD
-    ldrb r1, [r1, #16]
-    cmp r1, #1
-    bne 3f
     ldr r1, =0x20022108
     ldr r1, [r1]
     cbz r1, 3f
+    ldr r1, =MOD
+    ldrb r0, [r1, #234]            @ tape_sos: dryk 2 forces the tape write head
+    cmp r0, #2
+    beq 6f
+    ldrb r1, [r1, #16]
+    cmp r1, #1
+    bne 3f
     ldr r1, =SETTINGS
     ldrb r0, [r1, #4]
     cmp r0, #1
     bne 3f
+6:  ldr r1, =SETTINGS
     ldrb r0, [r1, #9]
     cbz r0, 3f
     movs r2, #2                    @ honor the tape Morph cap with a voice limit

@@ -113,3 +113,56 @@ unsigned preset_feedback_effect(unsigned passthrough) {
 }
 
 #include "preset_sos.c.inc"
+
+/* Published only while a dryk 2 / dlen 1 take is replacing the last splice.
+ * This uses the unused second half of tape_sos's reserved warble arena.
+ * Keep the field order aligned with the audio callback in dry_length.inc. */
+typedef struct {
+    unsigned index, start, old_end, next, limit;
+} Replacement;
+#define REPLACEMENT ((volatile Replacement *)0x2002a720)
+#define RECORD_WORD(addr) (*(volatile unsigned *)(addr))
+#define WRITE_HEAD RECORD_WORD(0x2002210c)
+#define REEL_CAPACITY RECORD_WORD(0x20021ca4)
+#define SPLICE_COUNT RECORD_WORD(0x2002208c)
+#define RECORD_SPLICE RECORD_WORD(0x20022114)
+#define SPLICE_MARKERS ((volatile unsigned *)0x2002215c)
+
+unsigned dry_length_start(unsigned stock_start) {
+    REPLACEMENT->index = 0;
+    if (PRESET_U8(0x2002a61b) != 1 || PRESET_U8(0x2002a0ea) != 2 ||
+        RECORD_WORD(0x2002a0ec) != 0 || !RECORD_WORD(0x20022108))
+        return stock_start;
+    /* 0 retention is sampled from the effective S.O.S. control once,
+     * including normal pot endpoint tolerance, modulation and preset pickup. */
+    unsigned index = RECORD_SPLICE;
+    if (!index || index > 300 || index != SPLICE_COUNT) return stock_start;
+    unsigned start = SPLICE_MARKERS[index-1], end = SPLICE_MARKERS[index];
+    unsigned limit = REEL_CAPACITY;
+    if (start >= end || end > limit || limit > 0x800000u) return stock_start;
+    REPLACEMENT->start = start;
+    REPLACEMENT->old_end = end;
+    REPLACEMENT->limit = limit;
+    WRITE_HEAD = REPLACEMENT->next = start;
+    RECORD_WORD(0x200213b4) = 0;      /* native raw recorder clears BUSY */
+    REPLACEMENT->index = index;
+    PRESET_U8(0x2002a038) = 3;         /* select direct write in the start block */
+    return start;
+}
+
+void dry_length_finish(void) {
+    unsigned index = REPLACEMENT->index;
+    unsigned next = REPLACEMENT->next;
+    REPLACEMENT->index = 0;
+    PRESET_U8(0x2002a038) = 0;
+    if (!index || index > 300 || index != RECORD_SPLICE || index != SPLICE_COUNT ||
+        REPLACEMENT->start != SPLICE_MARKERS[index-1] ||
+        REPLACEMENT->old_end != SPLICE_MARKERS[index] ||
+        REPLACEMENT->limit != REEL_CAPACITY || next > REEL_CAPACITY ||
+        next <= REPLACEMENT->old_end) return;
+    SPLICE_MARKERS[index] = next;
+    /* Mirror mg204's marker-change notification. Native record stop already
+     * invalidates the control caches and schedules the full stereo WAV save. */
+    RECORD_WORD(0x20021df4) = 0x3f8ccccd; /* Organize previous sample = 1.1 */
+    RECORD_WORD(0x20022074) |= 0x20;
+}

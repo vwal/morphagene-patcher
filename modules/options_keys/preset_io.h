@@ -6,6 +6,8 @@
 #define PRESET_IO_H
 #include <stdint.h>
 #include "../preset_recall/preset.h"
+#define DRYK_ADDRESS 0x2002a61au
+#define DLEN_ADDRESS 0x2002a61bu
 typedef struct {
     uint32_t mask, values[PRESET_COUNT], ready;
     uint32_t scan_state, parse_mode; /* normal fgets logical-line tracking */
@@ -16,6 +18,17 @@ _Static_assert(sizeof(PresetStage) == 64, "preset stage allocation");
 
 static inline int preset_space(char c) {
     return c == ' ' || c == '\t' || c == '\r';
+}
+/* Both readers accept exactly one mode digit, including the writer's comment. */
+static inline int mode_digit(const char *p, unsigned max, uint32_t *value) {
+    if (!preset_space(*p)) return 0;
+    while (preset_space(*p)) ++p;
+    if ((unsigned)(*p - '0') > max) return 0;
+    unsigned mode = (unsigned)(*p++ - '0');
+    while (preset_space(*p)) ++p;
+    if (*p && *p != '\n' && !(p[0] == '/' && p[1] == '/')) return 0;
+    *value = mode;
+    return 1;
 }
 static inline int preset_key(const char *p) {
     static const char keys[PRESET_COUNT][5] = {"mpos", "gpos", "spos", "splc",

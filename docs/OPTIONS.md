@@ -1,6 +1,6 @@
 # Settings (`options.txt`)
 
-**mg204+c3** fixes a settings-file read error that could change the Varispeed layout on a normal mount or at startup. See [the c3 release guide](RELEASE_MG204_C3.md).
+**mg204+c4** adds wet-only output for send/return use and a choice of fixed or extending overdubs. The previous **mg204+c3** fixed a settings-file read error that could change the Varispeed layout on a normal mount or at startup. See [the c3 release guide](RELEASE_MG204_C3.md).
 
 The Morphagene keeps its settings in `options.txt` at the root of the SD card.
 Normal mounting reads the file and then writes it back, including at power-up.
@@ -25,8 +25,26 @@ check it again. Normal mounting and firmware options saves add `dstr` back;
 review the file again before using it as a preserve-density card.
 
 Leave the file's **first line** as it is; the Morphagene keeps its own state
-there. Both editor and module rewrites add `// firmware version 204+c3` as a
-comment after it. This identifies extended firmware, not stock mg204.
+there. Both editors and the module write
+`// firmware version 204+c4` on a comment line below it.
+
+For a settings-only reload, include one `dryk` line to choose the new routing. Include `dlen 0` or `dlen 1` to select the overdub length behavior. Omitting either setting preserves its live value.
+A duplicate or malformed value rejects the entire live settings change. Each
+setting defaults to 0 on power-up. In mode 2, fixed-length overdubs use the tape
+head with fresh input at normal level, independent of `tape`, `inop` and
+`fbkp`. Varispeed, Gene Size and Slide determine the tape head's travel.
+For full-splice passes, use forward 1× and Gene Size fully CCW.
+
+With `dryk 2` and `dlen 1`, the firmware checks S.O.S. when recording starts.
+On the last or only splice, its zero-feedback zone (roughly the lowest 4.5% of
+the effective knob/CV reading, including a recalled S.O.S. preset) selects one
+continuous replacement. Fresh stereo input records forward at 1× from the
+beginning of that splice, independent of Varispeed, Slide and Gene Size. A
+15-second take over a 10-second splice gives 15 seconds of fresh audio. A
+shorter take leaves its original length and remaining tail. A take started on
+an earlier splice or above the zero-feedback zone uses fixed-length overdub
+feedback. Moving S.O.S. during a take keeps the recording mode selected at
+its start.
 
 ## The settings
 
@@ -48,11 +66,13 @@ or crosses the recalled position; secondary effects use their SHIFT gesture.
 | `spos` | Integer 0–100 | Omitted | Recall virtual Slide position with pickup |
 | `splc` | Integer 1–300 | Omitted | Recall splice selection, obeying omod; above count selects the last while retaining the configured number |
 | `vpos` | Integer 0–100 | Omitted | Calibrated Varispeed position before vsop/vrng/vctr; 50% is +1x with vctr 1 |
-| `sosp` | Integer 0–100 | Omitted | Main S.O.S. mix: 0% input, 100% Gene playback; separate from feedback |
+| `dryk` | 0, 1, 2 | 0 | 0 keeps c3 routing. 1 sends only Gene playback to both outputs and keeps normal recording controls. 2 sends only Gene playback and assigns primary S.O.S. to tape retention. |
+| `dlen` | 0, 1 | 0 | 0 keeps existing-splice overdubs at their current length. With 1 and `dryk 2`, start a take at fully CCW on the last or only splice to replace it from the beginning. Holding REC beyond the old end extends the splice. A shorter take keeps the previous length and tail. Earlier splices retain their fixed windows. |
+| `sosp` | Integer 0–100 | Omitted | Primary S.O.S. position. In modes 0 and 1, 0% selects input and 100% selects playback for the normal S.O.S. mix. In mode 2, 0% replaces each pass and 100% keeps it while recording fresh input. |
 | `srrp` | Integer 0–100 | Omitted | SHIFT + Morph SRR position: 0 off, higher stronger; fxsl 1 |
 | `wrbp` | Integer 0–100 | Omitted | SHIFT + Morph warble position: 0 off, higher stronger; fxsl 2; separate bank from SRR |
 | `jitp` | Integer 0–100 | Omitted | SHIFT + Slide jitter/Turing spread: 0 off, higher wider scatter |
-| `fbkp` | Integer 0–100 | Omitted | SHIFT + S.O.S. feedback: 0 none, 100 maximum; tape selects mode |
+| `fbkp` | Integer 0–100 | Omitted | SHIFT + S.O.S. feedback for dryk 0/1. At 0% nothing is retained. At 100% retention is maximal. The tape option selects the recording mode. |
 | `evop` | Integer 0–100 | Omitted | SHIFT + Organize Turing evolution: 0 locked, 100 fresh; nonlinear curve |
 | `trst` | 1, 2, 3, 4, 6, 8, 12, 16 | Omitted | Turing Genes per step; independent density gesture keeps priority |
 | `vuni` | 0, 1 | 0 | Hold SHIFT alone at least 0.5 seconds and release to recall forward +1× with automatic pickup. Use with SHIFT input unpatched; other controls cancel |

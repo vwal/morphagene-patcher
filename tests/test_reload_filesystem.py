@@ -115,14 +115,16 @@ class ReloadFilesystem(unittest.TestCase):
 
     def recording_write(self,fat32):
         a,d=self.setup_disk(fat32=fat32)
-        d.file(0,b'OPTIONS TXT',d.options_cluster,b'9 0 0\ndens 1\ndstr 0.1\n')
+        d.file(0,b'OPTIONS TXT',d.options_cluster,b'9 0 0\ndens 1\ndstr 0.1\ndryk 2\ndlen 1\n')
         before=dict(d.sectors)
         preserved={addr:bytes(a.uc.mem_read(addr,n)) for addr,n in
                    [(0x20001040,4),(0x20001064,4),(0x20021E64,0x400),(0xD0000000,0x1000)]}
         self.assertEqual(call(a,'reload_service',FS,LIVE),1)
         self.assertEqual(d.sectors,before);self.assertEqual(d.writes,[])
         self.assertEqual(a.get(CARD),0)
+        self.assertEqual(a.uc.mem_read(0x2002a61a,2), b'\x00\x00')
         call(a,'reload_commit')
+        self.assertEqual(a.uc.mem_read(0x2002a61a,2), b'\x02\x01')
         self.assertEqual(a.get(CARD),1);self.assertEqual(a.get(LIVE+8),96)
         self.assertEqual(a.get(LIVE),FS)
         self.assertEqual(a.get(0x2002a808),480000)

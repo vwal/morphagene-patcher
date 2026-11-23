@@ -1,5 +1,7 @@
 # Using the mods
 
+For overdubbing and loop recording, pages 12–13 of the full guide explain how `dens`, `dstr`, `inop` and `dryk` interact. The examples cover a clean phrase, recording overlapping Genes into a new splice, and fading layers on a wet-only mixer return. [US Letter](../web/morphagene-manual-letter.pdf#page=12) · [A4](../web/morphagene-manual-a4.pdf#page=12)
+
 See the [c3 update guide](RELEASE_MG204_C3.md) for the Varispeed fix and [settings reference](OPTIONS.md) for trusted-card reload and the switchable `mlop` option. Armed insertion and changed options were confirmed on hardware without an audible playback interruption.
 
 Most performance gestures use **SHIFT**: hold SHIFT and turn a knob. When you

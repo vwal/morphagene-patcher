@@ -1,5 +1,12 @@
 # Version history
 
+## mg204+c4 — 2026-11-22
+
+- Added wet-only output for mixer sends. With `dryk 1`, recording follows the existing controls. With `dryk 2`, fresh input records at every S.O.S. setting and S.O.S. controls how much previous audio survives the overdub. The default is `dryk 0`.
+- Fixed-length overdubs retain the loop length by default. With `dryk 2` and `dlen 1`, starting REC at fully counterclockwise S.O.S. on the last or only splice records a replacement from its start. Longer takes extend it and shorter takes preserve the tail.
+- Added WAV and options-file drop areas, a downloadable single-file offline editor, all 12 stock settings alongside 32 enhancement controls, optional preset labels and reset with confirmation.
+- Updated the Letter and A4 guides and quick cards. Rewritten options files now carry `// firmware version 204+c4`.
+
 ## mg204+c3 — 2026-11-21
 
 - Fixed normal card mounts and startup changing `vsop 0` or `vsop 1` to

@@ -103,7 +103,8 @@ other steps show the stock in-between colours.
 | P6 | 0x08027bde | block | Glide coefficient 1 while locked |
 
 **State:** MOD +0..+15, +92..+93, +208..+211. When the "SHFT" magic is
-missing, P1 zeroes MOD +4..+239.
+missing, P1 zeroes MOD +4..+231. P7 and P10 initialize +232..+239 on the
+audio side, so a first timer tick cannot change the dry-kill routing mid-block.
 
 ## Verification (emulator)
 

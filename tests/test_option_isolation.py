@@ -36,6 +36,7 @@ OPTIONS = (
     ('dens', 0x2002a607, 1, SWITCH), ('vqnt', 0x2002a610, 1, SWITCH),
     ('mlop', 0x2002a611, 1, SWITCH), ('dstr', 0x2002a614, 4, range(1, 1281)),
     ('vuni', 0x2002a618, 1, SWITCH), ('vctr', 0x2002a619, 1, SWITCH),
+    ('dryk', 0x2002a61a, 1, range(3)), ('dlen', 0x2002a61b, 1, SWITCH),
 )
 PRESETS = tuple((key, preset.value_addr(i), 4,
                  {'splc': range(1, 301), 'trst': preset.STEPS}.get(key, range(101)))
@@ -80,8 +81,8 @@ def touching(writes, watched_bytes):
 
 def live_slots():
     slots = {}
-    # The last four settings were added after the original 26-word array.
-    offsets = {'mlop': 232, 'dstr': 236, 'vuni': 244, 'vctr': 248}
+    # These settings were added after the original 26-word array.
+    offsets = {'mlop': 232, 'dstr': 236, 'vuni': 244, 'vctr': 248, 'dryk': 252, 'dlen': 216}
     for i, (key, *_) in enumerate(OPTIONS):
         slot = live.STATE + offsets[key] if key in offsets else live.VALUES + 4*i
         slots[key] = (slot, live.SEEN, 1 << i)

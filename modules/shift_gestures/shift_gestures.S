@@ -14,7 +14,7 @@
 @   +14 release_vs u16 Varispeed reading at SHIFT release (0xffff while held)
 @   +16..+127 reserved for sos_feedback.S and tape_sos.S (zeroed here)
 @   +208 ref_gs u16 / +210 ref_slide u16  snapshots for gene_shape.S (owners 4, 5)
-@   +128..+239 zeroed here too; +240 is the options.txt settings block
+@   +128..+231 zeroed here too; P7/P10 own +232..+239 on every audio block
 @   +128 ref_org u16 (Organize at session start), +130 Organize held u8
 
     .syntax unified
@@ -123,11 +123,11 @@ unity_buttons_done:
     cmp     r1, r0
     beq     1f
     str     r0, [r4]
-    movs    r0, #0                      @ zero +4..+239 (tape_sos / gene_shape fields too)
+    movs    r0, #0                      @ zero +4..+231 (tape_sos / gene_shape fields too)
     movs    r1, #4
 0:  str     r0, [r4, r1]
     adds    r1, r1, #4
-    cmp     r1, #240
+    cmp     r1, #232                    @ leave the current audio block's routing/gain intact
     blt     0b
 1:  ldr     r1, =STATE
     ldr     r1, [r1]

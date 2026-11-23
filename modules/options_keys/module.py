@@ -2,7 +2,7 @@ from mgmod.module import Module
 
 MODULE = Module(
     name='options_keys',
-    title='Mod settings in options.txt (vrng, vqnt, dens, dstr, tape, octl, scal, fxsl, cpul, mcap, sldm, root, tlen, ingn, mono)',
+    title='Mod settings in options.txt (vrng, vqnt, dens, dstr, tape, octl, scal, fxsl, cpul, mcap, sldm, root, tlen, ingn, mono, dryk, dlen)',
     status='emulated',
     source='options_keys.S', entry='opt_parse',
     requires=['sd_updater'],
@@ -20,7 +20,7 @@ MODULE = Module(
     settings=[4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
     ram=[(0x2002A600, 0x2002A603),                             # ingn: when the pending gain was first seen
          (0x2002A604, 0x2002A607),                            # scal mask, vrng, dens
-         (0x2002A610, 0x2002A611), (0x2002A614, 0x2002A619),
+         (0x2002A610, 0x2002A611), (0x2002A614, 0x2002A61B),
          (0x2002A660, 0x2002A6FF)],  # optional preset config and runtime lanes
-    options_keys=['ingn', 'scal', 'mlop', 'dstr', 'mpos', 'gpos', 'spos', 'splc', 'srrp', 'jitp', 'wrbp', 'fbkp', 'evop', 'trst', 'sosp', 'vpos'],
+    options_keys=['ingn', 'scal', 'dryk', 'dlen', 'mlop', 'dstr', 'mpos', 'gpos', 'spos', 'splc', 'srrp', 'jitp', 'wrbp', 'fbkp', 'evop', 'trst', 'sosp', 'vpos'],
 )

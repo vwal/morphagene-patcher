@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="$policy">
+  <title>Morphagene options editor · $version</title>
+  <style>$styles</style>
+  $scripts
+</head>
+<body class="offline-editor">
+  <a class="skip-link" href="#options">Skip to options editor</a>
+  <div class="page-shell">
+    <header class="site-header">
+      <span class="brand">$brand_mark<span>Morphagene <span class="brand-subtitle">/ $version</span></span></span>
+      $theme_toggle
+    </header>
+    <main id="options">
+      <h1>Offline options editor</h1>
+      <p class="offline-instructions">Open the <code>options.txt</code> from your Morphagene’s SD card. After editing, download the updated file and use it to replace <code>options.txt</code> at the card root.</p>
+      <noscript><p>Enable JavaScript in your browser to edit and save your settings.</p></noscript>
+      <div class="offline-file">$file_picker</div>
+      <div class="offline-shortcuts">
+        <details>
+          <summary>Jump to a group</summary>
+          <nav aria-label="Setting groups">$group_links</nav>
+        </details>
+        <a href="#options-note">Review generated settings ↓</a>
+      </div>
+      <details class="offline-help">
+        <summary>How preset recall works</summary>
+        $preset_help_body
+      </details>
+      $fields_and_save
+    </main>
+    <footer>
+      <p>© 2026 vwal · Built on Briskcat’s Morphagene mods. Independent customization. Not an official Make Noise release.</p>
+      <details class="offline-license"><summary>License and credits</summary><pre>$license_text</pre></details>
+    </footer>
+  </div>
+</body>
+</html>

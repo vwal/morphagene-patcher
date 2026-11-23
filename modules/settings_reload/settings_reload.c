@@ -32,11 +32,11 @@ typedef struct {
     uint32_t seen, values[26];
     uint32_t valid, reel, reels, data_start, size, cluster, position;
     uint32_t cid[4], dir_sector, dir_offset;
-    uint32_t reserved[8], snapshot_ready, live_file, scanning;
+    uint32_t reserved[7], dlen_value, snapshot_ready, live_file, scanning;
     uint32_t morph_loop_value; /* separate slot preserves the assembly state ABI */
     uint32_t density_start_value;
     uint32_t mount_ready; /* 1: owned fresh mount; 2: normal load in progress */
-    uint32_t unity_value, center_value;
+    uint32_t unity_value, center_value, dryk_value;
 } Reload;
 #define S ((volatile Reload *)0x2002a820)
 _Static_assert(sizeof(Reload) <= 0x100, "reload state overlaps FIL");
@@ -193,8 +193,24 @@ static const Option options[] = {
     {KEY('d','s','t','r'),0x2002a614,0,0,4},
     {KEY('v','u','n','i'),0x2002a618,0,1,1},
     {KEY('v','c','t','r'),0x2002a619,0,1,1},
+    {KEY('d','r','y','k'),DRYK_ADDRESS,0,2,1},
+    {KEY('d','l','e','n'),DLEN_ADDRESS,0,1,1},
 };
-_Static_assert(sizeof(options)/sizeof(options[0]) == 30, "seen mask/table mismatch");
+enum { OPTION_COUNT = sizeof(options)/sizeof(options[0]) };
+_Static_assert(OPTION_COUNT <= 32, "too many options for seen mask");
+
+/* Keep the original 26 staging words and assembly-visible state in place. */
+static volatile uint32_t *staged_option(unsigned i) {
+    switch (i) {
+        case 26: return &S->morph_loop_value;
+        case 27: return &S->density_start_value;
+        case 28: return &S->unity_value;
+        case 29: return &S->center_value;
+        case 30: return &S->dryk_value;
+        case 31: return &S->dlen_value;
+        default: return &S->values[i];
+    }
+}
 
 static int ws(char c) { return c == ' ' || c == '\t' || c == '\r'; }
 static const char *space(const char *p) { while (ws(*p)) ++p; return p; }
@@ -279,21 +295,19 @@ int reload_parse_line(const char *line) {
         key |= (uint32_t)(uint8_t)p[i] << (8*i);
     }
     unsigned i;
-    for (i=0; i<30 && options[i].key != key; ++i) {}
-    if (i == 30) return 1;
+    for (i=0; i<OPTION_COUNT && options[i].key != key; ++i) {}
+    if (i == OPTION_COUNT) return 1;
     if (!ws(p[4]) || (S->seen & (1u<<i))) return 0;
-    p = space(p+4);
+    const char *after_key = p + 4;
+    p = space(after_key);
     uint32_t n;
     if (i >= 9 && i <= 11) { if (!ratio(p, &n)) return 0; }
     else if (i == 27) { if (!density_start(p, &n)) return 0; }
     else if (i == 22) { if (!scale(p, &n)) return 0; }
+    else if (i >= 30) { if (!mode_digit(after_key, options[i].max, &n)) return 0; }
     else if (!integer(&p, &n) || *space(p) ||
              n < options[i].min || n > options[i].max) return 0;
-    if (i == 29) S->center_value = n;
-    else if (i == 28) S->unity_value = n;
-    else if (i == 27) S->density_start_value = n;
-    else if (i == 26) S->morph_loop_value = n;
-    else S->values[i] = n;
+    *staged_option(i) = n;
     S->seen |= 1u<<i;
     return 1;
 }
@@ -504,11 +518,9 @@ void reload_commit(void) {
         return;
     }
     if (!quiet()) { unlock(primask); return; }
-    for (unsigned i=0; i<30; ++i) {
+    for (unsigned i=0; i<OPTION_COUNT; ++i) {
         if (!(S->seen & (1u<<i))) continue;
-        uint32_t address = options[i].address, value = i == 29 ? S->center_value :
-            i == 28 ? S->unity_value : i == 27 ? S->density_start_value :
-            i == 26 ? S->morph_loop_value : S->values[i];
+        uint32_t address = options[i].address, value = *staged_option(i);
         uint32_t previous = options[i].width == 4 ? U32(address) :
                             options[i].width == 2 ? U16(address) : U8(address);
         if (previous == value && i != 21) continue;

@@ -12,8 +12,9 @@ const element=id=>elements[id]??={value:'',dataset:{},hidden:false,
  appendChild(node){if(id==='remix'&&!this.value)this.value=node.value;}};
 const ctx=vm.createContext({TextEncoder,Uint8Array,Int16Array,DataView,ArrayBuffer,crypto:webcrypto,setTimeout,
  window:{},document:{addEventListener:(event,fn)=>{handlers[event]=fn},getElementById:element,createElement:()=>({})}});
-vm.runInContext(fs.readFileSync(root+'/web/remixes.js','utf8'),ctx);
-vm.runInContext(fs.readFileSync(root+'/web/app.js','utf8'),ctx);
+for (const name of ['remixes.js', 'page.js', 'app.js']) {
+  vm.runInContext(fs.readFileSync(path.join(root,'web',name),'utf8'),ctx);
+}
 assert.ok(process.env.MGMOD_FIRMWARE && process.env.MGMOD_WAV,
  'Set MGMOD_FIRMWARE to the official decoded raw image and MGMOD_WAV to the official mg204.wav. Build full into MGMOD_BUILD_DIR or build/release first.');
 const raw=fs.readFileSync(process.env.MGMOD_FIRMWARE);
@@ -25,7 +26,7 @@ assert.deepEqual(Buffer.from(decoded),raw);
 ctx.decoded=decoded;vm.runInContext('stockImage=decoded',ctx);
 const image=await vm.runInContext('buildRemix(window.MGMOD_REMIXES[0])',ctx);
 assert.deepEqual(Buffer.from(image),fs.readFileSync(path.join(buildDir, 'mg204-full.bin')));
-assert.equal(release.release, 'mg204+c3');
+assert.equal(release.release, 'mg204+c4');
 assert.equal(release.raw_image_bytes, image.length);
 assert.equal(release.raw_image_sha256, Buffer.from(await webcrypto.subtle.digest('SHA-256',image)).toString('hex'));
 ctx.built=image;
@@ -40,14 +41,24 @@ assert.equal(ctx.saved.length,2);
 assert.equal(ctx.saved[0].name,'mgmod.bin');
 assert.equal(ctx.saved[0].name,release.sd_download);
 assert.deepEqual(Buffer.from(ctx.saved[0].bytes),fs.readFileSync(path.join(buildDir, 'mgmod.bin')));
-assert.equal(ctx.saved[1].name,'mg204+c3.wav');
+assert.equal(ctx.saved[1].name,'mg204+c4.wav');
 assert.equal(ctx.saved[1].name,release.wav_download);
 assert.equal(ctx.saved[1].type,'audio/wav');
 fs.writeFileSync(path.join(buildDir, 'browser.wav'),Buffer.from(ctx.saved[1].bytes));
 const corrupted=Buffer.from(official);corrupted.fill(0,0,12);
 ctx.file={name:'mg204.wav',arrayBuffer:async()=>corrupted.buffer.slice(corrupted.byteOffset,corrupted.byteOffset+corrupted.byteLength)};
 await assert.rejects(()=>vm.runInContext('readFirmware(file)',ctx));
+// Selecting another file while a card reader is busy must leave the newest validation in control.
+const pickFirmware = file => handlers['firmware:change']({target:{files:[file]}});
+const pending = Promise.withResolvers();
+const stale = pickFirmware({name:'older.wav', arrayBuffer:() => pending.promise});
+await pickFirmware(ctx.file);
+assert.equal(elements['firmware-status'].dataset.kind, 'error');
+pending.resolve(official.buffer.slice(official.byteOffset,official.byteOffset+official.byteLength));
+await stale;
+assert.equal(elements['build-buttons'].hidden, true);
+assert.equal(vm.runInContext('stockImage',ctx), null);
 const bad=Buffer.from(raw);bad[1234]^=1;ctx.bad=bad;
 vm.runInContext('stockImage=bad',ctx);
 await assert.rejects(()=>vm.runInContext('buildRemix(window.MGMOD_REMIXES[0])',ctx));
-console.log('PASS official WAV decode, patched raw/SD equivalence, mg204+c3 download handlers, audio encoding, corrupted input rejection');
+console.log('PASS official WAV decode, patched raw/SD equivalence, mg204+c4 download handlers, audio encoding, corrupted input rejection');

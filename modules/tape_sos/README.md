@@ -75,9 +75,15 @@ dead zone as SRR.
 | WA / WB | 0x080291d8 / 0x0802a4bc | sample, while recording | Paths A / B: buffer the frame for the tape engine (it writes once per block) |
 | L1 | 0x08024af8 | TIM2 | Varispeed LED: the clean target while warbling |
 
-**State:** MOD +16..+91, +94..+127, +144..+207, +232..+233. The tape engine is
+**State:** MOD +16..+91, +94..+127, +144..+207, +232..+234 and +236..+239. The tape engine is
 copied to SRAM at 0x2002A100. Warble state: 0x2002A700 (cleared by
 sd_updater at boot).
+
+In mg204+c4, P7 snapshots `dryk` at +234. At value 2,
+the main S.O.S. position after preset pickup supplies tape retention at +236.
+The existing feedback latch and gain remain independent. New splices still
+use the linear stock writer and capture fresh input at its normal level.
+The additional dry_monitor module selects the stereo Gene bus at the outputs.
 
 ## CPU
 

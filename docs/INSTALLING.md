@@ -10,8 +10,8 @@ You need:
 
 Pick one:
 
-- **Web builder (easiest):** open the [mg204+c3 patcher](https://vwal.github.io/morphagene-patcher/), choose
-  your `mg204.wav`, then download **mg204+c3.wav** for the first install and
+- **Web builder (easiest):** open the [mg204+c4 patcher](https://vwal.github.io/morphagene-patcher/), drop or choose
+  your `mg204.wav`, then download **mg204+c4.wav** for the first install and
   `mgmod.bin` for later updates.
 - **Command line:**
 
