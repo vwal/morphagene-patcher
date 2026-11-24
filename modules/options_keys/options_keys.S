@@ -663,7 +663,7 @@ fmt_tlen: .asciz "tlen %d //Turing loop length in steps, 1-16\n"
     .align 2
 fmt_ingn: .asciz "ingn %d //Input gain 0-3 (REC held + SHIFT taps); saved automatically a few seconds after a change\n"
     .align 2
-fmt_dens: .asciz "dens %d //Independent Gene density: 0 off, 1 SHIFT+Gene Size = 0.1-128 Genes/sec (takes priority over Turing rate); startup rate from dstr; bypassed with clock\n"
+fmt_dens: .asciz "dens %d //SHIFT+Gene Size: CCW stock timing, then 0.1-128 Hz.\n"
     .align 2
 fmt_vrng: .asciz "vrng %d //0 stock, 1 +/-4x bidirectional or 0-8x forward\n"
     .align 2
@@ -754,5 +754,5 @@ opt_version:
     addw r0, sp, #1396
     b.w VERSION_RETURN
 fmt_version:
-    .asciz "// firmware version 204+c4\n"
-    .space 34 - (. - fmt_version), 0   @ preserve the hardware-tested image layout
+    .asciz "// firmware version 204+c5\n"
+    .space 8   @ Keep the literal pool and following code at the hardware-tested addresses.

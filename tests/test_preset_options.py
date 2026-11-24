@@ -85,7 +85,7 @@ class PresetOptionHooks(unittest.TestCase):
         a.uc.reg_write(UC_ARM_REG_APSR,0xA8000000)
         a.run('opt_version',[0x080243c2])
         addr=a.uc.reg_read(UC_ARM_REG_R1)
-        header = b'// firmware version 204+c4\n\0'
+        header = b'// firmware version 204+c5\n\0'
         self.assertEqual(bytes(a.uc.mem_read(addr,len(header))),header)
         self.assertEqual(a.uc.reg_read(UC_ARM_REG_R0),SP+1396)
         self.assertEqual(a.uc.reg_read(UC_ARM_REG_SP),SP)

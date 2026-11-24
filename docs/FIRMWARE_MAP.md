@@ -196,7 +196,10 @@ reads stall.
 explicitly defaulted to 0 by the updater and covered by the full BSS reset.
 mg204+c4 uses the next two u8 slots, 0x2002A61A
 (`dryk`, output and feedback mode) and 0x2002A61B (`dlen`, final-splice
-replacement length). Both also default to 0 on reset.
+replacement length). Both also default to 0 on reset. Development 10 adds
+mode 3 in the same dryk byte. Each audio block uses the main S.O.S. gain at
+MOD +236 for mode 2 tape retention or mode 3 rendered Gene feedback. Mode 3
+uses the native writer and all available Gene voices.
 `shift_gestures` owns 0x2002A620..0x2002A65F (64 bytes): phase, start sample,
 six ADC snapshots, card state, mount state, audio request, held-unity flag,
 previous calibrated input, mapping configuration, force-glide and override.

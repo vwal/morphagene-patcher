@@ -17,7 +17,7 @@ class Audio:
         self.call(0x8026730)
         a.uc.hook_del(h)
         # Calibration/state for one loaded stereo splice, no clock, Play high.
-        for adr,n in {0x2002208c:1,0x2002215c:0,0x20022160:48000,0x20021dec:1,
+        for adr,n in {0x2002208c:1,0x2002215c:0,0x20022160:48000,0x20021dec:bits(1.),  # settled full-wet S.O.S. coefficient
             0x20001054:1,0x20021410:bits(1/4095),0x200012e4:1,0x2002205c:0,0x20021cb8:0,0x200220e0:bits(1),
             0x200220e8:bits(1),0x20021c68:4095,0x20021c6c:420,0x20021c74:3500,
             0x20021c78:0,0x20021c7c:2000,0x20022074:0,0x20021fb8+4:bits(48000),

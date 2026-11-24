@@ -8,7 +8,7 @@ for (const name of ['page.js', 'options.js']) {
   vm.runInContext(fs.readFileSync(new URL('../web/'+name,import.meta.url),'utf8'),context);
 }
 handlers.DOMContentLoaded();
-assert.match(elements['options-text'].value,/^\/\/ firmware version 204\+c4\n/);
+assert.match(elements['options-text'].value,/^\/\/ firmware version 204\+c5\n/);
 assert.equal(elements['recall-dstr'].checked,true);
 assert.equal(elements['opt-dstr'].disabled,false);
 assert.match(elements['options-text'].value,/^dstr 8 /m);
@@ -51,7 +51,7 @@ out=await load('6 0 0\nvqnt 2\n');assert.match(out,/^vqnt 0$/m);
 await load('6 0 0\nvqnt 1\n');out=await load('6 0 0\n');assert.match(out,/^vqnt 0 /m);
 await load(null);assert.equal(elements['opt-root'].value,'50');
 out=await load('6 46345 0\n// firmware version 204+c2\n// firmware version 155b\nvsop 1\n');
-assert.ok(out.startsWith('6 46345 0\n// firmware version 204+c4\n'));
+assert.ok(out.startsWith('6 46345 0\n// firmware version 204+c5\n'));
 assert.equal((out.match(/^\/\/ firmware version /gm)||[]).length,1);
 out=await load(out);assert.equal((out.match(/^\/\/ firmware version /gm)||[]).length,1);
 assert.match(out,/^vsop 1$/m);
@@ -286,7 +286,7 @@ for(const key of ['wrbp','jitp','evop','trst','sosp','vpos','splc'])
 assert.deepEqual(activeKey(out,'splc'),['splc 300']);
 console.log('PASS independent recalls: effect modes, feedback versus main mix, Turing priority and unchanged configured splice number');
 
-for (const n of [0,1,2]) {
+for (const n of [0,1,2,3]) {
   out=await load(`6 0 0\ndryk ${n}\n`);
   assert.equal(elements['opt-dryk'].value,String(n));
   handlers['opt-dryk:change']();
@@ -295,12 +295,28 @@ for (const n of [0,1,2]) {
   assert.deepEqual(activeKey(saved,'dryk'),[`dryk ${n}`]);
   assert.equal(await load(saved),saved);
 }
-for (const bad of ['3','02','-1','1.5','1 trailing','']) {
+for (const bad of ['4','9','02','-1','1.5','1 trailing','']) {
   out=await load(`6 0 0\ndryk ${bad}\n`);
   assert.equal(elements['opt-dryk'].value,'0');
 }
 out=await load('6 0 0\n');
 assert.match(out,/^dryk 0 \/\//m);
+
+out=await load('6 0 0\n// firmware version 204+c4\ndryk 2 //0 normal, 1 wet only, 2 wet with S.O.S. feedback.\nsosp 70 //Primary S.O.S. 0-100. In mode 2 this sets retention.\n');
+elements['opt-dryk'].value='3';
+handlers['opt-dryk:change']();
+assert.match(elements['options-text'].value,/^dryk 3 \/\/0 normal, 1 wet, 2 tape feedback, 3 Gene feedback\.$/m);
+assert.match(elements['options-text'].value,/^sosp 70 \/\/Primary S\.O\.S\. position for the selected sosc curve\.$/m);
+
+for (const [raw,expected] of [['0','0'],['1','1'],['2','2'],['3','0'],['01','0']]) {
+  out=await load('6 0 0\nsosc '+raw+'\n');
+  assert.equal(elements['opt-sosc'].value,expected);
+}
+await load('6 0 0\ndryk 1\n');
+assert.equal(elements['opt-sosc'].value,'0');
+elements['opt-sosc'].value='2';
+handlers['opt-sosc:change']();
+assert.deepEqual(activeKey(elements['options-text'].value,'sosc').map(line=>line.split(' //')[0]),['sosc 2']);
 
 for(const key of ['vuni','vctr','dlen']) {
   for(const n of [0,1]) {
@@ -521,12 +537,13 @@ assert.match(html,/dens 1 takes priority over the Turing rate/);
 const content=JSON.parse(fs.readFileSync(new URL('../web/site-content.json',import.meta.url),'utf8'));
 assert.deepEqual(content.fields.map(field=>field[0]).sort(),Array.from(vm.runInContext('FIELDS',context)).sort());
 assert.match(html,/no extra flat zone is added/);
-assert.match(html,/Morphagene mg204\+c4/);
-assert.doesNotMatch(html,/EXPERIMENTAL BUILD|private patcher/i);
+assert.match(html,/Morphagene mg204\+c5/);
+assert.match(html,/mg204\+c5 · Public release/);
 for(const id of ['firmware','remix','build-card','build-wav']) assert.ok(htmlIds.includes(id));
-assert.match(html,/mg204\+c4\.wav/);
+assert.match(html,/mg204\+c5\.wav/);
 assert.match(html,/<details><summary>Version by version<\/summary>/);
 const history = html.match(/<section[^>]+id="versions"[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
+assert.match(history,/<h3>mg204\+c5\b/);
 assert.match(history,/<h3>mg204\+c4\b/);
 assert.match(history,/<h3>mg204\+c3\b/);
 assert.match(history,/<h3>mg204\+c2\b/);
@@ -534,7 +551,8 @@ assert.doesNotMatch(html,/<details[^>]*\bopen\b/);
 assert.match(html,/This project contains carefully tested AI-generated code\./);
 assert.match(html,/Independent customization\. Not an official Make Noise release\./);
 const order=content.fields.map(field=>field[0]);
-assert.equal(order.indexOf('dlen'),order.indexOf('dryk')+1);
+assert.equal(order.indexOf('sosc'),order.indexOf('dryk')+1);
+assert.equal(order.indexOf('dlen'),order.indexOf('sosc')+1);
 assert.equal(order.indexOf('mpos'),order.indexOf('mlop')+1);
 assert.equal(order.indexOf('gpos'),order.indexOf('gnsm')+1);
 assert.equal(order.indexOf('fbkp'),order.indexOf('tape')+1);
@@ -546,7 +564,7 @@ assert.match(html,/100% gives the shortest Genes/);
 assert.match(html,/Bidirectional — classic/);
 assert.match(html,/Bidirectional — V\/oct/);
 assert.match(html,/attenuverter carefully adjusted/);
-console.log('PASS released mg204+c4 editor: grouped controls, percentage guidance, version history, disclosures and patcher');
+console.log('PASS mg204+c5 editor: grouped controls, percentage guidance, version history, disclosures and patcher');
 
 // Release check: a stale standalone file can look correct while exporting
 // settings for earlier firmware. Both editions must ship the current editor.

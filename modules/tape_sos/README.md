@@ -79,13 +79,11 @@ dead zone as SRR.
 copied to SRAM at 0x2002A100. Warble state: 0x2002A700 (cleared by
 sd_updater at boot).
 
-In mg204+c4, P7 snapshots `dryk` at +234. At value 2,
-the main S.O.S. position after preset pickup supplies tape retention at +236.
-The existing feedback latch and gain remain independent. New splices still
-use the linear stock writer and capture fresh input at its normal level.
-The additional dry_monitor module selects the stereo Gene bus at the outputs.
+P7 snapshots the recording mode at +234, the existing gain at +236 and the incoming gain at +132. The S.O.S. preset and pickup run before this calculation. Both stereo audio paths use the same gain pair. The secondary feedback bank at +20 remains independent.
 
-## CPU
+Modes 0/1 use calibrated incoming audio and performed Genes for the ordinary mix. Mode 0 monitors the mix. Modes 1–3 monitor Genes. Mode 2 scales the incoming samples before the tape writer blends them with the stored audio. Mode 3 records the mixed Gene performance on a linear time base. On an empty reel, both paths bypass the mix and record full input. The latched extending take also records full input while it replaces the final splice.
+
+## Upstream CPU measurements
 
 At high Morph with short Genes, stock is already at its limit. Emulated
 instructions per block (Gene Size 3000, Morph 4000):
@@ -100,7 +98,7 @@ Tape dubbing reads every sample it writes. If high Morph glitches are a
 problem, use `fxsl 0` (no SRR) or `fxsl 2` (warble is cheaper), keep flash prefetch on (it always is)
 (cpu_meter), or lower `mcap`.
 
-## Verification (emulator)
+## Upstream verification (emulator)
 
 - **Mix paths.** Both paths compared with the stock firmware's mix, case by
   case:

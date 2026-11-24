@@ -1,3 +1,15 @@
+# mg204+c5 release validation
+
+The owner tested the dry-kill modes and stock-timing gesture on a Morphagene. A byte comparison against the tested Development 12 application found differences only in the options version comment and its padding. The module writer and both editors identify rewritten files with `// firmware version 204+c5`.
+
+- Both CLI build names reproduced the 201,728-byte application with Arm GNU 14.2.rel1. SHA-256 is `f6ce230987d415901f07f18984cc879440323e3ad4290149caccae5bd6e0fc5a`.
+- All 257 firmware tests passed locally with the stock firmware and private references. Coverage includes stereo recording sources, S.O.S. gain curves, whole-splice timing, settings reload and empty-reel card removal.
+- The browser SD download matched the CLI file byte for byte. Both the browser and CLI update WAVs decoded to the release application.
+- Editor tests covered 45 controls, 4,857 field/value cases and 10,615 wrapped chunks. Chrome exercised firmware and settings-file drops, reset confirmation, and settings import/export from a downloaded editor with network access disabled.
+- The 13-page guide and single-page quick card were rendered and checked in US Letter and A4. Each PDF includes the complete license.
+
+---
+
 # mg204+c4 release validation
 
 The owner tested the new recording modes on a Morphagene. The release image matches the tested revision byte for byte outside the fixed-size string that writes `// firmware version 204+c4` to `options.txt`.

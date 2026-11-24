@@ -23,7 +23,7 @@ class DryKillLiveAudio(unittest.TestCase):
             audio.blocks(200)
 
         slot, seen, mask = live_slots()['dryk']
-        for mode in (2, 1, 0, 1, 2, 0):
+        for mode in (2, 3, 1, 0, 3, 2, 1, 0):
             with self.subTest(mode=mode):
                 live.a.put(slot, mode)
                 live.a.put(seen, mask)

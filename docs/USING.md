@@ -1,6 +1,6 @@
 # Using the mods
 
-For overdubbing and loop recording, pages 12–13 of the full guide explain how `dens`, `dstr`, `inop` and `dryk` interact. The examples cover a clean phrase, recording overlapping Genes into a new splice, and fading layers on a wet-only mixer return. [US Letter](../web/morphagene-manual-letter.pdf#page=12) · [A4](../web/morphagene-manual-a4.pdf#page=12)
+For overdubbing and loop recording, pages 12–13 of the full guide explain how `dens`, `dstr`, `inop`, `dryk` and `sosc` interact. The examples cover a clean phrase, recording overlapping Genes into a new splice, and fading layers on a wet-only mixer return. [US Letter](../web/morphagene-manual-letter.pdf#page=12) · [A4](../web/morphagene-manual-a4.pdf#page=12)
 
 See the [c3 update guide](RELEASE_MG204_C3.md) for the Varispeed fix and [settings reference](OPTIONS.md) for trusted-card reload and the switchable `mlop` option. Armed insertion and changed options were confirmed on hardware without an audible playback interruption.
 
@@ -18,7 +18,7 @@ back near where it was (pickup). That way the sound doesn't jump when you let go
 | SHIFT + Morph | Sample-rate reduction or tape warble | `fxsl` |
 | SHIFT + Varispeed | Lock to a scale (`vqnt 0`) or temporarily adjust continuously (`vqnt 1`) | `vqnt`, `octl`, `scal` |
 | SHIFT + Slide | Random Gene start positions (jitter) | always on |
-| SHIFT + Gene Size | Independent density: startup rate from `dstr` (default 8 Genes/sec); adjust 0.1–128 Genes/sec. Knob rate remains until adjusted again, recalled by dstr reload or powered off; not saved across power cycles. Reload recalls explicit `dstr`; omit to keep the live rate. Overrides Turing rate | `dens 1` |
+| SHIFT + Gene Size | Independent density: startup rate from `dstr` (default 8 Genes/sec); turn fully CCW for stock timing, then slightly clockwise for 0.1–128 Genes/sec. Knob rate remains until adjusted again, recalled by dstr reload or powered off; not saved across power cycles. Reload recalls explicit `dstr`; omit to keep the live rate. Overrides Turing rate | `dens 1` |
 | SHIFT + Organize / Gene Size / Slide | Turing mode controls | `sldm 1` |
 | REC held + SHIFT taps | Input gain (stock), now remembered | `ingn` |
 | (no gesture) | Mono input: L on both channels | `mono 2` (auto) or `mono 1` |
@@ -46,20 +46,19 @@ last splice. Existing density/gain keys remain available.
 
 ## SHIFT + S.O.S.: tape mode (default)
 
-A SHIFT + S.O.S. turn or explicit fbkp recall switches feedback control on. Without either,
-S.O.S. works exactly as stock.
+In `dryk 0/1`, turning SHIFT + S.O.S. or recalling `fbkp` activates the separate feedback control. Without either, ordinary recording follows `inop` and the main `sosc` curve. Modes 2 and 3 use the main curve directly.
 
 While you overdub an existing splice:
 - **A virtual tape head** writes into the Slide / Gene Size window. It moves at
   the Varispeed rate, so it plays backwards in reverse and pauses at zero speed.
 - **SHIFT + S.O.S. sets how much of the old recording stays** with each pass
   (like tape feedback). At 100% with silent input, nothing changes.
-- **Plain S.O.S.** still sets what you hear.
+- **Plain S.O.S.** sets the listening mix in mode 0. Mode 1 keeps the return wet only.
 - **Morph is capped at 0.3 while dubbing** to stay within the CPU budget. Change it with `mcap`.
 
 ## SHIFT + S.O.S.: classic TLA feedback (`tape 0`)
 
-The recorded signal becomes your input **plus** the Gene playback, and
+In modes 0/1 with classic feedback active and `inop 0`, the recorded signal becomes your input **plus** the Gene playback, and
 SHIFT + S.O.S. sets how much playback is fed back. Use this for
 sound-on-sound with TLA, without tape mode's moving head.
 

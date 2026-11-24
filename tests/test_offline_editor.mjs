@@ -16,16 +16,17 @@ const site = await readFile(new URL('../web/index.html', import.meta.url), 'utf8
 const expectedFields = [...site.matchAll(/\bid="(opt-[^"]+)"/g)].map(m => m[1]).sort();
 assert.ok(expectedFields.includes('opt-dryk'));
 assert.ok(expectedFields.includes('opt-dlen'));
+assert.ok(expectedFields.includes('opt-sosc'));
 const link = (site.match(/<a\b[^>]*>/gi) || []).find(tag =>
   /\shref="(?:\.\/)?morphagene-options-editor\.html"/.test(tag) && /\sdownload\b/.test(tag));
 assert.ok(link, 'The patcher offers the standalone HTML as a download');
 
 async function editStockSettings(page) {
   const headers = page.locator('.option-header');
-  assert.equal(await headers.count(), 44);
+  assert.equal(await headers.count(), 45);
   const origins = await headers.locator('.option-origin').allTextContents();
   assert.equal(origins.filter(origin => origin === 'Stock').length, 12);
-  assert.equal(origins.filter(origin => origin === 'Enhancement').length, 32);
+  assert.equal(origins.filter(origin => origin === 'Enhancement').length, 33);
   const optional = await headers.locator('.optional-marker').allTextContents();
   assert.deepEqual(optional, Array(13).fill('OPTIONAL:'));
 
@@ -147,7 +148,8 @@ try {
   assert.match(await page.locator('#options-status').textContent(), /Loaded options\.txt/);
   assert.equal(await page.locator('#opt-mpos').inputValue(), '19');
   await editStockSettings(page);
-  await page.locator('#opt-dryk').selectOption('2');
+  await page.locator('#opt-dryk').selectOption('3');
+  await page.locator('#opt-sosc').selectOption('2');
   await page.locator('#opt-dlen').selectOption('1');
   await page.locator('#recall-dstr').uncheck();
   await page.locator('#recall-vpos').check();
@@ -167,11 +169,13 @@ try {
   assert.equal(await readFile(cardOptions, 'utf8'), imported);
   const lines = saved.split(/\r?\n/);
   assert.equal(lines[0], '7 45875 0');
+  assert.equal(lines[1], '// firmware version 204+c5');
   assert.equal(lines.filter(l => /^\/\/ firmware version /.test(l)).length, 1);
   for (const line of ['// annotated performance reel', 'future_setting 12 // preserve me',
-                      'mcr1 2.00000 // stock chord', 'vsop 1', 'dryk 2 // send', 'mpos 19 // starting position']) {
+                      'mcr1 2.00000 // stock chord', 'vsop 1', 'dryk 3 // send', 'mpos 19 // starting position']) {
     assert.ok(lines.includes(line), line);
   }
+  assert.match(saved, /^sosc 2(?:\s|$)/m);
   assert.match(saved, /^dlen 1(?:\s|$)/m);
   assert.match(saved, /^inop 1 /m);
   assert.match(saved, /^pmod 2 /m);
@@ -188,7 +192,8 @@ try {
   const [chooser] = await Promise.all([page.waitForEvent('filechooser'), input.press('Enter')]);
   await chooser.setFiles(savedPath);
   await page.locator('#options-save').waitFor({state: 'visible'});
-  assert.equal(await page.locator('#opt-dryk').inputValue(), '2');
+  assert.equal(await page.locator('#opt-dryk').inputValue(), '3');
+  assert.equal(await page.locator('#opt-sosc').inputValue(), '2');
   assert.equal(await page.locator('#opt-mcr2').inputValue(), '-0.0625');
   assert.equal(await page.locator('#opt-dlen').inputValue(), '1');
   assert.equal(await page.locator('#recall-dstr').isChecked(), false);

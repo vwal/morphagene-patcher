@@ -177,6 +177,9 @@ cpu_block:
     cmp     r12, #2
     it      eq
     moveq   r11, #1
+    cmp     r12, #3                    @ resampling always uses the ordinary writer
+    it      eq
+    moveq   r11, #0
     cmp     r11, #0
     it      ne
     orrne   r10, r10, #2

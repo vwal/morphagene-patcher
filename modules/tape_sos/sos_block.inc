@@ -29,7 +29,7 @@
     .thumb_func
 p7_sos_block:
     ldr     r5, [r1]                    @ replaced: S.O.S. reading
-    push    {r0-r3}
+    push    {r0-r3, r12, lr}
     vpush   {s0-s1}
     ldr     r3, =MOD
     ldr     r0, [r3]
@@ -77,16 +77,48 @@ p7_sos_block:
     ldr     r3, =MOD
     ldr     r1, =DRYK_OPTION            @ boot-cleared even before first SHIFT timer tick
     ldrb    r0, [r1]
-    cmp     r0, #2
-    blo     12f
-    bhi     11f
-    SOS_RETENTION r5                    @ post-pickup main knob and CV
+    cmp     r0, #3
+    it      hi
+    movhi   r0, #0
+    strb    r0, [r3, #DRYK_BLOCK]
+    @ Symmetric endpoint allowance; both analog controls and presets use r5.
+    subs    r1, r5, #185
+    it      mi
+    movmi   r1, #0
+    movw    r0, #3726
+    cmp     r1, r0
+    it      hi
+    movhi   r1, r0                      @ existing contribution before mode selection
+    subs    r2, r0, r1                  @ incoming contribution
+    ldr     r12, =SOSC_OPTION
+    ldrb    r12, [r12]
+    cmp     r12, #1
+    beq     13f
+    cmp     r12, #2
+    beq     14f
+    movw    r0, #1831                   @ both at unity over ADC 2016..2080
+    cmp     r1, r0
+    it      hi
+    movhi   r1, r0
+    cmp     r2, r0
+    it      hi
+    movhi   r2, r0
+    b       15f
+13: mov     r2, r0                      @ keep incoming at unity
+    b       15f
+14: mov     r1, r0                      @ keep existing at unity
+15: vmov    s1, r0
+    vcvt.f32.u32 s1, s1
+    vmov    s0, r1
+    vcvt.f32.u32 s0, s0
+    vdiv.f32 s0, s0, s1
     vstr    s0, [r3, #DRYK_GAIN]
-    b       12f
-11: movs    r0, #0
-12: strb    r0, [r3, #DRYK_BLOCK]
+    vmov    s0, r2
+    vcvt.f32.u32 s0, s0
+    vdiv.f32 s0, s0, s1
+    vstr    s0, [r3, #INPUT_GAIN]
     vpop    {s0-s1}
-    pop     {r0-r3}
+    pop     {r0-r3, r12, lr}
     vldr    s1, k_top                   @ replaced: vldr s1, =1.04884
     b.w     P7_RETURN
 

@@ -8,6 +8,7 @@ MODULE = Module(
     hooks=[
         (0x0802312a, '012221490df29c70', 'reload_mount'),
         (0x08023136, '002800f0a680', 'reload_mount_done'),
+        (0x080236ae, '002840f0aa80', 'reload_idle_media'),
         (0x08022f7e, 'eeb9049a', 'reload_main'),
         (0x0802484e, '7d4ed6f80090', 'reload_buttons'),
         (0x0802493e, '354823fa01f2', 'reload_led'),

@@ -150,7 +150,7 @@
     [
       "dens",
       "Independent Gene density",
-      "With dens 1, startup density comes from dstr (default 8 Genes/sec). Hold SHIFT and turn Gene Size to adjust it from 0.1 to 128 Genes/sec. Knob changes remain until adjusted again, recalled by dstr reload or powered off; they are not saved across power cycles. The configured dstr value is kept in options.txt. Overrides the Turing rate gesture; external clock takes priority.",
+      "With dens 1, startup density comes from dstr (default 8 Genes/sec). Hold SHIFT and turn Gene Size to select stock timing at fully CCW. Turn slightly clockwise for 0.1 Genes/sec, through 8 at noon to 128 at fully CW. Unshifted Gene Size still sets length. This live choice lasts until another adjustment, explicit dstr reload or powered off; they are not saved across power cycles. The configured dstr value is kept in options.txt. Overrides the Turing rate gesture; external clock takes priority.",
       [
         "0: Off",
         "1: On"
@@ -198,7 +198,7 @@
     [
       "inop",
       "Recording source",
-      "For ordinary recording, S.O.S. blends the input with Gene playback. Choose input only to capture the live input at any S.O.S. position. Dry kill mode 2 uses its own overdub routing.",
+      "For ordinary recording, S.O.S. blends the input with Gene playback. Choose input only to capture the live input at any S.O.S. position. Dry kill modes 2 and 3 use their own recording sources.",
       [
         "0: S.O.S. mix",
         "1: Input only"
@@ -208,18 +208,30 @@
     [
       "dryk",
       "Dry kill",
-      "0 keeps the usual output mix. Modes 1 and 2 send only Gene playback to both outputs. Mode 1 keeps the current recording controls. In mode 2, S.O.S. and its CV set tape retention during overdubs. Fully CCW replaces the last pass, noon gives fading repeats, and fully CW retains the pass and adds fresh input. The first recording captures the input at normal level throughout the knob range.",
+      "Mode 0 monitors the S.O.S. curve. Modes 1\u20133 monitor only Gene playback. Mode 1 keeps the ordinary recording source and SHIFT feedback controls. Mode 2 mixes with stored audio under the tape head on fixed overdubs. Mode 3 mixes with performed Gene playback, including Varispeed, Morph, Gene Size and Slide.",
       [
         "0: Normal monitoring",
         "1: Wet only, current recording controls",
-        "2: Wet only, S.O.S. controls feedback"
+        "2: Wet only, tape feedback",
+        "3: Wet only, record Gene playback with S.O.S."
+      ],
+      "0"
+    ],
+    [
+      "sosc",
+      "S.O.S. curve",
+      "0 fades in existing audio up to noon, then fades out incoming audio. Both are at full level at noon. 1 keeps incoming audio full and fades in existing audio clockwise. 2 keeps existing audio full and fades out incoming audio clockwise. An omitted line selects 0 on startup or either card load. The first take on an empty reel always records full input. Choose sosc 1 with dryk 2 for the c4 full-input overdub.",
+      [
+        "0: Crossfade, both full at noon",
+        "1: Keep incoming audio full",
+        "2: Keep existing audio full"
       ],
       "0"
     ],
     [
       "dlen",
       "Overdub length at fully CCW",
-      "With dryk 2, Fixed keeps the loop length and overdubs inside the Slide and Gene Size window. Extend checks S.O.S. when REC starts. On the last or only splice, fully CCW (the lowest 4.5% of the effective knob/CV range, including a recalled S.O.S. preset) starts a replacement at the splice beginning. Input records forward at 1\u00d7, independent of Varispeed, Slide and Gene Size. Stop REC to set a longer end. A shorter take keeps the old length and tail. The selected recording mode lasts until REC stops. Earlier splices and takes started above the CCW zone use fixed-length overdubs with normal feedback.",
+      "Applies only to dryk 2. Fixed keeps the loop length and overdubs inside the Slide and Gene Size window. Extend works with sosc 0 or 1 and checks S.O.S. when REC starts. On the last or only splice, fully CCW (the lowest 4.5% of the effective knob/CV range, including a recalled S.O.S. preset) starts a replacement at the splice beginning. Input records forward at 1\u00d7, independent of Varispeed, Slide and Gene Size. Stop REC to set a longer end. A shorter take keeps the old length and tail. The selected recording mode lasts until REC stops. Earlier splices and takes started above the CCW zone use fixed-length overdubs with normal feedback.",
       [
         "0: Fixed (default)",
         "1: Extend the last splice at fully CCW"
@@ -229,7 +241,7 @@
     [
       "tape",
       "SHIFT + S.O.S. mode",
-      "Selects the feedback mode used by SHIFT + S.O.S. and fbkp: tape overdub or classic TLA feedback. The primary S.O.S. mix is separate (sosp). In dryk 2, primary S.O.S. controls overdub feedback.",
+      "Selects tape overdub or classic TLA feedback for SHIFT + S.O.S. and fbkp in dryk 0 and 1. Modes 2 and 3 use their dedicated recording paths and main S.O.S. knob.",
       [
         "0: Classic TLA feedback",
         "1: Tape mode"
@@ -239,14 +251,14 @@
     [
       "fbkp",
       "Feedback preset (%)",
-      "SHIFT + S.O.S. virtual knob position, 0-100%. 0% gives no retained feedback; 100% gives maximum retention. This is the existing knob curve, not a linear gain percentage. tape selects overdub or classic TLA behavior. This control is used in dryk 0 and 1. Mode 2 uses the primary S.O.S. position instead.",
+      "SHIFT + S.O.S. virtual knob position for dryk 0 and 1. With tape 1, this sets how much of the old pass is retained; with tape 0 and inop 0, it sets the Gene playback contribution. Modes 2 and 3 take their feedback setting from the main S.O.S. knob or its preset (sosp).",
       null,
       "0"
     ],
     [
       "sosp",
       "S.O.S. mix preset (%)",
-      "Primary S.O.S. virtual knob position: 0% is incoming audio, 100% is recorded Gene playback; middle positions blend them. This is separate from SHIFT + S.O.S. feedback (fbkp). Stock inop still determines what is recorded in normal routing. With dryk 2 this preset sets the retention position. Fresh input continues to record at every setting.",
+      "Primary S.O.S. virtual knob position on the selected sosc curve. At 50% in the default crossfade, both incoming and existing audio are at full level.",
       null,
       "0"
     ],
@@ -414,14 +426,19 @@
   ],
   "features": [
     [
+      "New in mg204+c5",
+      "Record the Gene performance",
+      "Choose the S.O.S. recording curve with <code>sosc</code>. Its default gives full incoming and existing audio at noon. With <code>dryk 3</code>, existing audio is the performed Gene playback. Record into a new splice to keep your source, or overdub the current splice."
+    ],
+    [
       "New in mg204+c4",
       "Wet-only mixer returns",
-      "Set <code>dryk 1</code> to hear only Gene playback while keeping your usual recording controls. With <code>dryk 2</code>, fresh input records on every pass and S.O.S. controls how much of the previous layer survives. <code>dryk 0</code> keeps normal operation."
+      "Set <code>dryk 1</code> to hear only Gene playback while keeping your usual recording controls. With <code>dryk 2</code>, the knob mixes incoming audio with the existing samples under the tape head. <code>dryk 0</code> monitors the selected curve."
     ],
     [
       "New in mg204+c4",
       "Fixed or growing overdubs",
-      "Keep a beat loop at its original length with <code>dlen 0</code>. With <code>dryk 2</code> and <code>dlen 1</code>, start REC fully counterclockwise on S.O.S. to replace the last or only splice from its start. A longer take extends it. A shorter take keeps its old end."
+      "Keep a beat loop at its original length with <code>dlen 0</code>. With <code>dryk 2</code> and <code>dlen 1</code>, select <code>sosc 0</code> or <code>sosc 1</code> and start REC fully counterclockwise on S.O.S. to replace the last or only splice from its start. A longer take extends it. A shorter take keeps its old end."
     ],
     [
       "New in mg204+c2",
@@ -451,7 +468,7 @@
     [
       "Pitch & timing",
       "Independent Gene density",
-      "With <code>dens 1</code>, startup density comes from <code>dstr</code>, default <strong>8 Genes/sec</strong>. SHIFT + Gene Size adjusts <strong>0.1-128 Genes/sec</strong>, independently of pitch and Morph. Live knob changes are not saved across power cycles. Include <code>dstr</code> to recall a prepared rate on settings-only reload; omit it to keep the live rate. External clock takes priority; available voices limit dense, long Genes."
+      "With <code>dens 1</code>, startup density comes from <code>dstr</code>, default <strong>8 Genes/sec</strong>. SHIFT + Gene Size at fully CCW selects stock timing. Above that position it adjusts <strong>0.1-128 Genes/sec</strong>, independently of pitch and Morph. Live knob changes are not saved across power cycles. Include <code>dstr</code> to recall a prepared rate on settings-only reload; omit it to keep the live rate. External clock takes priority; available voices limit dense, long Genes."
     ],
     [
       "Sound & movement",

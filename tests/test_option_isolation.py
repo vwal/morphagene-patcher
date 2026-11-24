@@ -36,7 +36,7 @@ OPTIONS = (
     ('dens', 0x2002a607, 1, SWITCH), ('vqnt', 0x2002a610, 1, SWITCH),
     ('mlop', 0x2002a611, 1, SWITCH), ('dstr', 0x2002a614, 4, range(1, 1281)),
     ('vuni', 0x2002a618, 1, SWITCH), ('vctr', 0x2002a619, 1, SWITCH),
-    ('dryk', 0x2002a61a, 1, range(3)), ('dlen', 0x2002a61b, 1, SWITCH),
+    ('dryk', 0x2002a61a, 1, range(4)), ('dlen', 0x2002a61b, 1, SWITCH),
 )
 PRESETS = tuple((key, preset.value_addr(i), 4,
                  {'splc': range(1, 301), 'trst': preset.STEPS}.get(key, range(101)))

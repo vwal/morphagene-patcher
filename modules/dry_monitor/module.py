@@ -2,8 +2,8 @@ from mgmod.module import Module
 
 MODULE = Module(
     name='dry_monitor',
-    title='Wet-only stereo return for dryk 1 and 2',
-    status='tested',
+    title='Wet-only stereo return for dryk 1, 2 and 3',
+    status='emulated',
     source='dry_monitor.S', entry='monitor_a',
     requires=['tape_sos'],
     hooks=[

@@ -88,6 +88,33 @@ reload_main:
 2:  restore_call
     b.w MAIN_HEAD
 
+@ Stock's timed mounted-card check seeks to zero and back to EOF. Both can
+@ succeed entirely from cache for a one-sector WAV, even after physical
+@ removal when the detect pin stays low. Probe sector 0 only on those files.
+@ This runs from the quiet foreground check; the reload buffer is word-aligned
+@ and is never in use by a concurrent foreground reader.
+.global reload_idle_media
+.type MEDIA_OK, %function
+.type MEDIA_LOST, %function
+.type DISK_READ, %function
+.thumb_func
+reload_idle_media:
+    cmp r0, #0                        @ second stock seek result
+    bne.w MEDIA_LOST
+    ldr r1, [sp, #856]                @ main FIL + 12: size
+    cmp.w r1, #512
+    bhi.w MEDIA_OK
+    ldr r0, [sp, #844]                @ main FIL.fs, valid after successful seek
+    ldrb r0, [r0, #1]                 @ mounted FatFs physical drive
+    ldr r1, =0x2002ab80               @ same 512-byte buffer as read_options
+    movs r2, #0                       @ first media sector
+    movs r3, #1
+    bl DISK_READ
+    cmp r0, #0
+    bne.w MEDIA_LOST                  @ native close, unmount and CARD_OK clear
+    b.w MEDIA_OK
+.ltorg
+
 @ Before stock button dispatch and before SHIFT knob gestures. In ordinary
 @ mounted operation, skip C entirely. Owned holds are consumed until release.
 .thumb_func

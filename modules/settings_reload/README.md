@@ -6,7 +6,8 @@ or occupied reel names. It retains basic file length and live-state checks.
 
 Hooks remain at 0x0802312a / 0x08023136 (mount entry/result), 0x08022f7e (common main head),
 0x0802484e (TIM2 buttons), 0x0802493e (SHIFT LED), 0x08027518 (audio entry),
-0x08031124 (common FatFs write core), and 0x08032260 (open/truncate).
+0x08031124 (common FatFs write core), 0x08032260 (open/truncate), and
+0x080236ae (idle mounted-card check after both seeks).
 The following mono_in hook starts at 0x0802751c. Original prologues and
 integer/FP registers/flags are preserved by the assembly wrappers.
 
@@ -22,6 +23,17 @@ hold waiting; a successful mount is the insertion signal. The tested hardware
 advanced 16 samples per audio block, so all hold/LED/probe timing now uses the
 48 kHz sample counter at 0x20021c88 rather than assuming 6000 blocks/second.
 The first normal initialization must already have established settings magic.
+
+The native idle mounted-card check seeks to the start and end of the reel
+roughly every 192,000 audio samples (four seconds). Both seeks can be satisfied
+from cache after the card has been pulled when the WAV is only 44 bytes.
+For a live file of 512 bytes or less, revision 2 follows a successful seek
+with a read of sector zero into the foreground reload buffer. A failed read
+enters the usual close/unmount path and clears CARD_OK. The probe leaves
+the file cursor in place. Larger files use the existing two seeks.
+The FAT16 and FAT32 regression exercises the real mounted idle path with a
+stuck-low detect pin, a physical read failure, and a subsequent settings-only
+reconnect and write.
 
 At the main loop head, capture a clean, idle live FIL (main SP+844, FATFS
 SP+1948). This snapshot involves no disk I/O. Writes to the live reel or its
@@ -42,8 +54,8 @@ The input gain codec update is deferred to the existing main-loop hook.
 State ABI at 0x2002A820: phase/start/owned/pending/result/finish/absent at +0..24;
 seen mask +28; original 26 option values +32..135; valid +136; reel +140;
 reels +144; data_start +148; size +152; cluster +156; position +160;
-CID +164..179; directory sector +180; directory offset +184; reserved former
-digest +188..215; dlen staging +216; snapshot_ready +220; live FIL pointer +224; reserved scanning
+CID +164..179; directory sector +180; directory offset +184; S.O.S. curve token +188 (zero for omitted, 1–3 for an explicit curve);
+reserved +192..215; dlen staging +216; snapshot_ready +220; live FIL pointer +224; reserved scanning
 +228 (always zero); mlop staged value +232, dstr +236, mount_ready +240 (1 owned fresh mount,
 2 normal load in progress). Preserving the earlier offsets avoids
 changing the assembly ABI. Scratch FIL starts 0x2002A920, 512-byte buffer at

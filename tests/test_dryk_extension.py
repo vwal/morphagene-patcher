@@ -156,7 +156,7 @@ class ReplacementTake(unittest.TestCase):
         self.assertEqual(self.frames(audio, LEFT, 512, end), (-3600,)*(end-512))
 
     def test_ineligible_routes_match_dlen_zero_on_both_channels(self):
-        for mode, selected in ((0, 2), (1, 2), (2, 1)):
+        for mode, selected in ((0, 2), (1, 2), (2, 1), (3, 2)):
             with self.subTest(mode=mode, selected=selected):
                 outcomes = []
                 for dlen in (0, 1):

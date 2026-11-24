@@ -5,6 +5,7 @@
 enum { ORDINARY_KEYS = 0, INCLUDE_PRESETS = 1, SKIP_CHUNK = 2 };
 
 void presets_normal_begin(void) {
+    PRESET_U8(SOSC_ADDRESS) = 0; /* A file without sosc selects the default curve. */
     PRESET_NORMAL->mask = 0;
     PRESET_NORMAL->ready = 1;
     PRESET_NORMAL->scan_state = 1; /* first logical line is the stock header */
@@ -59,10 +60,11 @@ unsigned presets_normal_parse(const char *p) {
     while (preset_space(*p)) ++p;
     unsigned dryk = p[0] == 'd' && p[1] == 'r' && p[2] == 'y' && p[3] == 'k';
     unsigned dlen = p[0] == 'd' && p[1] == 'l' && p[2] == 'e' && p[3] == 'n';
-    if (dryk || dlen) {
+    unsigned sosc = p[0] == 's' && p[1] == 'o' && p[2] == 's' && p[3] == 'c';
+    if (dryk || dlen || sosc) {
         uint32_t mode;
-        if (mode_digit(p+4, dryk ? 2u : 1u, &mode)) {
-            volatile uint8_t *dest = (volatile uint8_t *)(dryk ? DRYK_ADDRESS : DLEN_ADDRESS);
+        if (mode_digit(p+4, dryk ? 3u : sosc ? 2u : 1u, &mode)) {
+            volatile uint8_t *dest = (volatile uint8_t *)(dryk ? DRYK_ADDRESS : sosc ? SOSC_ADDRESS : DLEN_ADDRESS);
             *dest = (uint8_t)mode;
         }
         return 1;
@@ -94,11 +96,13 @@ void presets_write(void *file) {
         "fbkp %u //SHIFT+S.O.S. 0-100. Used in dry-kill modes 0 and 1.\n",
         "evop %u //Recall Turing evolution virtual knob percent, 0-100.\n",
         "trst %u //Recall Turing Genes per step: 1,2,3,4,6,8,12,16; dens takes priority.\n",
-        "sosp %u //Primary S.O.S. 0-100. In mode 2 this sets retention.\n",
+        "sosp %u //Primary S.O.S. position for the selected sosc curve.\n",
         "vpos %u //Recall calibrated Varispeed position before mapping, 0-100 percent.\n"
     };
-    print(file, "dryk %u //0 normal, 1 wet only, 2 wet with S.O.S. feedback.\n",
+    print(file, "dryk %u //0 normal, 1 wet, 2 tape feedback, 3 Gene feedback.\n",
           (unsigned)*(volatile uint8_t *)DRYK_ADDRESS);
+    print(file, "sosc %u //0 crossfade, 1 full input, 2 full existing.\n",
+          (unsigned)PRESET_U8(SOSC_ADDRESS));
     print(file, "dlen %u //0 fixed, 1 extend last splice at CCW in dryk 2.\n",
           (unsigned)*(volatile uint8_t *)DLEN_ADDRESS);
     unsigned staged = PRESET_NORMAL->ready == 2;

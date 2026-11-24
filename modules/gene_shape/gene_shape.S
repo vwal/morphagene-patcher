@@ -62,7 +62,6 @@
     .thumb_func
 size_hold:
     push    {r1-r3, lr}
-    bl      density_prepare
     ldr     r3, =MOD
     ldr     r1, [r3]
     ldr     r2, =MAGIC
@@ -111,7 +110,8 @@ size_hold:
     b       9f
 6:  movs    r1, #0                      @ knob is back: follow it again
     strb    r1, [r3, #212]
-9:  preset_post preset_gene_size, 0, 0
+9:  bl      density_prepare             @ publish the effective scheduler for this block
+    preset_post preset_gene_size, 0, 0
     pop     {r1-r3, pc}
 
 @ r1 = 1 with options.txt "sldm 1" (Turing mode), else 0. Keeps the rest.

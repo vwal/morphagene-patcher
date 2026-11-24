@@ -17,7 +17,7 @@ MODULE = Module(
         (0x0802a148, '7deee30a7cee438a', 'p12_mix_b'),         # per sample, branch B
         (0x08024af8, 'be49d1ed006a', 'led_rate'),              # Varispeed LED: clean target while warbling
     ],
-    mod_bytes=[(16, 91), (94, 127), (144, 207), (232, 234), (236, 239)],
+    mod_bytes=[(16, 91), (94, 127), (132, 135), (144, 207), (232, 234), (236, 239)],
     ram=[(0x2002A100, 0x2002A5FF),                             # engine copied to SRAM
          (0x2002A700, 0x2002A73F)],                            # warble at +0..31, optional replacement at +32..51
     options_keys=['tape', 'fxsl', 'mcap'],

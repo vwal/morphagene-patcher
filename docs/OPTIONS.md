@@ -1,6 +1,14 @@
 # Settings (`options.txt`)
 
-**mg204+c4** adds wet-only output for send/return use and a choice of fixed or extending overdubs. The previous **mg204+c3** fixed a settings-file read error that could change the Varispeed layout on a normal mount or at startup. See [the c3 release guide](RELEASE_MG204_C3.md).
+**mg204+c5** adds wet-only performance recording, selectable S.O.S. curves and stock timing at the bottom of the independent density control. The first take on an empty reel always records full incoming audio. On subsequent takes the knob positions below give **incoming / existing** levels.
+
+| Main S.O.S. curve | Fully CCW | Noon | Fully CW |
+|---|---|---|---|
+| `sosc 0` · crossfade (default) | Full / off | Full / full | Off / full |
+| `sosc 1` · full incoming | Full / off | Full / half | Full / full |
+| `sosc 2` · full existing | Full / full | Half / full | Off / full |
+
+For the full-input tape overdubs from c4, choose `dryk 2` and `sosc 1`. In mode 2, existing audio comes from the samples under the tape head. In mode 3, it comes from the performed Gene playback, so new recordings can capture changes to Morph, Slide, Gene Size and Varispeed. Recording into a new splice preserves the source. For examples, see [the recording guide, pages 12–13](../web/morphagene-manual-letter.pdf#page=12).
 
 The Morphagene keeps its settings in `options.txt` at the root of the SD card.
 Normal mounting reads the file and then writes it back, including at power-up.
@@ -26,16 +34,12 @@ review the file again before using it as a preserve-density card.
 
 Leave the file's **first line** as it is; the Morphagene keeps its own state
 there. Both editors and the module write
-`// firmware version 204+c4` on a comment line below it.
+`// firmware version 204+c5` on a comment line below it.
 
 For a settings-only reload, include one `dryk` line to choose the new routing. Include `dlen 0` or `dlen 1` to select the overdub length behavior. Omitting either setting preserves its live value.
-A duplicate or malformed value rejects the entire live settings change. Each
-setting defaults to 0 on power-up. In mode 2, fixed-length overdubs use the tape
-head with fresh input at normal level, independent of `tape`, `inop` and
-`fbkp`. Varispeed, Gene Size and Slide determine the tape head's travel.
-For full-splice passes, use forward 1× and Gene Size fully CCW.
+Including `sosc` selects the main S.O.S. curve. Omitting it selects the default crossfade on every successful load. A duplicate or malformed value rejects the entire live settings change. An empty reel always records the first take at full input gain. For a full-splice tape pass use forward 1×, Gene Size fully CCW and Slide at the start.
 
-With `dryk 2` and `dlen 1`, the firmware checks S.O.S. when recording starts.
+With `dryk 2`, `dlen 1` and `sosc 0` or `1`, the firmware checks S.O.S. when recording starts.
 On the last or only splice, its zero-feedback zone (roughly the lowest 4.5% of
 the effective knob/CV reading, including a recalled S.O.S. preset) selects one
 continuous replacement. Fresh stereo input records forward at 1× from the
@@ -66,9 +70,10 @@ or crosses the recalled position; secondary effects use their SHIFT gesture.
 | `spos` | Integer 0–100 | Omitted | Recall virtual Slide position with pickup |
 | `splc` | Integer 1–300 | Omitted | Recall splice selection, obeying omod; above count selects the last while retaining the configured number |
 | `vpos` | Integer 0–100 | Omitted | Calibrated Varispeed position before vsop/vrng/vctr; 50% is +1x with vctr 1 |
-| `dryk` | 0, 1, 2 | 0 | 0 keeps c3 routing. 1 sends only Gene playback to both outputs and keeps normal recording controls. 2 sends only Gene playback and assigns primary S.O.S. to tape retention. |
-| `dlen` | 0, 1 | 0 | 0 keeps existing-splice overdubs at their current length. With 1 and `dryk 2`, start a take at fully CCW on the last or only splice to replace it from the beginning. Holding REC beyond the old end extends the splice. A shorter take keeps the previous length and tail. Earlier splices retain their fixed windows. |
-| `sosp` | Integer 0–100 | Omitted | Primary S.O.S. position. In modes 0 and 1, 0% selects input and 100% selects playback for the normal S.O.S. mix. In mode 2, 0% replaces each pass and 100% keeps it while recording fresh input. |
+| `dryk` | 0–3 | 0 | 0 monitors the selected S.O.S. curve. 1–3 monitor Gene playback only. Mode 1 keeps ordinary recording controls. Mode 2 blends incoming with existing samples under the tape head. Mode 3 blends incoming with the performed Gene playback. |
+| `sosc` | 0–2 | 0 | 0 brings existing audio up to full by noon, then fades incoming audio down to zero. 1 holds incoming full and brings existing audio up clockwise. 2 holds existing full and fades incoming down clockwise. Mode 0 monitoring and ordinary mix recording follow this selector. |
+| `dlen` | 0, 1 | 0 | 0 keeps fixed-length overdubs. With 1 in `dryk 2`, start fully CCW with `sosc 0` or `1` to replace and optionally extend the last splice. Earlier splices keep their fixed windows. |
+| `sosp` | Integer 0–100 | Omitted | Primary S.O.S. knob position on the selected curve. 0% is fully CCW, 50% noon and 100% fully CW. |
 | `srrp` | Integer 0–100 | Omitted | SHIFT + Morph SRR position: 0 off, higher stronger; fxsl 1 |
 | `wrbp` | Integer 0–100 | Omitted | SHIFT + Morph warble position: 0 off, higher stronger; fxsl 2; separate bank from SRR |
 | `jitp` | Integer 0–100 | Omitted | SHIFT + Slide jitter/Turing spread: 0 off, higher wider scatter |
@@ -78,7 +83,7 @@ or crosses the recalled position; secondary effects use their SHIFT gesture.
 | `vuni` | 0, 1 | 0 | Hold SHIFT alone at least 0.5 seconds and release to recall forward +1× with automatic pickup. Use with SHIFT input unpatched; other controls cancel |
 | `vctr` | 0, 1 | 0 | Exact +1× at calibrated noon, all layouts/ranges/scales; 48–52% explicit notch and centered unity cell only when vctr 1; preserves endpoints and compresses reverse/stop into the left half |
 | `mlop` | 0, 1 | 0 | **0** stock Morph gaps; **1** seamless loop at minimum Morph. Included in Full |
-| `dens` | 0, 1 | 0 | Independent density: startup rate from `dstr` (default 8 Genes/sec). Hold SHIFT and turn Gene Size to adjust 0.1–128 Genes/sec. Knob changes remain until adjusted again, recalled by dstr reload or powered off; they are not saved across power cycles. Takes priority over Turing rate |
+| `dens` | 0, 1 | 0 | Independent density: startup rate from `dstr` (default 8 Genes/sec). Hold SHIFT and turn Gene Size fully CCW for stock timing. Just above the endpoint selects 0.1 Genes/sec, noon gives 8 and fully CW gives 128. The unshifted control sets Gene length in either case. Knob changes remain until adjusted again, recalled by dstr reload or powered off; they are not saved across power cycles. Takes priority over Turing rate |
 | `dstr` | 0.1-128, at most one decimal | 8 | Startup/reload density in Genes/sec. Explicit `dstr` recalls the rate on settings-only reload, even if unchanged; omit to preserve the live rate. Requires `dens 1`; external clock takes priority. The configured value stays in options.txt |
 | `vrng` | 0, 1 | 0 | **0** stock ranges; **1** +/-4x in `vsop 0/1`, stop to forward 8x with scale lock in `vsop 2` ([details](DEVELOPMENT_8X_DENSITY.md)) |
 | `vqnt` | 0, 1 | 0 | **0** SHIFT + Varispeed locks; **1** quantized normally, SHIFT + Varispeed temporarily continuous; release snaps back. Uses `octl` / `scal` in every range |
@@ -105,7 +110,7 @@ off unless recalled with jitp or adjusted manually.
 mlop 0 //0 stock gaps; 1 seamless loop at minimum Morph
 vrng 0 //0 stock, 1 +/-4x bidirectional or 0-8x forward
 vqnt 0 //0 SHIFT-to-lock; 1 quantized normally, SHIFT+Varispeed temporarily continuous
-dens 0 //1: SHIFT+Gene Size controls independent density (0.1-128 Genes/sec)
+dens 0 //SHIFT+Gene Size: CCW stock timing, then 0.1-128 Hz.
 tape 1 //SHIFT+S.O.S.: 0 classic TLA feedback (input + feedback x Gene playback), 1 tape mode (Varispeed tape head in the Slide/Gene Size window)
 octl 1 //Varispeed scale: 0 off, 1 octaves, 2 octaves + fifths, 3 semitones, 4 custom scale (scal)
 scal 0 //Custom scale for octl 4: semitones 1-11 above the root, e.g. 3,5,7,10 = minor pentatonic (root and octaves always on)

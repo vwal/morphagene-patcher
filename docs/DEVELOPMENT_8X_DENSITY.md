@@ -53,7 +53,7 @@ at 8x does more work than at 4x. Hardware CPU headroom remains to be measured.
 `dens 1` selects a separate, free-running grain-start clock. Its initial rate
 comes from `dstr` (default 8 Genes per second). Development 5 adds `dstr`: 0.1-128 Genes/sec in 0.1 steps, used when density is first enabled after power-up. The configured value persists in options.txt; settings-only reload recalls an explicit dstr, even if unchanged. Omit dstr to preserve the live rate. Hold **SHIFT + Gene Size** and turn:
 
-- Left: 0.1 Genes/sec (one every ten seconds).
+- Fully CCW selects stock timing in Development 12. Just clockwise of the endpoint selects 0.1 Genes/sec (one every ten seconds).
 - Center: about 8 Genes/sec.
 - Right: 128 Genes/sec.
 

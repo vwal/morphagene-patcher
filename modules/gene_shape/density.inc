@@ -1,8 +1,12 @@
-@ dens 1 assigns SHIFT+Gene Size to a free-running density, 0.1..128 Hz.
+@ dens 1: SHIFT+Gene Size selects stock timing at CCW, then 0.1..128 Hz.
 @ 0x2002a800: initialized, enabled-for-block, interval, countdown (u32 each).
+@ An initialized interval of zero selects the stock elapsed/interval comparison.
 @ Four stock voices; defer a due birth while the next voice is still sounding.
     .equ DENSITY, 0x2002A800
     .equ DENS_OPT, 0x2002A607
+    .equ STOCK_ENTER, 96                @ 12-bit ADC, hysteresis about 0.8% of travel
+    .equ STOCK_EXIT, 128
+    .equ RATE_START, 192                @ 0.1 Hz plateau immediately above the detent
     .type DENS_A_NEXT, %function
     .type DENS_B_NEXT, %function
     .global density_a, density_b, density_adjust, density_prepare
@@ -42,7 +46,9 @@ density_prepare:
     udiv r2, r2, r1                 @ nearest sample interval, calculated once
     str r2, [r3, #8]
     str r2, [r3, #12]            @ allow the initial stock Gene to play first
-1:  ldr r1, =0x20021cb0             @ stock external clock active flag
+1:  ldr r1, [r3, #8]
+    cbz r1, 2f                       @ stock timing, with the existing Gene Size
+    ldr r1, =0x20021cb0             @ stock external clock active flag
     ldr r1, [r1]
     cmp r1, #1
     beq 2f
@@ -57,6 +63,8 @@ density_prepare:
     cbz r1, 3f
     ldr r1, =MOD
     ldrb r0, [r1, #234]            @ tape_sos: dryk 2 forces the tape write head
+    cmp r0, #3                     @ resampling uses the full Gene playback
+    beq 3f
     cmp r0, #2
     beq 6f
     ldrb r1, [r1, #16]
@@ -81,24 +89,44 @@ density_prepare:
     .thumb_func
 density_adjust:
     push {r0-r3}
-    subs r0, #64
+    ldr r3, =DENSITY
+    ldr r2, [r3, #8]                 @ previous selected interval
+    movs r1, #1
+    str r1, [r3]                     @ an explicit gesture also counts as initialization
+    cmp r0, #STOCK_ENTER
+    bls 3f
+    cmp r0, #STOCK_EXIT
+    bhs 1f
+    cbz r2, 3f                       @ between thresholds keep the current timing mode
+1:  cmp r0, #2048
+    bhs 2f
+    subs r0, #RATE_START
     it mi
     movmi r0, #0
+    lsls r0, #7
+    movw r1, #(2048 - RATE_START)
+    udiv r0, r0, r1                  @ lower half: 0.1 Hz through 8 Hz at noon
+    b 4f
+2:  subs r0, #64                     @ original upper-half scale, 8..128 Hz
     movw r1, #3968
     cmp r0, r1
     it hi
     movhi r0, r1
     lsls r0, #8
     udiv r0, r0, r1
-    ldr r1, =density_table
+4:  ldr r1, =density_table
     ldr r0, [r1, r0, lsl #2]
-    ldr r3, =DENSITY
     str r0, [r3, #8]
+    cbz r2, 5f                       @ leave stock timing with a fresh interval
     ldr r1, [r3, #12]
     cmp r1, r0
     it hi
-    strhi r0, [r3, #12]             @ faster edit takes effect without a long wait
-    pop {r0-r3}
+    strhi r0, [r3, #12]              @ retain phase unless a faster rate is due sooner
+    b 6f
+3:  movs r0, #0
+    str r0, [r3, #8]                 @ stock timing, leave the running voices untouched
+5:  str r0, [r3, #12]
+6:  pop {r0-r3}
     bx lr
 
 @ Each hook replaces only the elapsed/interval FPU comparison. The stock

@@ -107,3 +107,35 @@ class SavedLength(unittest.TestCase):
                 self.assertEqual(payload, tuple(x/32768 for frame in zip(*buffers) for x in frame))
                 self.assertEqual(struct.unpack_from('<4sIIII4sIII', wav, 44+end*8),
                                  (b'cue ', 28, 1, 0, end, b'data', 0, 0, end))
+
+    def test_performance_overdub_survives_card_remount_with_original_marker(self):
+        image = images()[1]
+        audio, (_, end) = short_replacement(image)
+        original = [bytes(audio.uc.mem_read(plane, 2*end)) for plane in (LEFT, RIGHT)]
+        audio.uc.mem_write(0x2002a61a, bytes([3]))  # live change after the mode-2 take
+        audio.a.put(0x20021c68, 4095)  # include full Gene playback in the recording
+        audio.a.put(0x20021c74, 600)   # reverse playback
+        audio.a.put(0x20021c7c, 3000)
+        set_input(audio, 0, 0)
+        audio.blocks(64)
+        audio.a.put(FLAGS, 0)
+        audio.a.put(REC_REQUEST, 1)
+        audio.blocks(55)
+        audio.a.put(REC_REQUEST, 0)
+        audio.blocks(6)
+
+        self.assertEqual(audio.a.get(MARKER_ZERO+4), end)
+        after = [bytes(audio.uc.mem_read(plane, 2*end)) for plane in (LEFT, RIGHT)]
+        for old, captured in zip(original, after):
+            old_samples = struct.unpack(f'<{end}h', old)
+            new_samples = struct.unpack(f'<{end}h', captured)
+            self.assertTrue(any(new and new != prior for new, prior in zip(new_samples, old_samples)))
+        channels = [struct.unpack(f'<{end}h', channel) for channel in after]
+        expected = tuple(x/32768 for frame in zip(*channels) for x in frame)
+        for fat32 in (False, True):
+            with self.subTest(fat32=fat32):
+                wav = saved_wav(image, audio, end, end, fat32)
+                self.assertEqual(struct.unpack_from('<I', wav, 40)[0], end*8)
+                self.assertEqual(struct.unpack_from(f'<{2*end}f', wav, 44), expected)
+                self.assertEqual(struct.unpack_from('<4sIIII4sIII', wav, 44+end*8),
+                                 (b'cue ', 28, 1, 0, end, b'data', 0, 0, end))

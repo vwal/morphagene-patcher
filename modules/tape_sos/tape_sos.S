@@ -77,9 +77,11 @@
     .type LENGTH_START_RETURN, %function
     .type LENGTH_STOP_RETURN, %function
     .type STOCK_RECORD_STOP, %function
+    .equ SOSC_OPTION,   0x2002A61C
+    .equ INPUT_GAIN,    132             @ primary incoming gain
     .equ DRYK_OPTION,  0x2002A61A
     .equ DRYK_BLOCK,   234             @ validated once per block, shared with wet monitor
-    .equ DRYK_GAIN,    236             @ primary S.O.S. retention, separate from SHIFT bank
+    .equ DRYK_GAIN,    236             @ primary S.O.S. recording gain, separate from SHIFT bank
     .include "../preset_recall/preset_asm.inc"
 
     .text
@@ -170,25 +172,25 @@ k_prepare_ram: .word RAMCODE + eng_prepare - engine + 1
 72: pop     {r1, r2}                    @ pop does not change flags
     .endm
 
-    .macro CLAMP a, b
-    vmov.f32 s0, #1.0
-    vcmpe.f32 \a, s0
+    .macro CLAMP a, b, limit=s0
+    vmov.f32 \limit, #1.0
+    vcmpe.f32 \a, \limit
     vmrs    APSR_nzcv, fpscr
     it      gt
-    vmovgt.f32 \a, s0
-    vcmpe.f32 \b, s0
+    vmovgt.f32 \a, \limit
+    vcmpe.f32 \b, \limit
     vmrs    APSR_nzcv, fpscr
     it      gt
-    vmovgt.f32 \b, s0
-    vneg.f32 s0, s0
-    vcmpe.f32 \a, s0
+    vmovgt.f32 \b, \limit
+    vneg.f32 \limit, \limit
+    vcmpe.f32 \a, \limit
     vmrs    APSR_nzcv, fpscr
     it      lt
-    vmovlt.f32 \a, s0
-    vcmpe.f32 \b, s0
+    vmovlt.f32 \a, \limit
+    vcmpe.f32 \b, \limit
     vmrs    APSR_nzcv, fpscr
     it      lt
-    vmovlt.f32 \b, s0
+    vmovlt.f32 \b, \limit
     .endm
 
     .macro SRR_APPLY left, right, ta, tb
@@ -212,150 +214,65 @@ k_prepare_ram: .word RAMCODE + eng_prepare - engine + 1
     vfma.f32 \right, \tb, \ta
     .endm
 
-@ Merged per-sample hooks (one per reconstruction branch), at the S.O.S. mix:
-@ SRR on the Gene playback, then the stock monitor/record mix, then the tape or
-@ feedback record path. MOD+232 (set once per block by P10) is non-zero when
-@ SRR is active or tape/feedback mode is on, MOD+233 when tape/feedback is on.
-@ When +232 is zero the stock instructions run inline (one byte checked per
-@ sample); with SRR alone the tape checks are skipped too.
-@ Branch A (0x08028e7a): playback s16/s19, input s4/s3, mix s2, r0 = Input Only.
+@ Both audio paths share the same gain pair. First build the monitor mix;
+@ dry_monitor selects rendered Genes at the output for dryk 1..3 afterwards.
+@ The tape writer receives scaled fresh samples and applies existing gain to
+@ the stored samples at the write head. Other routes can use the Gene mix.
+    .macro RECORD_MIX left, right, wet_l, wet_r, mon_l, mon_r, tmp_l, tmp_r, inop, filter, state, after, skip, spare, spare_f
+    push    {r1, r12}
+    ldr     r1, =MOD
+    ldrb    \spare, [r1, #95]
+    cmp     \spare, #0
+    beq     1f
+    SRR_APPLY \wet_l, \wet_r, \tmp_l, \tmp_r
+1:  vldr    \tmp_l, [r1, #INPUT_GAIN]
+    vldr    \tmp_r, [r1, #DRYK_GAIN]
+    vmul.f32 \mon_l, \left, \tmp_l
+    vmul.f32 \mon_r, \right, \tmp_l
+    vfma.f32 \mon_l, \wet_l, \tmp_r
+    vfma.f32 \mon_r, \wet_r, \tmp_r
+    CLAMP   \mon_l, \mon_r, \tmp_r
+    ldrb    \spare, [r1, #233]
+    cmp     \spare, #4                  @ an empty reel or latched replacement
+    beq     7f
+    cmp     \spare, #3
+    beq     5f                          @ performance capture regardless of inop
+    cmp     \spare, #2
+    beq     6f                          @ tape retention from primary S.O.S.
+    cmp     \spare, #1
+    bne     4f
+    TAPE_SETTING
+    beq     7f                          @ legacy SHIFT tape uses unscaled input
+    cmp     \inop, #0
+    bne     8f
+    vldr    \tmp_l, [r1, #20]           @ legacy SHIFT classic feedback
+    vfma.f32 \left, \wet_l, \tmp_l
+    vfma.f32 \right, \wet_r, \tmp_l
+    CLAMP   \left, \right, \tmp_r
+    b       8f
+4:  cmp     \inop, #0                   @ ordinary inop 1 records input exclusively
+    bne     8f
+5:  vmov.f32 \left, \mon_l
+    vmov.f32 \right, \mon_r
+    b       8f
+6:  vmul.f32 \left, \left, \tmp_l
+    vmul.f32 \right, \right, \tmp_l
+7:  pop     {r1, r12}
+    vstr    \filter, [\state]
+    vmov.f32 \spare_f, \mon_r
+    b.w     \after
+8:  pop     {r1, r12}
+    b.w     \skip
+    .endm
+
     .thumb_func
 p11_mix_a:
-    push    {r1}
-    ldr     r1, =MOD
-    ldrb    r1, [r1, #232]
-    cbnz    r1, 1f
-    pop     {r1}
-    vsub.f32 s8, s16, s4                @ stock 0x08028e7a..0x08028e9c
-    vsub.f32 s7, s19, s3
-    vmov.f32 s13, s4
-    vmov.f32 s14, s3
-    vfma.f32 s14, s2, s7
-    cmp     r0, #0
-    vfma.f32 s13, s8, s2
-    itt     eq
-    vmoveq.f32 s3, s14
-    vmoveq.f32 s4, s13
-    b.w     A_SKIP
-1:  ldr     r1, =MOD
-    ldrb    r1, [r1, #95]
-    cbz     r1, 2f
-    ldr     r1, =MOD
-    SRR_APPLY s16, s19, s8, s7          @ s8/s7 are written just below
-2:  ldr     r1, =MOD
-    ldrb    r1, [r1, #233]              @ tape / feedback mode on?
-    cbnz    r1, 3f
-    pop     {r1}                        @ SRR only: stock mix inline
-    vsub.f32 s8, s16, s4
-    vsub.f32 s7, s19, s3
-    vmov.f32 s13, s4
-    vmov.f32 s14, s3
-    vfma.f32 s14, s2, s7
-    cmp     r0, #0
-    vfma.f32 s13, s8, s2
-    itt     eq
-    vmoveq.f32 s3, s14
-    vmoveq.f32 s4, s13
-    b.w     A_SKIP
-3:  cmp     r1, #2                      @ mode 2 always records fresh input
-    pop     {r1}
-    vsub.f32 s8, s16, s4
-    vsub.f32 s7, s19, s3
-    vmov.f32 s13, s4
-    vmov.f32 s14, s3
-    vfma.f32 s14, s2, s7
-    vfma.f32 s13, s8, s2                @ monitor mix L
-    beq     6f
-    TAPE_ON
-    TAPE_SETTING
-    bne     7f
-6:  vstr    s21, [r7]                   @ tape: record raw input, skip the splice filter
-    vmov.f32 s30, s14
-    b.w     A_AFTER_FILTER
-7:  cmp     r0, #0                      @ feedback: Input Only stays stock
-    bne     8f
-    push    {r1}
-    vpush   {s0}
-    ldr     r1, =MOD
-    vldr    s0, [r1, #20]
-    vfma.f32 s4, s16, s0               @ record = input + f * playback
-    vfma.f32 s3, s19, s0
-    CLAMP   s4, s3
-    vpop    {s0}
-    pop     {r1}
-    b.w     A_SKIP
-8:  cmp     r0, #0
-    b.w     A_STOCK
+    RECORD_MIX s4, s3, s16, s19, s13, s14, s8, s7, r0, s21, r7, A_AFTER_FILTER, A_SKIP, r12, s30
     .ltorg
 
-@ Branch B (0x0802a148): playback s27/s24, input s7/s6, mix s19, r4 = Input Only.
     .thumb_func
 p12_mix_b:
-    push    {r1}
-    ldr     r1, =MOD
-    ldrb    r1, [r1, #232]
-    cbnz    r1, 1f
-    pop     {r1}
-    vsub.f32 s1, s27, s7                @ stock 0x0802a148..0x0802a16a
-    vsub.f32 s17, s24, s6
-    vmov.f32 s30, s7
-    vmov.f32 s14, s6
-    vfma.f32 s14, s19, s17
-    cmp     r4, #0
-    vfma.f32 s30, s1, s19
-    itt     eq
-    vmoveq.f32 s6, s14
-    vmoveq.f32 s7, s30
-    b.w     B_SKIP
-1:  ldr     r1, =MOD
-    ldrb    r1, [r1, #95]
-    cbz     r1, 2f
-    ldr     r1, =MOD
-    SRR_APPLY s27, s24, s1, s17         @ s1/s17 are written just below
-2:  ldr     r1, =MOD
-    ldrb    r1, [r1, #233]              @ tape / feedback mode on?
-    cbnz    r1, 3f
-    pop     {r1}                        @ SRR only: stock mix inline
-    vsub.f32 s1, s27, s7
-    vsub.f32 s17, s24, s6
-    vmov.f32 s30, s7
-    vmov.f32 s14, s6
-    vfma.f32 s14, s19, s17
-    cmp     r4, #0
-    vfma.f32 s30, s1, s19
-    itt     eq
-    vmoveq.f32 s6, s14
-    vmoveq.f32 s7, s30
-    b.w     B_SKIP
-3:  cmp     r1, #2
-    pop     {r1}
-    vsub.f32 s1, s27, s7
-    vsub.f32 s17, s24, s6
-    vmov.f32 s30, s7
-    vmov.f32 s14, s6
-    vfma.f32 s14, s19, s17
-    vfma.f32 s30, s1, s19               @ monitor mix L
-    beq     6f
-    TAPE_ON
-    TAPE_SETTING
-    bne     7f
-6:  vstr    s25, [r0]                   @ tape: record raw input, skip the splice filter
-    vmov.f32 s22, s14
-    b.w     B_AFTER_FILTER
-7:  cmp     r4, #0                      @ feedback: Input Only stays stock
-    bne     8f
-    push    {r1}
-    vpush   {s0}
-    ldr     r1, =MOD
-    vldr    s0, [r1, #20]
-    vfma.f32 s7, s27, s0               @ record = input + f * playback
-    vfma.f32 s6, s24, s0
-    CLAMP   s7, s6
-    vpop    {s0}
-    pop     {r1}
-    b.w     B_SKIP
-8:  cmp     r4, #0
-    b.w     B_STOCK
+    RECORD_MIX s7, s6, s27, s24, s30, s14, s1, s17, r4, s25, r0, B_AFTER_FILTER, B_SKIP, r12, s22
     .ltorg
 
     .include "dry_length.inc"
@@ -555,6 +472,7 @@ p10_morph_cap:
 90: ldr     r0, =MOD
     ldrb    r1, [r0, #DRYK_BLOCK]
     cmp     r1, #2
+    bhi     99f                         @ mode 3 always renders the uncapped Morph
     beq     91f                         @ mode 2 uses the same tape-dub CPU cap
     ldrb    r1, [r0, #16]
     cmp     r1, #1
@@ -604,9 +522,18 @@ p10_morph_cap:
     movne   r2, #0
     ldrb    r3, [r0, #DRYK_BLOCK]
     cmp     r3, #2
-    itt     eq
-    moveq   r1, #2                     @ raw capture also works before the first timer tick
-    moveq   r2, #2                     @ dedicated fade takes priority over legacy latch
+    itt     hs
+    movhs   r1, r3                     @ modes 2/3 also work before the first timer tick
+    movhs   r2, r3                     @ both take priority over the legacy feedback latch
+    ldr     r3, =MARKER_COUNT
+    ldr     r3, [r3]
+    cmp     r3, #0
+    beq     97f
+    ldr     r3, =LENGTH_TAKE
+    ldr     r3, [r3]
+    cbz     r3, 98f
+97: movs    r2, #4                      @ full direct input for the entire first/replacement take
+98:
     strb    r1, [r0, #232]
     strb    r2, [r0, #233]
     vpop    {s0-s2}
@@ -1092,6 +1019,7 @@ e_setup:
     bne     9f
     ldrb    r2, [r7, #DRYK_BLOCK]
     cmp     r2, #2
+    bhi     9f                          @ mode 3 prints performed audio with the native writer
     beq     8f                          @ always use tape on a valid existing splice
     ldrb    r2, [r7, #16]
     cmp     r2, #1

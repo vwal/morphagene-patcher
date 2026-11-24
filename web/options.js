@@ -2,17 +2,23 @@
 'use strict';
 
 // ---------- options.txt ----------
-const VERSION_HEADER = '// firmware version 204+c4';
+const VERSION_HEADER = '// firmware version 204+c5';
 const MOD_HEADER = '//Morphagene extended mods';
 // In older builds this comment put "vsop 2" at the start of a 63-byte read.
-const LEGACY_RANGE_COMMENT = '//Varispeed range: 0 stock, 1 extended: vsop 0/1 +/-4x; vsop 2 forward stop to 8x with scale lock';
+const OBSOLETE_COMMENTS = {
+  dens: ['//Independent Gene density: 0 off, 1 on: startup rate from dstr (default 8 Genes/sec); hold SHIFT and turn Gene Size for 0.1-128 Genes/sec; knob rate remains until adjusted again, recalled by dstr reload or powered off, not saved across power cycles; overrides Turing rate; external clock takes priority', '//Independent Gene density: 0 off, 1 SHIFT+Gene Size = 0.1-128 Genes/sec (takes priority over Turing rate); startup rate from dstr; bypassed with clock'],
+  vrng: ['//Varispeed range: 0 stock, 1 extended: vsop 0/1 +/-4x; vsop 2 forward stop to 8x with scale lock'],
+  dryk: ['//0 normal, 1 wet only, 2 wet with S.O.S. feedback.'],
+  sosp: ['//S.O.S. mode 2 tape retention, mode 3 Gene level.', '//Primary S.O.S. 0-100%. In mode 2 this sets retention.',
+         '//Primary S.O.S. 0-100. In mode 2 this sets retention.']
+};
 // Extended option keys and explanatory comments for generated files.
 const KEYS = {
   mpos: '//Morph virtual knob preset: 0-100 percent. 10 selects the stock seamless loop (unclocked/dens 0); 0 gaps with mlop 0. Omit to use the panel at startup and preserve the live position on settings-only reload.',
   gpos: '//Gene Size virtual knob preset: 0-100 percent. 0 and 1 = longest/full splice; 100 = shortest, not a length percentage. Omit to use the panel at startup and preserve the live position on settings-only reload.',
   spos: '//Slide virtual knob preset: integer 0-100 percent. Omit to use the panel at startup and preserve the live position on settings-only reload.',
   vpos: '//Varispeed virtual knob preset: integer 0-100 percent before vsop/vrng/vctr mapping, not a speed ratio. vuni remains the +1x recall gesture.',
-  sosp: '//Primary S.O.S. 0-100%. In mode 2 this sets retention.',
+  sosp: '//Primary S.O.S. position for the selected sosc curve.',
   splc: '//Splice recall: integer 1-300, 1 is the first splice. Above the reel count selects its last splice; the configured number is retained. Omit to preserve selection on settings-only reload.',
   srrp: '//Sample-rate reduction virtual knob preset: integer 0-100 percent. Used with fxsl 1; retained separately from warble. SRR and warble cannot run together.',
   jitp: '//Jitter / Turing spread virtual knob preset: integer 0-100 percent for SHIFT+Slide.',
@@ -24,10 +30,11 @@ const KEYS = {
   vctr: '//Noon unity mapping: 0 original mapping, 1 +1x at calibrated noon with a 48-52 percent unity notch. The notch is enabled only with vctr 1.',
   mlop: '//Morph Loop: 0 stock gaps (default), 1 seamless loop at minimum Morph',
   dstr: '//Startup/reload Gene density: 0.1-128 Genes/sec, at most one decimal, default 8. Explicit dstr recalls on settings-only reload; omit to preserve live rate. Knob changes are temporary.',
-  dens: '//Independent Gene density: 0 off, 1 on: startup rate from dstr (default 8 Genes/sec); hold SHIFT and turn Gene Size for 0.1-128 Genes/sec; knob rate remains until adjusted again, recalled by dstr reload or powered off, not saved across power cycles; overrides Turing rate; external clock takes priority',
+  dens: '//SHIFT+Gene Size: CCW stock timing, then 0.1-128 Hz.',
   vrng: '//0 stock, 1 +/-4x bidirectional or 0-8x forward',
   vqnt: '//Varispeed quantization: 0 SHIFT+Varispeed locks, 1 quantized normally and SHIFT+Varispeed temporarily free; release snaps back; scale from octl/scal',
-  dryk: '//0 normal, 1 wet only, 2 wet with S.O.S. feedback.',
+  dryk: '//0 normal, 1 wet, 2 tape feedback, 3 Gene feedback.',
+  sosc: '//0 crossfade, 1 full input, 2 full existing.',
   dlen: '//0 fixed, 1 extend last splice at CCW in dryk 2.',
   tape: '//SHIFT+S.O.S.: 0 classic TLA feedback (input + feedback x Gene playback), 1 tape mode (Varispeed tape head in the Slide/Gene Size window)',
   octl: '//Varispeed scale: 0 off, 1 octaves, 2 octaves + fifths, 3 semitones, 4 custom scale (scal); vqnt selects gesture behavior',
@@ -52,11 +59,11 @@ const CHORD_KEYS = ['mcr1', 'mcr2', 'mcr3'];
 const FIELDS = [...Object.keys(STOCK_KEYS), ...Object.keys(KEYS)];
 const PRESET_KEYS = Object.freeze(['mpos', 'gpos', 'spos', 'vpos', 'sosp', 'splc', 'srrp', 'jitp', 'wrbp', 'fbkp', 'evop', 'trst']);
 const TURING_STEPS = Object.freeze([1,2,3,4,6,8,12,16]);
-const DEFAULTS = Object.freeze({mpos:'0', gpos:'0', spos:'0', vpos:'0', sosp:'0', splc:'1', srrp:'0', jitp:'0', wrbp:'0', fbkp:'0', evop:'0', trst:'1', vuni:'0', vctr:'0', dstr:'8', mlop:'0', vsop:'0', vqnt:'0', dens:'0', vrng:'0', dryk:'0', dlen:'0', tape:'1', octl:'1', scal:'0', fxsl:'1', cpul:'0',
+const DEFAULTS = Object.freeze({mpos:'0', gpos:'0', spos:'0', vpos:'0', sosp:'0', splc:'1', srrp:'0', jitp:'0', wrbp:'0', fbkp:'0', evop:'0', trst:'1', vuni:'0', vctr:'0', dstr:'8', mlop:'0', vsop:'0', vqnt:'0', dens:'0', vrng:'0', dryk:'0', sosc:'0', dlen:'0', tape:'1', octl:'1', scal:'0', fxsl:'1', cpul:'0',
   mcap:'3', sldm:'0', root:'50', tlen:'8', ingn:'0', mono:'0', gnsm:'0',
   inop:'0', pmin:'0', omod:'0', rsop:'0', pmod:'0', ckop:'0', cvop:'0',
   mcr1:'2', mcr2:'1.5', mcr3:'1.33333'});
-const LIMITS = {mpos:[0,100], gpos:[0,100], spos:[0,100], vpos:[0,100], sosp:[0,100], splc:[1,300], srrp:[0,100], jitp:[0,100], wrbp:[0,100], fbkp:[0,100], evop:[0,100], vuni:[0,1], vctr:[0,1], mlop:[0,1], vsop:[0,2], vqnt:[0,1], dens:[0,1], vrng:[0,1], dryk:[0,2], dlen:[0,1], tape:[0,1], octl:[0,4], fxsl:[0,2], cpul:[0,1],
+const LIMITS = {mpos:[0,100], gpos:[0,100], spos:[0,100], vpos:[0,100], sosp:[0,100], splc:[1,300], srrp:[0,100], jitp:[0,100], wrbp:[0,100], fbkp:[0,100], evop:[0,100], vuni:[0,1], vctr:[0,1], mlop:[0,1], vsop:[0,2], vqnt:[0,1], dens:[0,1], vrng:[0,1], dryk:[0,3], sosc:[0,2], dlen:[0,1], tape:[0,1], octl:[0,4], fxsl:[0,2], cpul:[0,1],
   mcap:[0,9], sldm:[0,1], root:[0,100], tlen:[1,16], ingn:[0,3], mono:[0,2], gnsm:[0,1],
   inop:[0,1], pmin:[0,1], omod:[0,1], rsop:[0,1], pmod:[0,2], ckop:[0,2], cvop:[0,1]};
 function optionValue(key, raw) {
@@ -65,7 +72,7 @@ function optionValue(key, raw) {
     const magnitude = Math.abs(Number(token));
     return /^[+-]?\d{1,8}(?:\.\d{1,8})?$/.test(token) && magnitude >= 0.0625 && magnitude <= 16 ? token : null;
   }
-  if (key === 'dryk' || key === 'dlen') return /^\d$/.test(raw) && Number(raw) <= LIMITS[key][1] ? raw : null;
+  if (key === 'dryk' || key === 'dlen' || key === 'sosc') return /^\d$/.test(raw) && Number(raw) <= LIMITS[key][1] ? raw : null;
   if (key === 'dstr') return /^\d{1,3}(?:\.\d)?$/.test(raw) && Number(raw)>=0.1 && Number(raw)<=128 ? String(Number(raw)) : null;
   if (key === 'trst') return /^\d+$/.test(raw) && TURING_STEPS.includes(Number(raw)) ? String(Number(raw)) : null;
   if (key === 'scal') return scaleList(raw);
@@ -150,8 +157,8 @@ function renderOptions() {
       if (i>0 && m && FIELDS.includes(m.key)) {
         if (!(m.key in values) || seen.has(m.key)) return [];
         seen.add(m.key);
-        const comment = m.key === 'vrng' && m.comment.trim() === LEGACY_RANGE_COMMENT
-          ? ' ' + KEYS.vrng : m.comment;
+        const comment = OBSOLETE_COMMENTS[m.key]?.includes(m.comment.trim())
+          ? ' ' + KEYS[m.key] : m.comment;
         return [m.key+' '+values[m.key]+comment];
       }
       return [line];

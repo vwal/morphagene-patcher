@@ -16,7 +16,7 @@ class DryKillOptions(unittest.TestCase):
         a = Arm('options_keys', 'opt_parse')
         a.uc.mem_write(DRYK-2, b'\x01\x01\x00\x77')
         calls = printf_capture(a)
-        for value in (2, 1, 0):
+        for value in (3, 2, 1, 0):
             normal.begin(a)
             normal.feed(a, f'1 0 0\nvsop 1\n\tdryk\t{value} // fader\r\n')
             self.assertEqual(bytes(a.uc.mem_read(DRYK-2, 4)), bytes((1, 1, value, 0x77)))
@@ -32,7 +32,7 @@ class DryKillOptions(unittest.TestCase):
 
     def test_normal_rejects_garbage_and_wrapped_comment(self):
         a = Arm('options_keys', 'opt_parse')
-        for text in ('dryk 3', 'dryk 0.5', 'dryk 02', 'dryk 2 tail', 'dryk 2/x', 'drykX 2',
+        for text in ('dryk 4', 'dryk 9', 'dryk 0.5', 'dryk 02', 'dryk 2 tail', 'dryk 2/x', 'drykX 2',
                      'dryk', 'dryk -1', 'dryk 2'+' '*80+'tail', 'dryk 2\x00extra',
                      '//'+'x'*61+'dryk 2'):
             normal.begin(a)
@@ -40,12 +40,13 @@ class DryKillOptions(unittest.TestCase):
             self.assertEqual(a.uc.mem_read(DRYK, 1), b'\x01', text)
 
     def test_live_omission_failure_and_atomic_commit(self):
-        for line, intended, accepted in (('dryk 2', 2, True), ('dryk 0', 0, True),
+        for line, intended, accepted in (('dryk 3', 3, True), ('dryk 2', 2, True),
+                                         ('dryk 0', 0, True),
                                          ('dryk 1', 1, True), ('', 1, True),
                                          ('dryk 2\ndryk 0', 1, False),
                                          ('dryk 02', 1, False), ('dryk 2 tail', 1, False),
-                                         ('dryk -1', 1, False), ('dryk 3', 1, False),
-                                         ('dryk 2\nmono 9', 1, False)):
+                                         ('dryk -1', 1, False), ('dryk 4', 1, False),
+                                         ('dryk 3\nmono 9', 1, False)):
             a = live.arm()
             a.uc.mem_write(DRYK-1, b'\x75\x01\x43')
             live.stage(a, ('1 0 0\nvrng 1\n'+line+'\n').encode())
@@ -87,4 +88,4 @@ class DryKillOptions(unittest.TestCase):
             self.assertEqual(a.get(live.PENDING), int(accepted), extra)
             self.assertEqual(bytes(a.uc.mem_read(DRYK, 3)), b'\x01\x00\x43', extra)
             live.call(a, 'reload_commit')
-            self.assertEqual(bytes(a.uc.mem_read(DRYK, 3)), bytes([2 if accepted else 1, expected, 0x43]), extra)
+            self.assertEqual(bytes(a.uc.mem_read(DRYK, 3)), bytes([2 if accepted else 1, expected, 0 if accepted else 0x43]), extra)

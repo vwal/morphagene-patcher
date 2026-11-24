@@ -123,9 +123,11 @@ unity_buttons_done:
     cmp     r1, r0
     beq     1f
     str     r0, [r4]
-    movs    r0, #0                      @ zero +4..+231 (tape_sos / gene_shape fields too)
+    movs    r0, #0                      @ reset gesture, tape and Gene state
     movs    r1, #4
-0:  str     r0, [r4, r1]
+0:  cmp     r1, #132                    @ preserve the current audio block's input gain
+    it      ne
+    strne   r0, [r4, r1]
     adds    r1, r1, #4
     cmp     r1, #232                    @ leave the current audio block's routing/gain intact
     blt     0b

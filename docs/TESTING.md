@@ -1,3 +1,9 @@
+# mg204+c5 firmware tests
+
+The density tests compare stock timing with the fully counterclockwise gesture on a 15-second splice. They also cover the transition back to 0.1 Hz, knob pickup, clock priority and settings-only recall.
+
+The [recording guide, pages 12–13](../web/morphagene-manual-letter.pdf#page=12) covers the three curves. The firmware tests in `tests/test_sos_curves.py` exercise native REC on an empty reel, stereo source isolation, tape writes, normal settings, and atomic live reload. The control tests sweep all 4,096 ADC values for each curve.
+
 # Reproducible builds and public tests
 
 Reference toolchain: **Arm GNU 14.2.rel1**. Official archive URLs and SHA-256

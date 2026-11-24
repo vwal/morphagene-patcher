@@ -46,7 +46,12 @@ class DensityHooks(unittest.TestCase):
         for adc in range(4096):
             a.uc.reg_write(UC_ARM_REG_R0,adc);a.run('size_hold')
             self.assertEqual(a.uc.reg_read(UC_ARM_REG_R0),2000)
-            interval=a.get(0x2002A808);index=max(0,min(3968,adc-64))*256//3968
+            interval = a.get(0x2002A808)
+            if adc < 128:  # upward sweep from the stock-timing endpoint
+                self.assertEqual(interval, 0)
+                continue
+            index = (max(0, adc-192)*128//1856 if adc < 2048
+                     else min(3968, adc-64)*256//3968)
             want=round(480000*80**(-index/128)) if index<128 else round(96000*2**(-index/32))
             self.assertEqual(interval,want);self.assertLessEqual(interval,prev);prev=interval
         a.uc.mem_write(MOD+4,b'\0')

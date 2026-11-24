@@ -32,7 +32,7 @@ typedef struct {
     uint32_t seen, values[26];
     uint32_t valid, reel, reels, data_start, size, cluster, position;
     uint32_t cid[4], dir_sector, dir_offset;
-    uint32_t reserved[7], dlen_value, snapshot_ready, live_file, scanning;
+    uint32_t sosc_token, reserved[6], dlen_value, snapshot_ready, live_file, scanning;
     uint32_t morph_loop_value; /* separate slot preserves the assembly state ABI */
     uint32_t density_start_value;
     uint32_t mount_ready; /* 1: owned fresh mount; 2: normal load in progress */
@@ -193,7 +193,7 @@ static const Option options[] = {
     {KEY('d','s','t','r'),0x2002a614,0,0,4},
     {KEY('v','u','n','i'),0x2002a618,0,1,1},
     {KEY('v','c','t','r'),0x2002a619,0,1,1},
-    {KEY('d','r','y','k'),DRYK_ADDRESS,0,2,1},
+    {KEY('d','r','y','k'),DRYK_ADDRESS,0,3,1},
     {KEY('d','l','e','n'),DLEN_ADDRESS,0,1,1},
 };
 enum { OPTION_COUNT = sizeof(options)/sizeof(options[0]) };
@@ -294,6 +294,14 @@ int reload_parse_line(const char *line) {
         if (!p[i]) return 1;
         key |= (uint32_t)(uint8_t)p[i] << (8*i);
     }
+    /* All 32 legacy presence bits are in use. Zero denotes an omitted
+     * curve; 1..3 represent explicit values 0..2 until atomic commit. */
+    if (key == KEY('s','o','s','c')) {
+        uint32_t mode;
+        if (S->sosc_token || !mode_digit(p+4, 2, &mode)) return 0;
+        S->sosc_token = mode + 1;
+        return 1;
+    }
     unsigned i;
     for (i=0; i<OPTION_COUNT && options[i].key != key; ++i) {}
     if (i == OPTION_COUNT) return 1;
@@ -317,6 +325,7 @@ int reload_parse_line(const char *line) {
  * is deliberately ignored: it contains saved reel/gain metadata, not options.
  */
 static int read_options(void) {
+    S->sosc_token = 0;
     PRESET_LIVE->mask = 0;
     PRESET_LIVE->ready = 0;
     if (f_open(FIL, "options.txt", 1)) return 0;
@@ -350,7 +359,7 @@ static int read_options(void) {
         if (line && !reload_parse_line(LINE)) valid = 0;
     }
     if (f_close(FIL)) valid = 0;
-    return valid && line && (S->seen || PRESET_LIVE->mask);
+    return valid && line && (S->seen || PRESET_LIVE->mask || S->sosc_token);
 }
 
 /* Called before FatFs's common write core (also used by f_printf), and before
@@ -548,6 +557,8 @@ void reload_commit(void) {
         U32(0x2002a808) = interval;
         U32(0x2002a80c) = interval;
     }
+    uint8_t curve = S->sosc_token ? (uint8_t)(S->sosc_token-1u) : 0;
+    if (U8(SOSC_ADDRESS) != curve) U8(SOSC_ADDRESS) = curve;
     presets_publish(PRESET_LIVE);
     morph_loop_apply();
     S->pending = 0;

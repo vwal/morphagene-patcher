@@ -8,6 +8,7 @@
 #include "../preset_recall/preset.h"
 #define DRYK_ADDRESS 0x2002a61au
 #define DLEN_ADDRESS 0x2002a61bu
+#define SOSC_ADDRESS 0x2002a61cu
 typedef struct {
     uint32_t mask, values[PRESET_COUNT], ready;
     uint32_t scan_state, parse_mode; /* normal fgets logical-line tracking */

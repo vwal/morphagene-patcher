@@ -49,7 +49,7 @@ def record(audio):
 @unittest.skipUnless(os.environ.get('MGMOD_FIRMWARE'), 'requires official firmware')
 class DryMonitor(unittest.TestCase):
     def test_wet_return_before_the_first_gesture_timer_tick(self):
-        for mode in (1, 2):
+        for mode in (1, 2, 3):
             audio = Audio(images()[1])
             audio.a.put(0x2002a000, 0)
             set_mode(audio, mode)
@@ -60,7 +60,7 @@ class DryMonitor(unittest.TestCase):
             self.assertEqual(audio.blocks(4), bytes(4 * 32))
 
     def test_silent_reel_rejects_stereo_input_from_first_sample_at_both_sos_ends(self):
-        for mode in (0, 1, 2):
+        for mode in (0, 1, 2, 3):
             audio = Audio(images()[1])
             set_mode(audio, mode)
             for address in (LEFT, RIGHT):
@@ -79,7 +79,7 @@ class DryMonitor(unittest.TestCase):
             self.assertEqual(any(monitor), mode == 0, mode)
 
     def test_wet_playback_has_the_same_level_with_or_without_input_at_every_sos_setting(self):
-        for mode in (1, 2):
+        for mode in (1, 2, 3):
             reference_audio, with_input = Audio(images()[1]), Audio(images()[1])
             for audio in (reference_audio, with_input):
                 set_mode(audio, mode)
@@ -99,7 +99,7 @@ class DryMonitor(unittest.TestCase):
                 self.assertNotEqual(stereo[::2], stereo[1::2])
 
     def test_empty_reel_does_not_monitor_the_input(self):
-        for mode in (0, 1, 2, 255):
+        for mode in (0, 1, 2, 3, 255):
             audio = Audio(images()[1])
             set_mode(audio, mode)
             audio.a.put(0x2002208C, 0)   # splice count
@@ -109,9 +109,9 @@ class DryMonitor(unittest.TestCase):
                 audio.uc.mem_write(address, bytes(PLANE_BYTES))
             audio.a.put(SOS, 0)
             audio.uc.mem_write(INPUT, SIGNAL)
-            self.assertEqual(any(audio.blocks(200)), mode not in (1, 2), mode)
+            self.assertEqual(any(audio.blocks(200)), mode not in (1, 2, 3), mode)
 
-    def test_mode_zero_matches_c3_and_mode_one_preserves_its_recordings(self):
+    def test_monitor_selection_preserves_recordings_and_legacy_overrides(self):
         for tape, inop, feedback in ((0, 0, False), (0, 1, False), (0, 0, True),
                                      (0, 1, True), (1, 0, True), (1, 1, True)):
             case = tape, inop, feedback
@@ -129,11 +129,16 @@ class DryMonitor(unittest.TestCase):
                 record(audio)
             before = planes(baseline)
             original_output = baseline.blocks(400)
-            self.assertEqual(normal.blocks(400), original_output, case)
-            self.assertNotEqual(wet.blocks(400), original_output, case)
-            original_recording = planes(baseline)
-            self.assertTrue(all(a != b for a, b in zip(before, original_recording)), case)
+            new_output = normal.blocks(400)
+            self.assertNotEqual(wet.blocks(400), new_output, case)
+            self.assertNotEqual(new_output, original_output, case)
+            recorded = planes(normal)
+            self.assertTrue(all(a != b for a, b in zip(before, recorded)), case)
+            self.assertEqual(planes(wet), recorded, case)
+            if inop or feedback:
+                self.assertEqual(recorded, planes(baseline), case)
+            else:
+                self.assertNotEqual(recorded, planes(baseline), case)
             for audio in (normal, wet):
-                self.assertEqual(planes(audio), original_recording, case)
                 for address in (0x20022108, 0x2002210C, 0x20022114):
                     self.assertEqual(audio.a.get(address), baseline.a.get(address), case)

@@ -1,5 +1,13 @@
 # Version history
 
+## mg204+c5 — 2026-11-24
+
+- Added `dryk 3` for wet-only performance recording. The recorder combines live input at real-time speed with the Gene playback you hear, including Varispeed, Morph, Gene Size and Slide. Overdub the current splice to feed the result back into playback, or record into a new splice to keep the original.
+- Added three main S.O.S. curves. `sosc 0` (default, including when omitted) brings both sources to full level at noon. `sosc 1` keeps incoming audio full and varies existing audio. `sosc 2` keeps existing audio full and varies incoming audio. Normal monitoring follows the curve in `dryk 0`. Modes 1–3 keep a wet-only return. The first take on an empty reel always captures full input.
+- **Upgrading from c4:** for the previous full-input tape overdub, choose `dryk 2` and `sosc 1`. To extend the last splice with `dlen 1`, start REC at fully CCW with `sosc 0` or `1`.
+- With `dens 1`, SHIFT + Gene Size fully CCW selects stock Gene timing. Unshifted Gene Size still sets length. Move just clockwise for 0.1 Genes/sec, through 8 at noon to 128 fully clockwise. Omitting `dstr` on settings-only reload preserves the timing choice.
+- Fixed card-removal detection on an empty, single-sector reel after the last splice is erased. Updated both editors, the Letter and A4 guides and quick cards, and the module and editor header to `// firmware version 204+c5`.
+
 ## mg204+c4 — 2026-11-22
 
 - Added wet-only output for mixer sends. With `dryk 1`, recording follows the existing controls. With `dryk 2`, fresh input records at every S.O.S. setting and S.O.S. controls how much previous audio survives the overdub. The default is `dryk 0`.

@@ -20,7 +20,7 @@ MODULE = Module(
     settings=[4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
     ram=[(0x2002A600, 0x2002A603),                             # ingn: when the pending gain was first seen
          (0x2002A604, 0x2002A607),                            # scal mask, vrng, dens
-         (0x2002A610, 0x2002A611), (0x2002A614, 0x2002A61B),
+         (0x2002A610, 0x2002A611), (0x2002A614, 0x2002A61C),
          (0x2002A660, 0x2002A6FF)],  # optional preset config and runtime lanes
-    options_keys=['ingn', 'scal', 'dryk', 'dlen', 'mlop', 'dstr', 'mpos', 'gpos', 'spos', 'splc', 'srrp', 'jitp', 'wrbp', 'fbkp', 'evop', 'trst', 'sosp', 'vpos'],
+    options_keys=['ingn', 'scal', 'dryk', 'dlen', 'sosc', 'mlop', 'dstr', 'mpos', 'gpos', 'spos', 'splc', 'srrp', 'jitp', 'wrbp', 'fbkp', 'evop', 'trst', 'sosp', 'vpos'],
 )
