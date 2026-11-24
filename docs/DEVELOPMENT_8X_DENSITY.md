@@ -51,7 +51,7 @@ at 8x does more work than at 4x. Hardware CPU headroom remains to be measured.
 ## Independent Gene density
 
 `dens 1` selects a separate, free-running grain-start clock. Its initial rate
-comes from `dstr`. In mg204-c6, 0 selects stock timing and 0.1–128.0 specifies Genes/sec. The default is 1.0 Gene/sec. Earlier releases defaulted to 8. The configured value persists in options.txt; settings-only reload recalls an explicit dstr, even if unchanged. Omit dstr to preserve the live rate. Hold **SHIFT + Gene Size** and turn:
+comes from `dstr`. In mg204+c6, 0 selects stock timing and 0.1–128.0 specifies Genes/sec. The default is 1.0 Gene/sec. Earlier releases defaulted to 8. The configured value persists in options.txt; settings-only reload recalls an explicit dstr, even if unchanged. Omit dstr to preserve the live rate. Hold **SHIFT + Gene Size** and turn:
 
 - Fully CCW selects stock timing (introduced in mg204+c5). Just clockwise of the endpoint selects 0.1 Genes/sec (one every ten seconds).
 - Center: about 8 Genes/sec.

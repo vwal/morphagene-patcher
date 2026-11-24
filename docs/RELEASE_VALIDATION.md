@@ -1,8 +1,8 @@
-# mg204-c6 release validation
+# mg204+c6 release validation
 
-The owner confirmed the stock-timing refinement resolved the reported playback repeat on the module. The release application matched the tested Development 13 image byte for byte outside the fixed-size version comment. The module and both editors now write `// firmware version 204-c6`.
+The owner confirmed the stock-timing refinement resolved the reported playback repeat on the module. The release application matched the tested Development 13 image byte for byte outside the fixed-size version comment. The module and both editors now write `// firmware version 204+c6`.
 
-- Both CLI build names reproduced a 202,752-byte application with Arm GNU 14.2.rel1. SHA-256 is `ed03290645a49cecf1ad5f280ed8c17de152a48c039d2bfa1a5d03b3305d7617`.
+- Both CLI build names reproduced a 202,752-byte application with Arm GNU 14.2.rel1. SHA-256 is `4596b236d5a0b82e56aaba6c6c4ed2204677b2224362356e2a1369cd681e7ab4`.
 - All 259 firmware tests passed locally with private reference images. Density checks covered all 1,281 supported values, the 1.0 Gene/sec startup default, explicit zero and omitted lines on settings-only reload, timing while Genes remain active and transitions between the shifted knob and card settings.
 - Both firmware readers accepted a test card with all 45 settings explicitly zero. The 12 optional presets were active. The six positive-only settings assumed their documented minima.
 - The browser generated the same SD update as the CLI. The browser and CLI update WAVs both decoded to the verified release application.

@@ -426,7 +426,7 @@
   ],
   "features": [
     [
-      "New in mg204-c6",
+      "New in mg204+c6",
       "Recall Gene timing",
       "Set <code>dens 1</code> and <code>dstr 0</code> to boot with stock Gene timing and keep SHIFT + Gene Size available. On a settings-only reload, include <code>dstr</code> to recall stock timing or a rate from 0.1 to 128 Genes/sec. Omit it to keep the live timing. A fresh boot with no <code>dstr</code> line uses 1 Gene/sec. An existing <code>dstr 8.0</code> still selects 8 Genes/sec. External clock takes priority, and available voices limit the overlap of long Genes."
     ],

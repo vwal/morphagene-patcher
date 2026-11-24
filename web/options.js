@@ -2,7 +2,7 @@
 'use strict';
 
 // ---------- options.txt ----------
-const VERSION_HEADER = '// firmware version 204-c6';
+const VERSION_HEADER = '// firmware version 204+c6';
 const MOD_HEADER = '//Morphagene extended mods';
 // In older builds this comment put "vsop 2" at the start of a 63-byte read.
 const OBSOLETE_COMMENTS = {

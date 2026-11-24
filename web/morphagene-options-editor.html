@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; script-src 'sha256-ByO0Uoex1asw+jPpEctooQyMcrYwjuyFhaCUthEWu14=' 'sha256-ASVmwSD/W00rkGsw2/fdVRgsolwphQZgdGNmWbtGyi0=' 'sha256-UmVWcV6k4kW8ZdvKphGiCChoWe4cOo6foUKKkQ21hNE='; style-src 'sha256-q6+BNWFXHFjLk/H0KyZ/W9unzIIklL4RN9ilAoMBSyY='">
-  <title>Morphagene options editor · mg204-c6</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; script-src 'sha256-ByO0Uoex1asw+jPpEctooQyMcrYwjuyFhaCUthEWu14=' 'sha256-ASVmwSD/W00rkGsw2/fdVRgsolwphQZgdGNmWbtGyi0=' 'sha256-vQx++enGJ3X6C7BOqzrL7+KLIfTeytCj/Kr8LSEjZI8='; style-src 'sha256-q6+BNWFXHFjLk/H0KyZ/W9unzIIklL4RN9ilAoMBSyY='">
+  <title>Morphagene options editor · mg204+c6</title>
   <style>:root {
   color-scheme: light;
   --paper: #f5f4ee;
@@ -472,7 +472,7 @@ function bindFileDrop(inputId, zoneId, load, rejectDrop) {
 'use strict';
 
 // ---------- options.txt ----------
-const VERSION_HEADER = '// firmware version 204-c6';
+const VERSION_HEADER = '// firmware version 204+c6';
 const MOD_HEADER = '//Morphagene extended mods';
 // In older builds this comment put "vsop 2" at the start of a 63-byte read.
 const OBSOLETE_COMMENTS = {
@@ -781,7 +781,7 @@ document.addEventListener('DOMContentLoaded', initOptionsEditor);
   <a class="skip-link" href="#options">Skip to options editor</a>
   <div class="page-shell">
     <header class="site-header">
-      <span class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Morphagene <span class="brand-subtitle">/ mg204-c6</span></span></span>
+      <span class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Morphagene <span class="brand-subtitle">/ mg204+c6</span></span></span>
       <button class="theme-toggle" id="theme-toggle" type="button" role="switch" aria-label="Night mode" aria-checked="false" title="Switch to night mode" hidden><svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg><svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.7 13.2A8.8 8.8 0 0 1 10.8 3.3a8.8 8.8 0 1 0 9.9 9.9Z"/></svg><span id="theme-label">Day</span></button>
     </header>
     <main id="options">

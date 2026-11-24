@@ -183,7 +183,7 @@ try {
   assert.equal(await readFile(cardOptions, 'utf8'), imported);
   const lines = saved.split(/\r?\n/);
   assert.equal(lines[0], '7 45875 0');
-  assert.equal(lines[1], '// firmware version 204-c6');
+  assert.equal(lines[1], '// firmware version 204+c6');
   assert.equal(lines.filter(l => /^\/\/ firmware version /.test(l)).length, 1);
   for (const line of ['// annotated performance reel', 'future_setting 12 // preserve me',
                       'mcr1 2.00000 // stock chord', 'vsop 1', 'dryk 3 // send', 'mpos 19 // starting position']) {

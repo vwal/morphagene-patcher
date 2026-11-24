@@ -1,11 +1,11 @@
 # Version history
 
-## mg204-c6 — 2026-11-24
+## mg204+c6 — 2026-11-24
 
 - With `dens 1`, `dstr 0` (or `0.0`) now selects stock Gene timing on power-up and settings-only reload. SHIFT + Gene Size remains available for independent density. Already-playing Genes finish when timing changes.
 - Omitting `dstr` now starts at **1.0 Gene/sec** on power-up and preserves current timing on a settings-only reload. An explicit `dstr 8.0` still recalls eight starts per second. Edit an older card once if you want stock timing or the lower rate.
 - Both card readers and both editors accept an explicit zero for all 45 settings. For `tlen`, `splc` and `trst`, it selects 1. For `mcr1`, `mcr2` and `mcr3`, it selects the smallest forward ratio, +0.0625.
-- Updated the patcher, downloadable offline editor, and Letter/A4 guides and quick cards. The module and editors write `// firmware version 204-c6`.
+- Updated the patcher, downloadable offline editor, and Letter/A4 guides and quick cards. The module and editors write `// firmware version 204+c6`.
 
 ## mg204+c5 — 2026-11-24
 

@@ -8,7 +8,7 @@ for (const name of ['page.js', 'options.js']) {
   vm.runInContext(fs.readFileSync(new URL('../web/'+name,import.meta.url),'utf8'),context);
 }
 handlers.DOMContentLoaded();
-assert.match(elements['options-text'].value,/^\/\/ firmware version 204-c6\n/);
+assert.match(elements['options-text'].value,/^\/\/ firmware version 204\+c6\n/);
 assert.equal(elements['recall-dstr'].checked,true);
 assert.equal(elements['opt-dstr'].disabled,false);
 assert.match(elements['options-text'].value,/^dstr 1 /m);
@@ -51,7 +51,7 @@ out=await load('6 0 0\nvqnt 2\n');assert.match(out,/^vqnt 0$/m);
 await load('6 0 0\nvqnt 1\n');out=await load('6 0 0\n');assert.match(out,/^vqnt 0 /m);
 await load(null);assert.equal(elements['opt-root'].value,'50');
 out=await load('6 46345 0\n// firmware version 204+c2\n// firmware version 155b\nvsop 1\n');
-assert.ok(out.startsWith('6 46345 0\n// firmware version 204-c6\n'));
+assert.ok(out.startsWith('6 46345 0\n// firmware version 204+c6\n'));
 assert.equal((out.match(/^\/\/ firmware version /gm)||[]).length,1);
 out=await load(out);assert.equal((out.match(/^\/\/ firmware version /gm)||[]).length,1);
 assert.match(out,/^vsop 1$/m);
@@ -521,11 +521,11 @@ for (const comment of vm.runInContext('OBSOLETE_COMMENTS.dstr', context)) {
   assert.equal(elements['opt-dstr'].value,'8');
   assert.equal(elements['recall-dstr'].checked,true);
   assert.match(activeDensity(out)[0], /^dstr 8 \/\/0 stock timing/);
-  assert.match(out, /^4 45875 0\n\/\/ firmware version 204-c6\n/);
+  assert.match(out, /^4 45875 0\n\/\/ firmware version 204\+c6\n/);
 }
 out=await load('4 45875 0\n// firmware version 204+c5-dstr\ndstr 0.0 // user timing note\n');
 assert.deepEqual(activeDensity(out), ['dstr 0 // user timing note']);
-assert.match(out,/^4 45875 0\n\/\/ firmware version 204-c6\n/);
+assert.match(out,/^4 45875 0\n\/\/ firmware version 204\+c6\n/);
 console.log('PASS all 45 explicit zeros, normalized minima, checked preset round trip, signed ratios and stock timing');
 
 // Generated markup exposes native, labelled controls with firmware bounds.
@@ -573,13 +573,13 @@ const content=JSON.parse(fs.readFileSync(new URL('../web/site-content.json',impo
 assert.deepEqual(content.fields.map(field=>field[0]).sort(),Array.from(vm.runInContext('FIELDS',context)).sort());
 assert.match(html,/no extra flat zone is added/);
 assert.match(html, /id="opt-dstr" type="number" min="0" max="128" step="0.1" value="1"/);
-assert.match(html,/Morphagene mg204-c6/);
-assert.match(html,/mg204-c6 · Public release/);
+assert.match(html,/Morphagene mg204\+c6/);
+assert.match(html,/mg204\+c6 · Public release/);
 for(const id of ['firmware','remix','build-card','build-wav']) assert.ok(htmlIds.includes(id));
-assert.match(html,/mg204-c6\.wav/);
+assert.match(html,/mg204\+c6\.wav/);
 assert.match(html,/<details><summary>Version by version<\/summary>/);
 const history = html.match(/<section[^>]+id="versions"[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
-assert.match(history,/<h3>mg204-c6\b/);
+assert.match(history,/<h3>mg204\+c6\b/);
 assert.match(history,/<h3>mg204\+c5\b/);
 assert.match(history,/<h3>mg204\+c4\b/);
 assert.match(history,/<h3>mg204\+c3\b/);
@@ -601,7 +601,7 @@ assert.match(html,/100% gives the shortest Genes/);
 assert.match(html,/Bidirectional — classic/);
 assert.match(html,/Bidirectional — V\/oct/);
 assert.match(html,/attenuverter carefully adjusted/);
-console.log('PASS mg204-c6 editor: grouped controls, percentage guidance, version history, disclosures and patcher');
+console.log('PASS mg204+c6 editor: grouped controls, percentage guidance, version history, disclosures and patcher');
 
 // Release check: a stale standalone file can look correct while exporting
 // settings for earlier firmware. Both editions must ship the current editor.

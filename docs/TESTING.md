@@ -1,4 +1,4 @@
-# mg204-c6 firmware tests
+# mg204+c6 firmware tests
 
 The density tests compare `dens 1, dstr 0` output with stock timing at startup and after settings-only reload. They also check the 1.0 Gene/sec startup default, explicit rate recall, current timing and phase when the line is omitted, and the shifted knob’s 0.1–128 Genes/sec range. The normal card reader, live reader, hosted editor and offline editor exercise explicit zero across their settings. See [release validation](RELEASE_VALIDATION.md).
 

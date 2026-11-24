@@ -220,8 +220,8 @@ function initPatcher() {
         status('build-status', 'Encoding the audio update…');
         await new Promise((res) => setTimeout(res, 20));
         if (sequence !== firmwareSequence) return;
-        download('mg204-c6.wav', updateWav(image), 'audio/wav');
-        status('build-status', 'mg204-c6.wav saved. Follow the first-time audio installation steps above.', 'ok');
+        download('mg204+c6.wav', updateWav(image), 'audio/wav');
+        status('build-status', 'mg204+c6.wav saved. Follow the first-time audio installation steps above.', 'ok');
       }
     } catch (err) {
       if (sequence !== firmwareSequence) return;

@@ -2,7 +2,7 @@
 
 ## Gene timing at startup and reload
 
-With `dens 1`, **mg204-c6** lets a prepared card recall a timing mode as well as a rate. The primary Gene Size control sets length in either mode.
+With `dens 1`, **mg204+c6** lets a prepared card recall a timing mode as well as a rate. The primary Gene Size control sets length in either mode.
 
 | `options.txt` with `dens 1` | At power-up | On a settings-only reload |
 |---|---|---|
@@ -48,7 +48,7 @@ review the file again before using it as a preserve-density card.
 
 Leave the file's **first line** as it is; the Morphagene keeps its own state
 there. Both editors and the module write
-`// firmware version 204-c6` on a comment line below it.
+`// firmware version 204+c6` on a comment line below it.
 
 For a settings-only reload, include one `dryk` line to choose the new routing. Include `dlen 0` or `dlen 1` to select the overdub length behavior. Omitting either setting preserves its live value.
 Including `sosc` selects the main S.O.S. curve. Omitting it selects the default crossfade on every successful load. A duplicate or malformed value rejects the entire live settings change. An empty reel always records the first take at full input gain. For a full-splice tape pass use forward 1×, Gene Size fully CCW and Slide at the start.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the mg204-c6 guide and quick card."""
+"""Build the mg204+c6 guide and quick card."""
 import argparse
 import os
 from datetime import datetime, timezone
@@ -33,7 +33,7 @@ for name, file in [('Guide','Regular'),('GuideB','Bold')]:
 pdfmetrics.registerFontFamily('Guide',normal='Guide',bold='GuideB',italic='Guide',boldItalic='GuideB')
 ink,green,muted,rust,rule,pale = [colors.HexColor(c) for c in
     ('#20322c','#285843','#45594f','#91431f','#cdd8cf','#eaf2eb')]
-GUIDE_BUILD = 'mg204-c6'
+GUIDE_BUILD = 'mg204+c6'
 GUIDE_PAGES = 13
 SITE='https://briskcat.github.io/morphagene-mods/'
 MANUAL='https://www.makenoisemusic.com/modules/morphagene/'
@@ -93,7 +93,7 @@ class Guide:
 
 
 g=Guide(args.output)
-g.start('Return to your sound','mg204-c6 / firmware guide','Boot with stock Gene timing, bring in overlapping Genes with SHIFT + Gene Size, or record a Gene performance on a wet-only mixer return. Independent customization built on Briskcat’s Morphagene mods.')
+g.start('Return to your sound','mg204+c6 / firmware guide','Boot with stock Gene timing, bring in overlapping Genes with SHIFT + Gene Size, or record a Gene performance on a wet-only mixer return. Independent customization built on Briskcat’s Morphagene mods.')
 g.section('One build, selectable features')
 g.body('This build keeps your chosen Varispeed layout when you mount the card. It includes the optional SHIFT return to exact forward +1x, +1x at noon and control presets introduced in mg204+c2. <b>mlop 0</b> keeps the original Morph gaps; <b>mlop 1</b> enables seamless looping at minimum Morph. No separate firmware is needed.')
 g.rows([('Return to 1:1 / 3','A half-second SHIFT hold/release resets to original forward playback speed, with soft pickup. Separately place +1x at calibrated noon with an easy-to-find notch.'),('Pitch and timing / 4','Expanded +/-4x or forward 8x Varispeed, quantization, independent density and Morph Loop.'),('Sound and motion / 5','Tape/TLA feedback, SRR, warble, jitter and Turing patterns.'),('Live settings / 6','Matching-card settings reload keeps the live reel and card mounted. Included presets apply; omitted values stay live.'),('Presets / 7-8','All dialable values can be included in prepared options. Understand percentages, pickup, splice selection and saving.'),('Reference / 9-11','Options tables, testing, credits and release history. Installation and recovery are on page 2.'),('Overdubbing / 12-13','Choose what reaches the outputs and what goes on the reel. Set up a clean loop, print overlapping Genes or fade layers on a mixer send.')],left=130,pad=5)
@@ -103,7 +103,7 @@ g.finish()
 
 g.start('Install and recover','Audio first / SD thereafter','Back up the entire SD card before installing. Keep your original Make Noise update WAV for recovery.')
 g.section('Build your update')
-g.body('Drop the official Make Noise <b>mg204.wav</b> into the '+link('https://vwal.github.io/morphagene-patcher/','firmware patcher')+' or use Choose file. Download <b>mg204-c6.wav</b> for the first audio installation or <b>mgmod.bin</b> to update a module that already has the SD updater.')
+g.body('Drop the official Make Noise <b>mg204.wav</b> into the '+link('https://vwal.github.io/morphagene-patcher/','firmware patcher')+' or use Choose file. Download <b>mg204+c6.wav</b> for the first audio installation or <b>mgmod.bin</b> to update a module that already has the SD updater.')
 g.section('First installation by audio')
 g.rows([('1 / Prepare','Remove the SD card. Connect the player to <b>Left Signal IN</b>, starting at about 80% volume. Disable effects, EQ, sound enhancements and notifications.'),('2 / Bootloader','Power on holding <b>REC</b>. Only the SPLICE window lights green. Release REC.'),('3 / Play the WAV','Play the generated update WAV without interruption. Windows flash during loading; all lights flash on completion. Keep power stable.'),('4 / Calibrate','Follow Make Noise’s update instructions: power on holding <b>SPLICE</b>, turn Varispeed fully both ways, press SPLICE, then power-cycle.')],left=100,pad=5)
 g.section('Later SD updates and stock recovery')
@@ -154,7 +154,7 @@ g.rows([('srrp / SRR','<b>0-100.</b> 0% bypasses; increasing strengthens sample-
 g.section('Soft pickup, reload and saving')
 g.body('A recalled main control holds until its combined knob/CV input comes near or crosses the preset position. Secondary effects use the same pickup idea during their matching <b>SHIFT + knob</b> gesture. The primary control stays at its effective value during that gesture. Organize picks up at the selected splice, and ordinary SHIFT navigation remains available.')
 g.body('An explicit value recalls again even when identical to the previous file. Omitted keys preserve live values and pickup. Saves retain the <b>configured numbers, not later knob movements</b>; omitted preset keys remain omitted. No gesture captures the live knobs into options.txt.')
-g.note('Density and input gain were already configurable with <b>dstr</b> and <b>ingn</b>. The module adds dstr back on a normal options rewrite. Uncheck its Recall box again when preparing an omission for live reload. The editors and module write <b>// firmware version 204-c6</b>. Keep the first numeric state line.')
+g.note('Density and input gain were already configurable with <b>dstr</b> and <b>ingn</b>. The module adds dstr back on a normal options rewrite. Uncheck its Recall box again when preparing an omission for live reload. The editors and module write <b>// firmware version 204+c6</b>. Keep the first numeric state line.')
 g.finish()
 
 g.start('Options: pitch and timing','Reference / file format','Use the browser editor to load the module’s options.txt, choose values and save it back to the card root. Keep the first line unchanged; it stores the module’s own state.')
@@ -172,7 +172,7 @@ g.finish()
 
 g.start('Testing, limits and credits','Read before performance use','Hardware checks covered dry kill, Gene timing, unity, presets and armed reload. Latency depends on the card and patch.')
 g.section('Version by version')
-g.rows([('mg204-c6','Recall stock Gene timing with dstr 0. Startup defaults to 1.0 Gene/sec. Zero selects 1 for counts and +0.0625 for chord ratios.'),
+g.rows([('mg204+c6','Recall stock Gene timing with dstr 0. Startup defaults to 1.0 Gene/sec. Zero selects 1 for counts and +0.0625 for chord ratios.'),
         ('mg204+c5','Wet-only performance recording, three S.O.S. curves, stock timing at minimum density and card removal after erasing the last splice.'),
         ('mg204+c4','Wet-only returns, S.O.S. overdub feedback, fixed or growing takes, and downloadable offline settings editor.'),
         ('mg204+c3','Fixes Varispeed reverting to forward only. Restore a previously overwritten vsop once.'),
@@ -226,7 +226,7 @@ g.note('<b>For a longer pad</b>, set <b>dryk 2, dlen 1</b> with <b>sosc 0 or 1</
 g.finish();g.c.save()
 
 g=Guide(args.card,card=True)
-g.start('Quick reference','Morphagene extended / mg204-c6','Settings are in the card’s options.txt. Page numbers refer to the full guide.')
+g.start('Quick reference','Morphagene extended / mg204+c6','Settings are in the card’s options.txt. Page numbers refer to the full guide.')
 g.rows([
 ('Recording / 12','<b>dryk 0</b> monitors the mix. <b>1–3</b> monitor Genes only. Modes 0/1 use ordinary recording and inop. Mode 2 mixes input with stored samples. Mode 3 mixes real-time input with performed Genes. First take on an empty reel always captures full input.'),
 ('Main S.O.S. / 12','<b>sosc 0</b> default crossfade, both full at noon. <b>1</b> full input, turn CW to add existing audio. <b>2</b> full existing, turn CW to reduce input. For the c4 tape overdub use <b>dryk 2, sosc 1</b>.'),
@@ -238,7 +238,7 @@ g.rows([
 ('Effects / 5, 8','SHIFT + Morph selects SRR or warble via <b>fxsl 1/2</b>. SHIFT + Slide adjusts jitter. SHIFT + S.O.S. sets tape/TLA feedback in dryk 0/1. <b>srrp, wrbp, jitp, fbkp</b> recall amounts.'),
 ('Turing / 5, 8','<b>sldm 1</b> enables SHIFT + Organize for evolution (<b>evop</b>), SHIFT + Gene Size for Genes/step (<b>trst</b>, dens off), SHIFT + Slide for spread. <b>tlen</b> sets steps and <b>root</b> the root chance.'),
 ('Live cards / 6','Finish saves, remove the card, wait for SHIFT to go dark. Hold SHIFT alone for 1 s until steady and insert a matching card while held. Two flashes = mounted, three = failed. Keep reel files identical across copies.'),
-('Install / editor / 2, 10','First install by WAV through Left Signal IN. Follow page 2 for REC boot and calibration. Later, boot with <b>mgmod.bin</b> at the card root. Success renames it <b>mgmod.ok</b>. The editor and module write <b>204-c6</b> in options.txt.')
+('Install / editor / 2, 10','First install by WAV through Left Signal IN. Follow page 2 for REC boot and calibration. Later, boot with <b>mgmod.bin</b> at the card root. Success renames it <b>mgmod.ok</b>. The editor and module write <b>204+c6</b> in options.txt.')
 ],left=104,size=9.3,leading=12.1,pad=3)
 g.note('<b>(c) 2026 vwal</b>; upstream <b>(c) 2026 morphagene-mods contributors</b> / Briskcat (MIT). Free use/share with notices; no sales, paid bundles/products/services, except Make Noise official integration. Full terms: embedded LICENSE.txt. Carefully tested AI-generated code. Independent customization; not an official Make Noise release. <b>vwal.github.io/morphagene-patcher/</b>')
 g.finish();g.c.save()

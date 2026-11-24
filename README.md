@@ -1,11 +1,11 @@
-# Morphagene mg204-c6
+# Morphagene mg204+c6
 
 [Open the firmware patcher and options editor](https://vwal.github.io/morphagene-patcher/).
 
 An unofficial Morphagene mg204 extension by vwal, built on
 [Briskcat’s Morphagene mods](https://github.com/briskcat/morphagene-mods).
 The browser patcher processes your own official `mg204.wav` locally and downloads
-`mg204-c6.wav` for audio installation or `mgmod.bin` for an existing SD updater.
+`mg204+c6.wav` for audio installation or `mgmod.bin` for an existing SD updater.
 No firmware is uploaded. This repository contains source and patch data only.
 
 - **New in c6.** Set `dens 1` and `dstr 0` for stock Gene timing at startup or on a settings-only reload. SHIFT + Gene Size still gives you independent density on demand. An omitted `dstr` starts at 1.0 Gene/sec on power-up and preserves live timing on reload. If your c5 card already says `dstr 8.0`, edit that line to choose a different startup behavior. [Settings and zero values](docs/OPTIONS.md)
