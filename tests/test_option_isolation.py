@@ -34,7 +34,7 @@ OPTIONS = (
     ('tlen', 0x2002a0fc, 1, range(1, 17)), ('ingn', 0x2002a0fd, 1, range(4)),
     ('scal', 0x2002a604, 2, range(0, 4096, 2)), ('vrng', 0x2002a606, 1, SWITCH),
     ('dens', 0x2002a607, 1, SWITCH), ('vqnt', 0x2002a610, 1, SWITCH),
-    ('mlop', 0x2002a611, 1, SWITCH), ('dstr', 0x2002a614, 4, range(1, 1281)),
+    ('mlop', 0x2002a611, 1, SWITCH), ('dstr', 0x2002a614, 4, range(1281)),
     ('vuni', 0x2002a618, 1, SWITCH), ('vctr', 0x2002a619, 1, SWITCH),
     ('dryk', 0x2002a61a, 1, range(4)), ('dlen', 0x2002a61b, 1, SWITCH),
 )
@@ -44,6 +44,16 @@ PRESETS = tuple((key, preset.value_addr(i), 4,
 
 
 def input_cases():
+    # Explicit zero chooses the lowest forward ratio or the first count. For
+    # unaligned card slots and near-identical keys, check original destinations,
+    # widths and neighboring values through both ordinary and live readers.
+    for key, address, width, _ in OPTIONS + PRESETS:
+        if key.startswith('mcr'):
+            for token in ('0', '+0', '-0', '0.00000', '-000.00000000'):
+                yield key, (address, width), f'{key} {token}', 0.0625
+        if key in ('tlen', 'splc', 'trst'):
+            for token in ('0', '00', '000'):
+                yield key, (address, width), f'{key} {token}', 1
     for key, address, width, domain in OPTIONS + PRESETS:
         for expected in domain:
             if key == 'scal':

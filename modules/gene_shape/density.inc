@@ -36,15 +36,15 @@ density_prepare:
     str r1, [r3]
     ldr r1, =0x2002A614             @ dstr in tenths of a Gene/sec
     ldr r1, [r1]
-    cmp r1, #1
-    blo 4f
+    mov r2, r1
+    cbz r1, 5f                      @ dstr 0 selects the stock-timing detent
     cmp r1, #1280
-    bls 5f
-4:  movs r1, #80                    @ defensive fallback: 8 Genes/sec
-5:  ldr r2, =480000
+    it hi
+    movhi r1, #10                   @ defensive fallback: 1.0 Gene/sec
+    ldr r2, =480000
     add r2, r2, r1, lsr #1
     udiv r2, r2, r1                 @ nearest sample interval, calculated once
-    str r2, [r3, #8]
+5:  str r2, [r3, #8]
     str r2, [r3, #12]            @ allow the initial stock Gene to play first
 1:  ldr r1, [r3, #8]
     cbz r1, 2f                       @ stock timing, with the existing Gene Size

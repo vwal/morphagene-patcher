@@ -8,10 +8,10 @@ for (const name of ['page.js', 'options.js']) {
   vm.runInContext(fs.readFileSync(new URL('../web/'+name,import.meta.url),'utf8'),context);
 }
 handlers.DOMContentLoaded();
-assert.match(elements['options-text'].value,/^\/\/ firmware version 204\+c5\n/);
+assert.match(elements['options-text'].value,/^\/\/ firmware version 204-c6\n/);
 assert.equal(elements['recall-dstr'].checked,true);
 assert.equal(elements['opt-dstr'].disabled,false);
-assert.match(elements['options-text'].value,/^dstr 8 /m);
+assert.match(elements['options-text'].value,/^dstr 1 /m);
 const presetKeys=['mpos','gpos','spos','splc','srrp','jitp','wrbp','fbkp','evop','sosp','vpos'];
 const allPresetKeys=[...presetKeys,'trst'];
 for(const key of allPresetKeys) {
@@ -40,7 +40,7 @@ out=await load('6 0 0\nvsop 0\n');
 assert.match(out,/^tape 1 /m);assert.match(out,/^vrng 0 /m);assert.match(out,/^root 50 /m);
 assert.equal(elements['opt-gnsm'].value,'0');
 out=await load('6 0 0\nroot 101\ntlen 0\nvrng 9\n');
-assert.match(out,/^root 50$/m);assert.match(out,/^tlen 8$/m);assert.match(out,/^vrng 0$/m);
+assert.match(out,/^root 50$/m);assert.match(out,/^tlen 1$/m);assert.match(out,/^vrng 0$/m);
 out=await load('6 0 0\ndens 1\nvsop 2\nvrng 1\n');assert.match(out,/^dens 1$/m);assert.match(out,/^vsop 2$/m);
 assert.equal(elements['opt-dens'].value,'1');
 out=await load('6 0 0\ndens 7\n');assert.match(out,/^dens 0$/m);
@@ -51,7 +51,7 @@ out=await load('6 0 0\nvqnt 2\n');assert.match(out,/^vqnt 0$/m);
 await load('6 0 0\nvqnt 1\n');out=await load('6 0 0\n');assert.match(out,/^vqnt 0 /m);
 await load(null);assert.equal(elements['opt-root'].value,'50');
 out=await load('6 46345 0\n// firmware version 204+c2\n// firmware version 155b\nvsop 1\n');
-assert.ok(out.startsWith('6 46345 0\n// firmware version 204+c5\n'));
+assert.ok(out.startsWith('6 46345 0\n// firmware version 204-c6\n'));
 assert.equal((out.match(/^\/\/ firmware version /gm)||[]).length,1);
 out=await load(out);assert.equal((out.match(/^\/\/ firmware version /gm)||[]).length,1);
 assert.match(out,/^vsop 1$/m);
@@ -67,17 +67,17 @@ out=await load('6 0 0\nscal 3,banana\n');assert.match(out,/^scal 0$/m);
 out=await load('6 0 0\n\tmlop\t1 // hello\n');assert.match(out,/^mlop 1 \/\/ hello$/m);
 console.log('PASS Morph Loop, forward layout, duplicate keys, tabs and invalid scale handling');
 
-for (let n=1;n<=1280;n++) {
+for (let n=0;n<=1280;n++) {
   out=await load(`6 0 0\ndstr ${(n/10).toFixed(1)}\n`);
   assert.equal(elements['opt-dstr'].value,String(n/10));
   assert.ok(out.includes(`dstr ${n/10}\n`));
 }
-for(const bad of ['0','0.0','0.01','0.09','128.1','129','-1','+8','.5','8.','8.00','1e1','nan','0008','8junk']) {
-  out=await load(`6 0 0\ndstr ${bad}\n`);assert.match(out,/^dstr 8$/m);
+for(const bad of ['0.01','0.09','128.1','129','-1','+8','.5','8.','8.00','1e1','nan','0008','8junk']) {
+  out=await load(`6 0 0\ndstr ${bad}\n`);assert.match(out,/^dstr 1$/m);
 }
 out=await load('6 0 0\ndstr 4\ndstr 16\n');assert.equal((out.match(/^dstr /gm)||[]).length,1);assert.match(out,/^dstr 16$/m);
-out=await load('6 0 0\n');assert.equal(elements['opt-dstr'].value,'8');
-console.log('PASS startup density: all 1280 tenth-step values, invalid fallback, duplicates and missing default');
+out=await load('6 0 0\n');assert.equal(elements['opt-dstr'].value,'1');
+console.log('PASS startup density: stock timing and all 1280 positive tenth-step values, invalid fallback, duplicates and missing default');
 
 // Checkbox round trips: no implicit recall when an imported file omits dstr.
 function recall(checked) {
@@ -100,7 +100,7 @@ assert.match(out,/^unknown line$/m);
 assert.ok(out.startsWith('6 46345 0\n'));
 elements['opt-mlop'].value='1';handlers['opt-mlop:change']();
 assert.deepEqual(activeDensity(elements['options-text'].value),[]);
-assert.match(elements['options-note'].textContent,/preserves the current density/);
+assert.match(elements['options-note'].textContent,/keeps the live Gene timing/);
 // The actual save action uses the same omitted-key output.
 context.saved=[];
 vm.runInContext('download = (name, bytes, type) => saved.push({name, bytes, type})',context);
@@ -118,7 +118,7 @@ out=await load(preserved);
 assert.equal(elements['recall-dstr'].checked,false);
 assert.equal(elements['opt-dstr'].disabled,true);
 assert.deepEqual(activeDensity(out),[]);
-out=recall(true);assert.equal(activeDensity(out).length,1);assert.match(out,/^dstr 8 /m);
+out=recall(true);assert.equal(activeDensity(out).length,1);assert.match(out,/^dstr 1 /m);
 // Comments and the state line never enable recall; recognized bad values do.
 for(const text of ['6 0 0\n//dstr 128\n', 'dstr 128\n//state line is ignored\n', '6 0 0\n']) {
  out=await load(text);assert.equal(elements['recall-dstr'].checked,false);
@@ -132,7 +132,7 @@ for(const text of ['dstr','dstr 0','dstr 8junk','  dstr\t0.1 // low']) {
 }
 // Fresh snippet/reset restores the default; toggle retains the chosen rate.
 out=await load(null);assert.equal(elements['recall-dstr'].checked,true);
-assert.match(out,/^dstr 8 /m);
+assert.match(out,/^dstr 1 /m);
 elements['opt-dstr'].value='0.1';handlers['opt-dstr:change']();
 out=recall(false);assert.deepEqual(activeDensity(out),[]);
 assert.match(elements['options-note'].textContent,/removed automatically/);
@@ -158,7 +158,7 @@ for(const key of presetKeys) {
   }
   // A missing or invalid last occurrence must not create an implicit preset.
   await load(`6 0 0\n${key} 43\n`);
-  for(const bad of ['', '-1', String(hi+1), '1.0', '0.5', '+8', '1e1', 'nan', '8junk', ...(key==='splc'?['0']:[])]) {
+  for(const bad of ['', '-1', String(hi+1), '1.0', '0.5', '+8', '1e1', 'nan', '8junk']) {
     out=await load(`6 0 0\n${key} ${bad}\n`);
     assert.equal(elements['recall-'+key].checked,false);
     assert.equal(elements['opt-'+key].disabled,true);
@@ -201,7 +201,7 @@ for(const n of [1,2,3,4,6,8,12,16]) {
   assert.equal(elements['opt-trst'].value,String(n));
   assert.deepEqual(activeKey(out,'trst'),[`trst ${n}`]);
 }
-for(const bad of ['', '-1','0','5','7','9','10','11','13','14','15','17','1.0','0.5','1e1','8junk']) {
+for(const bad of ['', '-1','5','7','9','10','11','13','14','15','17','1.0','0.5','1e1','8junk']) {
   out=await load(`6 0 0\ntrst ${bad}\n`);
   assert.equal(elements['recall-trst'].checked,false);
   assert.equal(elements['opt-trst'].disabled,true);
@@ -383,7 +383,7 @@ function* fieldValues(key) {
       yield notes.join(',') || '0';
     }
   } else if (key === 'dstr') {
-    for (let tenths = 1; tenths <= 1280; tenths++) yield String(tenths/10);
+    for (let tenths = 0; tenths <= 1280; tenths++) yield String(tenths/10);
   } else if (key === 'trst') {
     yield* [1,2,3,4,6,8,12,16].map(String);
   } else if (['mcr1','mcr2','mcr3'].includes(key)) {
@@ -451,7 +451,7 @@ for (const heading of ['//Morphagene Study mods', '//Morphagene extended mods'])
   assert.equal(await load(out), out);
 }
 await load('6 0 0\nmcr3 -1.5 // reverse\n');
-for (const bad of ['', '0', '-0.06249', '+16.0001', '1.123456789', '2e0', 'invalid']) {
+for (const bad of ['', '0.001', '-0.06249', '+16.0001', '1.123456789', '2e0', 'invalid']) {
   const count = context.saved.length;
   elements['opt-mcr3'].value = bad;
   handlers['opt-mcr3:input']();
@@ -492,6 +492,41 @@ for (const rejected of [false,true]) {
   assert.equal(elements['options-save-row'].hidden,false);
   assert.equal(elements['options-status'].dataset.kind,'');
 }
+
+// Only positive counts and chord ratios normalize zero. The ordinary zero
+// cases include off switches, useful zero presets, and root/octaves-only scal.
+const zeroMinimum = {splc:'1', trst:'1', tlen:'1', mcr1:'0.0625', mcr2:'0.0625', mcr3:'0.0625'};
+out = await load(['6 46345 0', ...editorFields.map(key => key+' 0 // retained'), ''].join('\n'));
+for (const key of editorFields) {
+  const expected = zeroMinimum[key] ?? '0';
+  assert.equal(elements['opt-'+key].value, expected, key);
+  assert.deepEqual(activeKey(out, key), [key+' '+expected+' // retained'], key);
+  if (allPresetKeys.includes(key) || key==='dstr') assert.equal(elements['recall-'+key].checked,true,key);
+}
+const allZeros = out;
+assert.equal(await load(allZeros),allZeros);
+out = recall(false); assert.deepEqual(activeDensity(out),[]);
+out = recall(true); assert.deepEqual(activeDensity(out),['dstr 0 // retained']);
+for (const token of ['00','000','0.0','000.0']) {
+  out=await load('6 0 0\ndstr '+token+'\n'); assert.deepEqual(activeDensity(out),['dstr 0']);
+}
+for (const token of ['-0', '+0.0', '-00000000.00000000']) {
+  out=await load('6 0 0\nmcr2 '+token+'\n'); assert.deepEqual(activeKey(out,'mcr2'),['mcr2 0.0625']);
+}
+out=await load('6 0 0\ndstr 0 //Startup/reload density in Genes/sec: 0.1-128, at most one decimal; default 8. Explicit dstr recalls on settings-only reload. Knob changes are not saved.\n');
+assert.match(activeDensity(out)[0], /^dstr 0 \/\/0 stock timing/);
+// Module- and editor-written c5 cards retain an explicitly configured 8 after upgrading.
+for (const comment of vm.runInContext('OBSOLETE_COMMENTS.dstr', context)) {
+  out=await load('4 45875 0\r\n// firmware version 204+c5\r\ndens 1\r\ndstr 8.0 '+comment+'\r\n');
+  assert.equal(elements['opt-dstr'].value,'8');
+  assert.equal(elements['recall-dstr'].checked,true);
+  assert.match(activeDensity(out)[0], /^dstr 8 \/\/0 stock timing/);
+  assert.match(out, /^4 45875 0\n\/\/ firmware version 204-c6\n/);
+}
+out=await load('4 45875 0\n// firmware version 204+c5-dstr\ndstr 0.0 // user timing note\n');
+assert.deepEqual(activeDensity(out), ['dstr 0 // user timing note']);
+assert.match(out,/^4 45875 0\n\/\/ firmware version 204-c6\n/);
+console.log('PASS all 45 explicit zeros, normalized minima, checked preset round trip, signed ratios and stock timing');
 
 // Generated markup exposes native, labelled controls with firmware bounds.
 const html=fs.readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
@@ -537,12 +572,14 @@ assert.match(html,/dens 1 takes priority over the Turing rate/);
 const content=JSON.parse(fs.readFileSync(new URL('../web/site-content.json',import.meta.url),'utf8'));
 assert.deepEqual(content.fields.map(field=>field[0]).sort(),Array.from(vm.runInContext('FIELDS',context)).sort());
 assert.match(html,/no extra flat zone is added/);
-assert.match(html,/Morphagene mg204\+c5/);
-assert.match(html,/mg204\+c5 · Public release/);
+assert.match(html, /id="opt-dstr" type="number" min="0" max="128" step="0.1" value="1"/);
+assert.match(html,/Morphagene mg204-c6/);
+assert.match(html,/mg204-c6 · Public release/);
 for(const id of ['firmware','remix','build-card','build-wav']) assert.ok(htmlIds.includes(id));
-assert.match(html,/mg204\+c5\.wav/);
+assert.match(html,/mg204-c6\.wav/);
 assert.match(html,/<details><summary>Version by version<\/summary>/);
 const history = html.match(/<section[^>]+id="versions"[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
+assert.match(history,/<h3>mg204-c6\b/);
 assert.match(history,/<h3>mg204\+c5\b/);
 assert.match(history,/<h3>mg204\+c4\b/);
 assert.match(history,/<h3>mg204\+c3\b/);
@@ -564,7 +601,7 @@ assert.match(html,/100% gives the shortest Genes/);
 assert.match(html,/Bidirectional — classic/);
 assert.match(html,/Bidirectional — V\/oct/);
 assert.match(html,/attenuverter carefully adjusted/);
-console.log('PASS mg204+c5 editor: grouped controls, percentage guidance, version history, disclosures and patcher');
+console.log('PASS mg204-c6 editor: grouped controls, percentage guidance, version history, disclosures and patcher');
 
 // Release check: a stale standalone file can look correct while exporting
 // settings for earlier firmware. Both editions must ship the current editor.

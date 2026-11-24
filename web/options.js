@@ -2,11 +2,13 @@
 'use strict';
 
 // ---------- options.txt ----------
-const VERSION_HEADER = '// firmware version 204+c5';
+const VERSION_HEADER = '// firmware version 204-c6';
 const MOD_HEADER = '//Morphagene extended mods';
 // In older builds this comment put "vsop 2" at the start of a 63-byte read.
 const OBSOLETE_COMMENTS = {
   dens: ['//Independent Gene density: 0 off, 1 on: startup rate from dstr (default 8 Genes/sec); hold SHIFT and turn Gene Size for 0.1-128 Genes/sec; knob rate remains until adjusted again, recalled by dstr reload or powered off, not saved across power cycles; overrides Turing rate; external clock takes priority', '//Independent Gene density: 0 off, 1 SHIFT+Gene Size = 0.1-128 Genes/sec (takes priority over Turing rate); startup rate from dstr; bypassed with clock'],
+  dstr: ['//Startup/reload Gene density: 0.1-128 Genes/sec, at most one decimal, default 8. Explicit dstr recalls on settings-only reload; omit to preserve live rate. Knob changes are temporary.',
+         '//Startup/reload density in Genes/sec: 0.1-128, at most one decimal; default 8. Explicit dstr recalls on settings-only reload. Knob changes are not saved.'],
   vrng: ['//Varispeed range: 0 stock, 1 extended: vsop 0/1 +/-4x; vsop 2 forward stop to 8x with scale lock'],
   dryk: ['//0 normal, 1 wet only, 2 wet with S.O.S. feedback.'],
   sosp: ['//S.O.S. mode 2 tape retention, mode 3 Gene level.', '//Primary S.O.S. 0-100%. In mode 2 this sets retention.',
@@ -29,7 +31,7 @@ const KEYS = {
   vuni: '//Unity recall: 0 off, 1 hold SHIFT alone >=0.5 seconds and release for forward +1x with pickup. Use with SHIFT jack unpatched.',
   vctr: '//Noon unity mapping: 0 original mapping, 1 +1x at calibrated noon with a 48-52 percent unity notch. The notch is enabled only with vctr 1.',
   mlop: '//Morph Loop: 0 stock gaps (default), 1 seamless loop at minimum Morph',
-  dstr: '//Startup/reload Gene density: 0.1-128 Genes/sec, at most one decimal, default 8. Explicit dstr recalls on settings-only reload; omit to preserve live rate. Knob changes are temporary.',
+  dstr: '//0 stock timing, 0.1-128 Genes/sec. Default 1.0. Omit on settings-only reload to keep live timing.',
   dens: '//SHIFT+Gene Size: CCW stock timing, then 0.1-128 Hz.',
   vrng: '//0 stock, 1 +/-4x bidirectional or 0-8x forward',
   vqnt: '//Varispeed quantization: 0 SHIFT+Varispeed locks, 1 quantized normally and SHIFT+Varispeed temporarily free; release snaps back; scale from octl/scal',
@@ -59,7 +61,7 @@ const CHORD_KEYS = ['mcr1', 'mcr2', 'mcr3'];
 const FIELDS = [...Object.keys(STOCK_KEYS), ...Object.keys(KEYS)];
 const PRESET_KEYS = Object.freeze(['mpos', 'gpos', 'spos', 'vpos', 'sosp', 'splc', 'srrp', 'jitp', 'wrbp', 'fbkp', 'evop', 'trst']);
 const TURING_STEPS = Object.freeze([1,2,3,4,6,8,12,16]);
-const DEFAULTS = Object.freeze({mpos:'0', gpos:'0', spos:'0', vpos:'0', sosp:'0', splc:'1', srrp:'0', jitp:'0', wrbp:'0', fbkp:'0', evop:'0', trst:'1', vuni:'0', vctr:'0', dstr:'8', mlop:'0', vsop:'0', vqnt:'0', dens:'0', vrng:'0', dryk:'0', sosc:'0', dlen:'0', tape:'1', octl:'1', scal:'0', fxsl:'1', cpul:'0',
+const DEFAULTS = Object.freeze({mpos:'0', gpos:'0', spos:'0', vpos:'0', sosp:'0', splc:'1', srrp:'0', jitp:'0', wrbp:'0', fbkp:'0', evop:'0', trst:'1', vuni:'0', vctr:'0', dstr:'1', mlop:'0', vsop:'0', vqnt:'0', dens:'0', vrng:'0', dryk:'0', sosc:'0', dlen:'0', tape:'1', octl:'1', scal:'0', fxsl:'1', cpul:'0',
   mcap:'3', sldm:'0', root:'50', tlen:'8', ingn:'0', mono:'0', gnsm:'0',
   inop:'0', pmin:'0', omod:'0', rsop:'0', pmod:'0', ckop:'0', cvop:'0',
   mcr1:'2', mcr2:'1.5', mcr3:'1.33333'});
@@ -69,11 +71,16 @@ const LIMITS = {mpos:[0,100], gpos:[0,100], spos:[0,100], vpos:[0,100], sosp:[0,
 function optionValue(key, raw) {
   if (CHORD_KEYS.includes(key)) {
     const token = raw.trim();
+    if (!/^[+-]?\d{1,8}(?:\.\d{1,8})?$/.test(token)) return null;
     const magnitude = Math.abs(Number(token));
-    return /^[+-]?\d{1,8}(?:\.\d{1,8})?$/.test(token) && magnitude >= 0.0625 && magnitude <= 16 ? token : null;
+    if (magnitude === 0) return '0.0625';
+    return magnitude >= 0.0625 && magnitude <= 16 ? token : null;
   }
   if (key === 'dryk' || key === 'dlen' || key === 'sosc') return /^\d$/.test(raw) && Number(raw) <= LIMITS[key][1] ? raw : null;
-  if (key === 'dstr') return /^\d{1,3}(?:\.\d)?$/.test(raw) && Number(raw)>=0.1 && Number(raw)<=128 ? String(Number(raw)) : null;
+  if (key === 'dstr') return /^\d{1,3}(?:\.\d)?$/.test(raw) && Number(raw)<=128 ? String(Number(raw)) : null;
+  // A zero written for a positive-only count recalls its smallest count.
+  if ((key === 'splc' || key === 'trst') && /^0{1,3}$/.test(raw)) return '1';
+  if (key === 'tlen' && /^0{1,4}$/.test(raw)) return '1';
   if (key === 'trst') return /^\d+$/.test(raw) && TURING_STEPS.includes(Number(raw)) ? String(Number(raw)) : null;
   if (key === 'scal') return scaleList(raw);
   const n = Number(raw), [lo, hi] = LIMITS[key];
@@ -179,7 +186,7 @@ function renderOptions() {
     }
     text = out.join('\n') + '\n';
     $('options-note').textContent = 'Your options.txt with these values. Copy it back to the card root. ' +
-      (recallDensity ? 'Settings-only reload recalls the selected density.' : 'Settings-only reload preserves the current density; dstr is omitted.');
+      (recallDensity ? 'Settings-only reload recalls the selected Gene timing.' : 'Settings-only reload keeps the live Gene timing because dstr is omitted.');
   } else {
     const seen = new Set();
     text = [VERSION_HEADER, '//Stock Morphagene settings', ...settingLines(STOCK_KEYS, values, seen),

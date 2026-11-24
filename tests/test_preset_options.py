@@ -66,7 +66,8 @@ class PresetOptionHooks(unittest.TestCase):
             self.assertEqual(a.get(NORMAL), 1 << index)
         r.call(a, 'presets_normal_begin')
         normal_line(a, 'splc 0')
-        self.assertEqual(a.get(NORMAL), 0)
+        self.assertEqual(a.get(NORMAL), 1 << 3)
+        self.assertEqual(a.get(NORMAL+4+3*4), 1)
 
     def test_turing_enum_rejects_every_unsupported_small_integer(self):
         a = Arm('options_keys', 'opt_parse')
@@ -74,7 +75,9 @@ class PresetOptionHooks(unittest.TestCase):
             r.call(a, 'presets_normal_begin')
             normal_line(a, 'trst 8')
             normal_line(a, f'trst {value}')
-            self.assertEqual(a.get(NORMAL), 1<<9 if value in STEPS else 0, value)
+            self.assertEqual(a.get(NORMAL), 1<<9 if value == 0 or value in STEPS else 0, value)
+            if value == 0:
+                self.assertEqual(a.get(NORMAL+4+9*4), 1)
 
     def test_version_wrapper_names_custom_firmware_without_touching_state(self):
         a = Arm('options_keys', 'opt_parse')
@@ -85,7 +88,7 @@ class PresetOptionHooks(unittest.TestCase):
         a.uc.reg_write(UC_ARM_REG_APSR,0xA8000000)
         a.run('opt_version',[0x080243c2])
         addr=a.uc.reg_read(UC_ARM_REG_R1)
-        header = b'// firmware version 204+c5\n\0'
+        header = b'// firmware version 204-c6\n\0'
         self.assertEqual(bytes(a.uc.mem_read(addr,len(header))),header)
         self.assertEqual(a.uc.reg_read(UC_ARM_REG_R0),SP+1396)
         self.assertEqual(a.uc.reg_read(UC_ARM_REG_SP),SP)
@@ -191,10 +194,10 @@ class PresetTransactions(unittest.TestCase):
         self.assertEqual(a.uc.mem_read(EXT+32, 256), ext_runtime)
 
     def test_invalid_or_duplicate_preset_rejects_every_setting(self):
-        for bad in (b'splc 301', b'splc 0', b'mpos 101', b'gpos -1', b'spos 1.5',
+        for bad in (b'splc 301', b'splc 0x', b'mpos 101', b'gpos -1', b'spos 1.5',
                     b'mpos 2\nmpos 2', b'splc 1\nsplc 2', b'srrp 101',
                     b'jitp -1', b'wrbp 1.5', b'fbkp 1000', b'evop 20junk',
-                    b'trst 5', b'trst 0', b'trst 16\ntrst 16', b'sosp 101', b'vpos 101'):
+                    b'trst 5', b'trst 0x', b'trst 16\ntrst 16', b'sosp 101', b'vpos 101'):
             a = r.arm(); a.put(COUNT, 3); a.put(r.STOCK, 0)
             staged(a, b'header\nvsop 2\nmpos 50\n'+bad+b'\n')
             r.call(a,'reload_commit')

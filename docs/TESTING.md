@@ -1,6 +1,6 @@
-# mg204+c5 firmware tests
+# mg204-c6 firmware tests
 
-The density tests compare stock timing with the fully counterclockwise gesture on a 15-second splice. They also cover the transition back to 0.1 Hz, knob pickup, clock priority and settings-only recall.
+The density tests compare `dens 1, dstr 0` output with stock timing at startup and after settings-only reload. They also check the 1.0 Gene/sec startup default, explicit rate recall, current timing and phase when the line is omitted, and the shifted knob’s 0.1–128 Genes/sec range. The normal card reader, live reader, hosted editor and offline editor exercise explicit zero across their settings. See [release validation](RELEASE_VALIDATION.md).
 
 The [recording guide, pages 12–13](../web/morphagene-manual-letter.pdf#page=12) covers the three curves. The firmware tests in `tests/test_sos_curves.py` exercise native REC on an empty reel, stereo source isolation, tape writes, normal settings, and atomic live reload. The control tests sweep all 4,096 ADC values for each curve.
 
@@ -137,7 +137,7 @@ confirmed SHIFT arming and changed options applying on insertion without an
 audible playback interruption. Exact SD latency, clocked transitions and heavy
 recording/overdub combinations still need separate measurement or audition.
 
-Startup-density coverage executes all 1,280 supported dstr tenths in both
+Startup-density coverage executes all 1,281 supported dstr values including zero in both
 parsers, interval rounding, malformed/out-of-range rejection, duplicate and
 missing reload values, writer round trips, explicit rate recall, preserved
 rate/phase when omitted, dirty startup RAM, real audio birth spacing including

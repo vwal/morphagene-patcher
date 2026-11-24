@@ -23,6 +23,7 @@ class Audio:
             0x20021c78:0,0x20021c7c:2000,0x20022074:0,0x20021fb8+4:bits(48000),
             0x2002A000:0x53484654,0x2002A0F0:0x5354504f}.items():a.put(adr,n)
         a.uc.mem_write(0x2002A0F4,bytes([1,1,1,0,0,3,0,50,8,0,0,0]))
+        a.put(0x2002A614, 10)  # boot default dstr 1.0 (this harness begins after boot)
         # full .bss reset is covered separately; initial Arm memory is zero.
         wave=struct.pack('<48000h',*(int(10000*__import__('math').sin(2*__import__('math').pi*i/100)) for i in range(48000)))
         a.uc.mem_write(0xd0000000,wave);a.uc.mem_write(0xd1000000,wave)

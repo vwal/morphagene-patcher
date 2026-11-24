@@ -41,11 +41,25 @@ async function editStockSettings(page) {
   assert.match(await page.locator('#options-text').inputValue(), /^inop 0 /m);
   await inop.selectOption('1');
   await page.locator('#opt-pmod').selectOption('2');
+  const timing = page.locator('#opt-dstr');
+  const recall = page.locator('#recall-dstr');
+  await timing.fill('0');
+  await timing.press('Tab');
+  assert.match(await page.locator('#options-text').inputValue(), /^dstr 0$/m);
+  await recall.uncheck();
+  assert.doesNotMatch(await page.locator('#options-text').inputValue(), /^dstr /m);
+  await recall.check();
+  assert.equal(await timing.inputValue(), '0');
+  assert.match(await page.locator('#options-text').inputValue(), /^dstr 0$/m);
   const ratio = page.locator('#opt-mcr2');
   await ratio.fill('1.0');
   await ratio.press('5');
   assert.equal(await ratio.inputValue(), '1.05');
-  await ratio.fill('0');
+  await ratio.fill('-0.00000');
+  await ratio.press('Tab');
+  assert.equal(await ratio.inputValue(), '0.0625');
+  assert.match(await page.locator('#options-text').inputValue(), /^mcr2 0\.0625 /m);
+  await ratio.fill('0.001');
   assert.equal(await ratio.getAttribute('aria-invalid'), 'true');
   assert.equal(await page.locator('#error-mcr2').isVisible(), true);
   assert.equal(await page.locator('#options-save').isDisabled(), true);
@@ -70,7 +84,7 @@ async function checkReset(page) {
   await dialog.getByRole('button', {name: 'Cancel'}).click();
   assert.equal(await preview.inputValue(), before);
 
-  await page.locator('#opt-mcr1').fill('0');
+  await page.locator('#opt-mcr1').fill('0.001');
   assert.equal(await page.locator('#options-save').isDisabled(), true);
   await reset.click();
   await dialog.getByRole('button', {name: 'Reset to defaults'}).click();
@@ -169,7 +183,7 @@ try {
   assert.equal(await readFile(cardOptions, 'utf8'), imported);
   const lines = saved.split(/\r?\n/);
   assert.equal(lines[0], '7 45875 0');
-  assert.equal(lines[1], '// firmware version 204+c5');
+  assert.equal(lines[1], '// firmware version 204-c6');
   assert.equal(lines.filter(l => /^\/\/ firmware version /.test(l)).length, 1);
   for (const line of ['// annotated performance reel', 'future_setting 12 // preserve me',
                       'mcr1 2.00000 // stock chord', 'vsop 1', 'dryk 3 // send', 'mpos 19 // starting position']) {
@@ -266,6 +280,7 @@ try {
   assert.match(webSaved, /^mcr2 -0\.06250000 /m);
   assert.match(webSaved, /^inop 1 /m);
   assert.match(webSaved, /^pmod 2 /m);
+  assert.match(webSaved, /^dstr 0$/m);
   await web.reload();
   await web.locator('#options-file').setInputFiles(webPath);
   await web.waitForFunction(() => document.getElementById('recall-mpos').checked);

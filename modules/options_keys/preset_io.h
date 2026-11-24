@@ -20,6 +20,26 @@ _Static_assert(sizeof(PresetStage) == 64, "preset stage allocation");
 static inline int preset_space(char c) {
     return c == ' ' || c == '\t' || c == '\r';
 }
+/* Positive-only ordinary settings accept a complete, explicitly written zero
+ * at their minimum. Count syntax is integer-only; signed chord ratios allow
+ * up to eight decimal places. Never normalize a malformed zero prefix. */
+static inline int explicit_zero(const char *p, int chord) {
+    if (!preset_space(*p)) return 0;
+    while (preset_space(*p)) ++p;
+    if (chord && (*p == '+' || *p == '-')) ++p;
+    const char *start = p;
+    while (*p == '0') ++p;
+    if (p == start || p-start > (chord ? 8 : 4)) return 0;
+    if (chord && *p == '.') {
+        start = ++p;
+        while (*p == '0') ++p;
+        if (p == start || p-start > 8) return 0;
+    }
+    while (preset_space(*p)) ++p;
+    return !*p || *p == '\n' || (p[0] == '/' && p[1] == '/');
+}
+#define MIN_CHORD_BITS 0x3d800000u /* +0.0625f, the smallest forward ratio */
+
 /* Both readers accept exactly one mode digit, including the writer's comment. */
 static inline int mode_digit(const char *p, unsigned max, uint32_t *value) {
     if (!preset_space(*p)) return 0;
@@ -55,7 +75,8 @@ static inline int preset_number(const char *p, unsigned index, uint32_t *out) {
     }
     while (preset_space(*p)) ++p;
     if (!digits || (*p && *p != '\n' && !(p[0]=='/' && p[1]=='/'))) return 0;
-    if (n > (index == 3 ? 300u : 100u) || (index == 3 && n == 0)) return 0;
+    if (n > (index == PRESET_SPLICE ? 300u : 100u)) return 0;
+    if (!n && (index == PRESET_SPLICE || index == PRESET_TURING_RATE)) n = 1;
     if (index == PRESET_TURING_RATE && n != 1 && n != 2 && n != 3 &&
         n != 4 && n != 6 && n != 8 && n != 12 && n != 16) return 0;
     *out = n;

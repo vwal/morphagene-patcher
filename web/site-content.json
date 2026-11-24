@@ -98,21 +98,21 @@
     [
       "mcr1",
       "Gene 2 chord ratio",
-      "Sets the playback speed of Gene 2 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. The magnitude can range from 0.0625 to 16, with up to eight decimal places.",
+      "Sets the playback speed of Gene 2 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. The magnitude can range from 0.0625 to 16, with up to eight decimal places. An explicit zero selects the minimum forward ratio, 0.0625.",
       null,
       "2"
     ],
     [
       "mcr2",
       "Gene 3 chord ratio",
-      "Sets the playback speed of Gene 3 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. The magnitude can range from 0.0625 to 16, with up to eight decimal places.",
+      "Sets the playback speed of Gene 3 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. The magnitude can range from 0.0625 to 16, with up to eight decimal places. An explicit zero selects the minimum forward ratio, 0.0625.",
       null,
       "1.5"
     ],
     [
       "mcr3",
       "Gene 4 chord ratio",
-      "Sets the playback speed of Gene 4 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. The magnitude can range from 0.0625 to 16, with up to eight decimal places.",
+      "Sets the playback speed of Gene 4 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. The magnitude can range from 0.0625 to 16, with up to eight decimal places. An explicit zero selects the minimum forward ratio, 0.0625.",
       null,
       "1.33333"
     ],
@@ -150,7 +150,7 @@
     [
       "dens",
       "Independent Gene density",
-      "With dens 1, startup density comes from dstr (default 8 Genes/sec). Hold SHIFT and turn Gene Size to select stock timing at fully CCW. Turn slightly clockwise for 0.1 Genes/sec, through 8 at noon to 128 at fully CW. Unshifted Gene Size still sets length. This live choice lasts until another adjustment, explicit dstr reload or powered off; they are not saved across power cycles. The configured dstr value is kept in options.txt. Overrides the Turing rate gesture; external clock takes priority.",
+      "With dens 1, dstr selects startup timing. Its default is 1 Gene/sec. Hold SHIFT and turn Gene Size to select stock timing at fully CCW. Turn slightly clockwise for 0.1 Genes/sec, through 8 at noon to 128 at fully CW. Pitch and Morph can change while the selected rate stays fixed. Unshifted Gene Size sets length. Panel edits last until another adjustment, an explicit dstr reload or power-off. The module keeps the configured value in options.txt. Overrides the Turing rate gesture; external clock takes priority.",
       [
         "0: Off",
         "1: On"
@@ -159,10 +159,10 @@
     ],
     [
       "dstr",
-      "Startup / reload density (Genes/sec)",
-      "0.1-128 Genes/sec in 0.1 steps; default 8. Sets the startup rate and recalls the rate on settings-only reload whenever dstr is present, even if unchanged. Use the checkbox below to recall this rate or preserve the current density during settings-only reload. Requires dens 1; external clock takes priority.",
+      "Startup / reload Gene timing (Genes/sec)",
+      "Enter 0 for stock Gene timing or 0.1\u2013128 for a rate in Genes/sec, in steps of 0.1. The default is 1.0 Gene/sec. With dens 1, SHIFT + Gene Size remains available after either choice. If your card already says dstr 8.0, it will still start at 8 Genes/sec. Change it to 0 for stock timing or 1 for one Gene per second. An external clock takes priority.",
       null,
-      "8"
+      "1"
     ],
     [
       "ckop",
@@ -325,7 +325,7 @@
     [
       "trst",
       "Turing Genes per step",
-      "Choose 1, 2, 3, 4, 6, 8, 12 or 16 Genes per step. Used with sldm 1; dens 1 takes priority over the Turing rate. Unchecked preserves the live Turing rate on reload.",
+      "Choose 1, 2, 3, 4, 6, 8, 12 or 16 Genes per step. Used with sldm 1; dens 1 takes priority over the Turing rate. An explicit zero recalls 1 Gene per step. Unchecked preserves the live Turing rate on reload.",
       [
         "1: 1 Gene per step",
         "2: 2 Genes per step",
@@ -341,7 +341,7 @@
     [
       "tlen",
       "Turing loop steps",
-      "Number of repeating random steps, 1-16.",
+      "Number of repeating random steps, 1\u201316. An explicit zero selects 1 step.",
       null,
       "8"
     ],
@@ -376,7 +376,7 @@
     [
       "splc",
       "Splice to recall",
-      "Splice number, integer 1-300; 1 is the first splice. A number above the loaded reel count selects its last splice while keeping your configured number. Unchecked keeps normal startup selection and preserves the current splice on settings-only reload.",
+      "Splice numbers run from 1 to 300. Both 0 and 1 recall the first splice. A number above the loaded reel count selects its last splice while keeping your configured number. Unchecked keeps normal startup selection and preserves the current splice on settings-only reload.",
       null,
       "1"
     ],
@@ -426,6 +426,11 @@
   ],
   "features": [
     [
+      "New in mg204-c6",
+      "Recall Gene timing",
+      "Set <code>dens 1</code> and <code>dstr 0</code> to boot with stock Gene timing and keep SHIFT + Gene Size available. On a settings-only reload, include <code>dstr</code> to recall stock timing or a rate from 0.1 to 128 Genes/sec. Omit it to keep the live timing. A fresh boot with no <code>dstr</code> line uses 1 Gene/sec. An existing <code>dstr 8.0</code> still selects 8 Genes/sec. External clock takes priority, and available voices limit the overlap of long Genes."
+    ],
+    [
       "New in mg204+c5",
       "Record the Gene performance",
       "Choose the S.O.S. recording curve with <code>sosc</code>. Its default gives full incoming and existing audio at noon. With <code>dryk 3</code>, existing audio is the performed Gene playback. Record into a new splice to keep your source, or overdub the current splice."
@@ -464,11 +469,6 @@
       "Pitch & timing",
       "Expanded Varispeed",
       "Enable <code>vrng 1</code> for +/-4x, or combine it with <code>vsop 2</code> for stop to forward 8x. Choose octaves, fifths, semitones or a custom scale. <code>vqnt 1</code> keeps pitch quantized normally; SHIFT + Varispeed temporarily frees it. Default <code>vqnt 0</code> retains SHIFT-to-lock."
-    ],
-    [
-      "Pitch & timing",
-      "Independent Gene density",
-      "With <code>dens 1</code>, startup density comes from <code>dstr</code>, default <strong>8 Genes/sec</strong>. SHIFT + Gene Size at fully CCW selects stock timing. Above that position it adjusts <strong>0.1-128 Genes/sec</strong>, independently of pitch and Morph. Live knob changes are not saved across power cycles. Include <code>dstr</code> to recall a prepared rate on settings-only reload; omit it to keep the live rate. External clock takes priority; available voices limit dense, long Genes."
     ],
     [
       "Sound & movement",

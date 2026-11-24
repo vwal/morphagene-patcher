@@ -106,7 +106,8 @@ every boot), then +4 `tape`, +5 `octl`, +6 `fxsl`, +7 `mono`, +8 `cpul`,
 - 0x2002A600..0x2002A603: options_keys, block count when a new input gain was first seen.
 - 0x2002A604..0x2002A605: options_keys, `scal` mask (bit *d* = *d* semitones), cleared by sd_updater every boot.
 - 0x2002A606: options_keys, `vrng` (0 stock, 1 extended +/-4x or forward 8x range).
-- 0x2002A607: options_keys, `dens` (0 stock timing, 1 independent density).
+- 0x2002A607: options_keys, `dens` (0 stock timing, 1 enables the independent-density gesture).
+- 0x2002A614..0x2002A617: configured `dstr`. Zero selects stock Gene timing. Values 1–1280 store tenths of a Gene/sec. Startup initializes this word to 10 (1.0 Gene/sec).
 - 0x2002A800..0x2002A81F: gene_shape density init, active flag, interval, countdown and voice limit.
 - 0x2002A608..0x2002A60F: mono_in, quiet count and crossfade gain.
 - 0x2002A610: options_keys, `vqnt` (0 SHIFT-to-lock, 1 quantized by default); cleared by sd_updater every boot.

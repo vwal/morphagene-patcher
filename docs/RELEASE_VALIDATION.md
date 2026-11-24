@@ -1,3 +1,16 @@
+# mg204-c6 release validation
+
+The owner confirmed the stock-timing refinement resolved the reported playback repeat on the module. The release application matched the tested Development 13 image byte for byte outside the fixed-size version comment. The module and both editors now write `// firmware version 204-c6`.
+
+- Both CLI build names reproduced a 202,752-byte application with Arm GNU 14.2.rel1. SHA-256 is `ed03290645a49cecf1ad5f280ed8c17de152a48c039d2bfa1a5d03b3305d7617`.
+- All 259 firmware tests passed locally with private reference images. Density checks covered all 1,281 supported values, the 1.0 Gene/sec startup default, explicit zero and omitted lines on settings-only reload, timing while Genes remain active and transitions between the shifted knob and card settings.
+- Both firmware readers accepted a test card with all 45 settings explicitly zero. The 12 optional presets were active. The six positive-only settings assumed their documented minima.
+- The browser generated the same SD update as the CLI. The browser and CLI update WAVs both decoded to the verified release application.
+- The editor checks exercised 4,858 field/value cases and 8,056 wrapped chunks. Chrome verified importing, editing, saving and reopening a card file in the offline editor, reset confirmation, and building an SD update from the official WAV on the hosted editor test page.
+- Both 13-page guides and single-page quick cards were rendered in Letter and A4. Each includes the full license.
+
+---
+
 # mg204+c5 release validation
 
 The owner tested the dry-kill modes and stock-timing gesture on a Morphagene. A byte comparison against the tested Development 12 application found differences only in the options version comment and its padding. The module writer and both editors identify rewritten files with `// firmware version 204+c5`.

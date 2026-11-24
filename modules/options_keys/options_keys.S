@@ -60,7 +60,7 @@
     .equ KEY_SCAL,       0x6c616373     @ "scal"
     .equ KEY_MONO,       0x6f6e6f6d     @ "mono"
     .equ KEY_DSTR,       0x72747364     @ dstr: startup Genes/sec, one decimal
-    .equ DSTR,           0x2002A614     @ u32 tenths, default 80
+    .equ DSTR,           0x2002A614     @ u32 tenths, default 10; zero selects stock timing
     .equ KEY_DENS,       0x736e6564
     .equ KEY_VRNG,       0x676e7276     @ "vrng"
     .equ KEY_VQNT,       0x746e7176     @ "vqnt"
@@ -285,7 +285,7 @@ parse_vctr:
     strh    r0, [r2]
     b       4b
 
-@ Strict decimal startup rate: 0.1..128.0, at most one fractional digit.
+@ Strict decimal startup rate: 0 for stock timing, otherwise 0.1..128.0, at most one fractional digit.
 @ No changes until the entire significant value is valid. No libc/FPU needed.
 parse_dstr:
     add     ip, fp, #4
@@ -349,11 +349,14 @@ dstr_tail_next:
     ldrb    r1, [ip], #1
     b       dstr_tail
 dstr_valid:
-    cmp     r0, #1
-    blo     dstr_done
     cmp     r0, #1280
     bhi     dstr_done
     ldr     r2, =DSTR
+    str     r0, [r2]
+    @ Audio can have seen dens before this line during an ordinary mount.
+    @ Reinitialize from the configured value on the next enabled block.
+    ldr     r2, =0x2002A800
+    movs    r0, #0
     str     r0, [r2]
 dstr_done:
     b.w     PARSE_NEXT
@@ -673,7 +676,7 @@ fmt_mono: .asciz "mono %d //Mono input: 0 off (stereo), 1 left input copied to t
     .ltorg
 
     .align 2
-fmt_dstr: .asciz "dstr %d.%d //Startup/reload density in Genes/sec: 0.1-128, at most one decimal; default 8. Explicit dstr recalls on settings-only reload. Knob changes are not saved.\n"
+fmt_dstr: .asciz "dstr %d.%d //0 stock timing, 0.1-128 Genes/sec. Default 1.0.\n"
     .align 2
 fmt_mlop: .asciz "mlop %d //Morph loop: 0 stock gaps (default), 1 seamless loop at minimum Morph\n"
 
@@ -754,5 +757,5 @@ opt_version:
     addw r0, sp, #1396
     b.w VERSION_RETURN
 fmt_version:
-    .asciz "// firmware version 204+c5\n"
-    .space 8   @ Keep the literal pool and following code at the hardware-tested addresses.
+    .asciz "// firmware version 204-c6\n"
+    .space 8   @ Retain the version field footprint across test and release labels.

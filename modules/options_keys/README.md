@@ -65,8 +65,8 @@ The stock firmware resets the input gain (REC held + SHIFT taps, index at
 initialized to zero every boot. Single-digit keys require a separator after
 the key and whitespace, a comment or end-of-line after the digit.
 
-`dstr` is a u32 at 0x2002A614, stored in tenths of Genes/sec (1-1280).
-The updater sets 80 every boot. Boot and reload parsers accept an integer or
+`dstr` is a u32 at 0x2002A614, stored in tenths of Genes/sec (1–1280), or zero for stock timing.
+The updater initializes it to 10 (1.0 Gene/sec) every boot. Boot and reload parsers accept an integer or
 one decimal digit; the writer uses integer formatting, never float printf.
 Density initialization consumes this setting. A successful settings-only
 commit also recalls an explicit dstr even if its configured value is unchanged;

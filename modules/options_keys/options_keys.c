@@ -58,6 +58,21 @@ void presets_normal_end(const uint8_t *file) {
 }
 unsigned presets_normal_parse(const char *p) {
     while (preset_space(*p)) ++p;
+    /* Stock treats a zero chord ratio as reverse. Handle only complete zero
+     * tokens here, keeping its existing parsing of all other ratios. Keep the
+     * stock option word and the audio engine's working ratio in sync. */
+    if (p[0] == 'm' && p[1] == 'c' && p[2] == 'r' &&
+        p[3] >= '1' && p[3] <= '3' && explicit_zero(p+4, 1)) {
+        unsigned offset = 4u * (unsigned)(p[3] - '1');
+        PRESET_U32(0x200012d4u + offset) = MIN_CHORD_BITS;
+        PRESET_U32(0x20022124u + offset) = MIN_CHORD_BITS;
+        return 1;
+    }
+    if (p[0] == 't' && p[1] == 'l' && p[2] == 'e' && p[3] == 'n' &&
+        explicit_zero(p+4, 0)) {
+        PRESET_U8(0x2002a0fcu) = 1;
+        return 1;
+    }
     unsigned dryk = p[0] == 'd' && p[1] == 'r' && p[2] == 'y' && p[3] == 'k';
     unsigned dlen = p[0] == 'd' && p[1] == 'l' && p[2] == 'e' && p[3] == 'n';
     unsigned sosc = p[0] == 's' && p[1] == 'o' && p[2] == 's' && p[3] == 'c';

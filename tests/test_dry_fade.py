@@ -71,6 +71,7 @@ class FadeControl(unittest.TestCase):
 
     def test_density_voice_cap_applies_with_tape_disabled_and_no_shift_edit(self):
         a = Arm('gene_shape', 'density_prepare')
+        a.put(0x2002a614, 10)
         a.uc.mem_write(0x2002a607, b'\1')
         a.uc.mem_write(BLOCK_MODE, b'\2')
         a.put(0x200220e0, bits(1.))
@@ -82,6 +83,7 @@ class FadeControl(unittest.TestCase):
 
     def test_resampling_keeps_all_voices_with_legacy_tape_feedback_latched(self):
         a = Arm('gene_shape', 'density_prepare')
+        a.put(0x2002a614, 10)
         a.uc.mem_write(0x2002a607, bytes([1]))
         a.uc.mem_write(0x2002a0f4, bytes([1]))
         a.uc.mem_write(MOD + 16, bytes([1]))

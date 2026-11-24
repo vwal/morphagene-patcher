@@ -1,6 +1,20 @@
 # Settings (`options.txt`)
 
-**mg204+c5** adds wet-only performance recording, selectable S.O.S. curves and stock timing at the bottom of the independent density control. The first take on an empty reel always records full incoming audio. On subsequent takes the knob positions below give **incoming / existing** levels.
+## Gene timing at startup and reload
+
+With `dens 1`, **mg204-c6** lets a prepared card recall a timing mode as well as a rate. The primary Gene Size control sets length in either mode.
+
+| `options.txt` with `dens 1` | At power-up | On a settings-only reload |
+|---|---|---|
+| `dstr 0` or `dstr 0.0` | Stock Gene timing | Return to stock timing. Genes already playing can finish. |
+| `dstr 0.1` through `dstr 128.0` | Start at the specified rate in Genes/sec | Recall that rate, including after a SHIFT adjustment. |
+| No `dstr` line | Start at 1.0 Gene/sec | Preserve live timing, including the stock-timing position. |
+
+**Upgrading a c5 card.** An existing `dstr 8.0` still starts Genes at 125 ms intervals while voices are available. With long Genes starting at the same place, this can make a clean phrase sound doubled after a reboot, even with REC off. Choose `dstr 0` to hear ordinary timing at startup and keep SHIFT + Gene Size available. Choose `dstr 1.0` for one launch per second. The shifted knob still gives 8 Genes/sec at noon.
+
+## Overdub sources and S.O.S.
+
+Wet-only performance recording and the main S.O.S. curves were introduced in **mg204+c5**. The first take on an empty reel always records full incoming audio. On subsequent takes the knob positions below give **incoming / existing** levels.
 
 | Main S.O.S. curve | Fully CCW | Noon | Fully CW |
 |---|---|---|---|
@@ -27,14 +41,14 @@ these extended options.
 In the editor, **Recall density on settings-only reload** includes `dstr` when
 checked and removes it automatically when unchecked. Importing a file sets the
 checkbox from the presence of an active `dstr` line. Unchecked preserves the
-current density on settings-only reload, but startup then defaults to 8/sec.
+current density on settings-only reload, but startup then defaults to 1.0 Gene/sec.
 The numeric field is disabled while unchecked and retains your value if you
 check it again. Normal mounting and firmware options saves add `dstr` back;
 review the file again before using it as a preserve-density card.
 
 Leave the file's **first line** as it is; the Morphagene keeps its own state
 there. Both editors and the module write
-`// firmware version 204+c5` on a comment line below it.
+`// firmware version 204-c6` on a comment line below it.
 
 For a settings-only reload, include one `dryk` line to choose the new routing. Include `dlen 0` or `dlen 1` to select the overdub length behavior. Omitting either setting preserves its live value.
 Including `sosc` selects the main S.O.S. curve. Omitting it selects the default crossfade on every successful load. A duplicate or malformed value rejects the entire live settings change. An empty reel always records the first take at full input gain. For a full-splice tape pass use forward 1×, Gene Size fully CCW and Slide at the start.
@@ -49,6 +63,10 @@ shorter take leaves its original length and remaining tail. A take started on
 an earlier splice or above the zero-feedback zone uses fixed-length overdub
 feedback. Moving S.O.S. during a take keeps the recording mode selected at
 its start.
+
+## How zero is read
+
+Both editors and both card readers accept an explicit zero for all 45 settings. Six settings translate zero to the smallest supported value. For `tlen`, `splc` and `trst`, zero selects 1. For `mcr1`, `mcr2` and `mcr3`, zero selects the smallest supported forward speed ratio, +0.0625. To omit a splice or Genes-per-step recall, remove that line or uncheck its Recall box. For `dstr`, zero selects stock timing with independent density still available.
 
 ## The settings
 
@@ -65,7 +83,7 @@ or crosses the recalled position; secondary effects use their SHIFT gesture.
 
 | Key | Values | Default | What it does |
 |---|---|---|---|
-| `mpos` | Integer 0–100 | Omitted | Recall Morph; 10% (9-11%) selects stock seamless looping with unclocked scheduling/dens 0. 0% gaps with mlop 0 |
+| `mpos` | Integer 0–100 | Omitted | Recall Morph. With stock timing and no external clock, 10% (9–11%) selects seamless looping. At 0%, mlop 0 leaves a gap. |
 | `gpos` | Integer 0–100 | Omitted | Recall Gene Size: 0% and 1% full-splice/longest; 100% shortest. Nonlinear, not a length percentage |
 | `spos` | Integer 0–100 | Omitted | Recall virtual Slide position with pickup |
 | `splc` | Integer 1–300 | Omitted | Recall splice selection, obeying omod; above count selects the last while retaining the configured number |
@@ -83,8 +101,8 @@ or crosses the recalled position; secondary effects use their SHIFT gesture.
 | `vuni` | 0, 1 | 0 | Hold SHIFT alone at least 0.5 seconds and release to recall forward +1× with automatic pickup. Use with SHIFT input unpatched; other controls cancel |
 | `vctr` | 0, 1 | 0 | Exact +1× at calibrated noon, all layouts/ranges/scales; 48–52% explicit notch and centered unity cell only when vctr 1; preserves endpoints and compresses reverse/stop into the left half |
 | `mlop` | 0, 1 | 0 | **0** stock Morph gaps; **1** seamless loop at minimum Morph. Included in Full |
-| `dens` | 0, 1 | 0 | Independent density: startup rate from `dstr` (default 8 Genes/sec). Hold SHIFT and turn Gene Size fully CCW for stock timing. Just above the endpoint selects 0.1 Genes/sec, noon gives 8 and fully CW gives 128. The unshifted control sets Gene length in either case. Knob changes remain until adjusted again, recalled by dstr reload or powered off; they are not saved across power cycles. Takes priority over Turing rate |
-| `dstr` | 0.1-128, at most one decimal | 8 | Startup/reload density in Genes/sec. Explicit `dstr` recalls the rate on settings-only reload, even if unchanged; omit to preserve the live rate. Requires `dens 1`; external clock takes priority. The configured value stays in options.txt |
+| `dens` | 0, 1 | 0 | Independent density: startup rate from `dstr` (default 1.0 Gene/sec). Hold SHIFT and turn Gene Size fully CCW for stock timing. Just above the endpoint selects 0.1 Genes/sec, noon gives 8 and fully CW gives 128. The unshifted control sets Gene length in either case. Knob changes remain until adjusted again, recalled by dstr reload or powered off; they are not saved across power cycles. Takes priority over Turing rate |
+| `dstr` | 0 or 0.1–128, at most one decimal | 1.0 | 0 selects stock Gene timing. A positive value sets Genes/sec. An explicit value recalls that choice on settings-only reload, even if unchanged. Omit the line to keep the live timing. Requires `dens 1`; external clock takes priority. The configured value stays in options.txt |
 | `vrng` | 0, 1 | 0 | **0** stock ranges; **1** +/-4x in `vsop 0/1`, stop to forward 8x with scale lock in `vsop 2` ([details](DEVELOPMENT_8X_DENSITY.md)) |
 | `vqnt` | 0, 1 | 0 | **0** SHIFT + Varispeed locks; **1** quantized normally, SHIFT + Varispeed temporarily continuous; release snaps back. Uses `octl` / `scal` in every range |
 | `tape` | 0, 1 | 1 | SHIFT + S.O.S.: **1** tape mode, **0** classic TLA feedback |
@@ -100,7 +118,7 @@ or crosses the recalled position; secondary effects use their SHIFT gesture.
 
 At startup, invalid mod values are ignored and defaults remain. During a
 dedicated settings-only reload, an invalid recognized value rejects the whole
-transaction; missing keys retain their current values. SHIFT + Slide jitter starts
+transaction. An omitted `dstr` preserves live timing. An omitted `sosc` selects the default crossfade. SHIFT + Slide jitter starts
 off unless recalled with jitp or adjusted manually.
 
 ## What the section looks like
@@ -111,6 +129,7 @@ mlop 0 //0 stock gaps; 1 seamless loop at minimum Morph
 vrng 0 //0 stock, 1 +/-4x bidirectional or 0-8x forward
 vqnt 0 //0 SHIFT-to-lock; 1 quantized normally, SHIFT+Varispeed temporarily continuous
 dens 0 //SHIFT+Gene Size: CCW stock timing, then 0.1-128 Hz.
+dstr 1.0 //0 stock timing, 0.1-128 Genes/sec. Default 1.0.
 tape 1 //SHIFT+S.O.S.: 0 classic TLA feedback (input + feedback x Gene playback), 1 tape mode (Varispeed tape head in the Slide/Gene Size window)
 octl 1 //Varispeed scale: 0 off, 1 octaves, 2 octaves + fifths, 3 semitones, 4 custom scale (scal)
 scal 0 //Custom scale for octl 4: semitones 1-11 above the root, e.g. 3,5,7,10 = minor pentatonic (root and octaves always on)
@@ -165,6 +184,5 @@ The module then uses the default settings.
 
 ## Stock settings
 
-The stock keys above the mod section (`vsop`, `inop`, `gnsm`, `pmod` and so
-on) work exactly as described in Make Noise's manual. If an older build of
+Make Noise’s manual covers the stock keys above the mod section, including `vsop`, `inop`, `gnsm` and `pmod`. Both editors label these settings **Stock**. For a chord ratio entered as zero, c6 uses +0.0625. If an older build of
 these mods left `gnsm 2` in your file, it now behaves like `gnsm 1` (smooth).

@@ -233,7 +233,7 @@ static int density_start(const char *p, uint32_t *out) {
         tenth = (unsigned)(*p++ - '0');
     }
     uint32_t n = whole*10u + tenth;
-    if (*space(p) || n < 1 || n > 1280) return 0;
+    if (*space(p) || n > 1280) return 0;
     *out = n;
     return 1;
 }
@@ -309,7 +309,11 @@ int reload_parse_line(const char *line) {
     const char *after_key = p + 4;
     p = space(after_key);
     uint32_t n;
-    if (i >= 9 && i <= 11) { if (!ratio(p, &n)) return 0; }
+    if (i >= 9 && i <= 11) {
+        if (explicit_zero(after_key, 1)) n = MIN_CHORD_BITS;
+        else if (!ratio(p, &n)) return 0;
+    }
+    else if (i == 20 && explicit_zero(after_key, 0)) n = 1; /* tlen */
     else if (i == 27) { if (!density_start(p, &n)) return 0; }
     else if (i == 22) { if (!scale(p, &n)) return 0; }
     else if (i >= 30) { if (!mode_digit(after_key, options[i].max, &n)) return 0; }
@@ -548,11 +552,12 @@ void reload_commit(void) {
      * is unchanged but the performer moved the density knob. Missing dstr
      * preserves both the live interval and its phase. Commit only after every
      * setting and the reel reconnection have passed validation. Existing
-     * voices/playheads are untouched; the next birth waits one new interval.
+     * voices/playheads are untouched. Zero resumes the stock scheduler. A
+     * positive rate schedules the next birth one new interval from now.
      */
     if (S->seen & (1u << 27)) {
         uint32_t n = U32(0x2002a614);
-        uint32_t interval = (480000u + n/2u) / n;
+        uint32_t interval = n ? (480000u + n/2u) / n : 0;
         U32(0x2002a800) = 1;
         U32(0x2002a808) = interval;
         U32(0x2002a80c) = interval;

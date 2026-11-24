@@ -130,6 +130,7 @@ class QuantizedAudio(unittest.TestCase):
         for vsop,extended,density in [(0,0,0),(1,1,0),(2,1,0),(2,1,1)]:
             a=Audio(images()[1]);b=Audio(prior)
             for x in (a,b):
+                x.a.put(0x2002A614, 80)  # match Development 2 density
                 x.a.put(0x200012a8,vsop);x.uc.mem_write(RANGE,bytes([extended]));x.uc.mem_write(0x2002A607,bytes([density]))
             self.assertEqual(a.blocks(900),b.blocks(900),(vsop,extended,density))
             self.assertEqual(a.births,b.births)

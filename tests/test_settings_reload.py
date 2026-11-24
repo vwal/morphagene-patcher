@@ -195,9 +195,9 @@ class ReloadParser(unittest.TestCase):
 
     def test_invalid_recognized_values_and_duplicates(self):
         for text in ['mlop 2','mlop -1','mlop 10','vsop 3','vqnt 2','tape -1','octl 5','fxsl 3','mono 3','mcap 10',
-                     'root 101','root 999999999','tlen 0','tlen 17','ingn 4','gnsm 2',
+                     'root 101','root 999999999','tlen 0x','tlen 17','ingn 4','gnsm 2',
                      'vqnt 1oops','vqntX1','scal 12','scal 0,3','scal 3,','scal 3,,5',
-                     'mcr1 0','mcr1 nan','mcr1 inf','mcr1 -17','mcr1 0.06','mcr1 1e99']:
+                     'mcr1 0.','mcr1 nan','mcr1 inf','mcr1 -17','mcr1 0.06','mcr1 1e99']:
             with self.subTest(text=text):self.assertEqual(line(arm(),text),0)
         a=arm();self.assertEqual(line(a,'vqnt 1'),1);self.assertEqual(line(a,'vqnt 0'),0)
 

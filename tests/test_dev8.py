@@ -58,7 +58,7 @@ class DensityHooks(unittest.TestCase):
         for adc,expected in [(3000,2000),(2010,2010),(2500,2500)]:
             a.uc.reg_write(UC_ARM_REG_R0,adc);a.run('size_hold');self.assertEqual(a.uc.reg_read(UC_ARM_REG_R0),expected)
     def test_clock_bypass_and_tape_voice_limit(self):
-        a=Arm('gene_shape','g2_size');a.uc.mem_write(0x2002A607,b'\1');a.put(0x200220e0,bits(1));a.run('density_prepare');self.assertEqual(a.get(0x2002A804),1)
+        a=Arm('gene_shape','g2_size');a.put(0x2002A614,10);a.uc.mem_write(0x2002A607,b'\1');a.put(0x200220e0,bits(1));a.run('density_prepare');self.assertEqual(a.get(0x2002A804),1)
         a.put(0x20021cb0,1);a.run('density_prepare');self.assertEqual(a.get(0x2002A804),0)
         a.put(0x20021cb0,0);a.put(0x200220e0,0);a.run('density_prepare');self.assertEqual(a.get(0x2002A804),0)
         a.put(0x200220e0,bits(8));a.put(0x20022108,1);a.uc.mem_write(MOD+16,b'\1');a.uc.mem_write(0x2002A0F4,b'\1');a.uc.mem_write(0x2002A0F9,b'\3')
@@ -83,7 +83,7 @@ class AudioIntegration(unittest.TestCase):
     def test_density_spacing_independent_of_pitch_and_morph(self):
         image=images()[1]
         for adc,morph in [(2600,420),(3500,2000),(4095,4000)]:
-            a=Audio(image);a.uc.mem_write(0x2002A607,b'\1');a.a.put(0x20021c74,adc);a.a.put(0x20021c6c,morph);a.blocks(2400)
+            a=Audio(image);a.a.put(0x2002A614,80);a.uc.mem_write(0x2002A607,b'\1');a.a.put(0x20021c74,adc);a.a.put(0x20021c6c,morph);a.blocks(2400)
             self.assertGreaterEqual(len(a.births),4)
             self.assertEqual([y-x for x,y in zip(a.births,a.births[1:])],[6000]*(len(a.births)-1),(adc,morph,a.births))
     def test_forward_audio_reaches_eight_and_stops(self):

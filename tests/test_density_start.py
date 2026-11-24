@@ -17,20 +17,28 @@ def parse(a, text):
 class DensityStart(unittest.TestCase):
     def test_every_tenth_parses_consistently_at_boot_and_reload(self):
         boot=Arm('options_keys','opt_parse');live=arm()
-        for n in range(1,1281):
+        for n in range(1281):
             text=f'dstr {n//10}.{n%10}'
             parse(boot,text)
             self.assertEqual(boot.get(DSTR),n,text)
             live.put(SEEN,0)
             self.assertEqual(line(live,text),1,text)
             self.assertEqual(live.get(0x2002A820+236),n,text)
-        for text,n in [('dstr 8',80),('dstr\t128',1280),('dstr  0.5  ',5)]:
+        for text,n in [('dstr 0',0),('dstr 0.0',0),('dstr 8',80),('dstr\t128',1280),('dstr  0.5  ',5)]:
             parse(boot,text);self.assertEqual(boot.get(DSTR),n)
         parse(boot,'dstr 2.5 // startup');self.assertEqual(boot.get(DSTR),25)
 
+    def test_normal_mount_after_density_initialized_rearms_the_scheduler(self):
+        boot = Arm('options_keys', 'opt_parse')
+        for value, expected in [('1.0', 10), ('0', 0)]:
+            boot.put(DENSITY, 1)
+            parse(boot, 'dstr '+value)
+            self.assertEqual(boot.get(DENSITY), 0)
+            self.assertEqual(boot.get(DSTR), expected)
+
     def test_invalid_values_leave_boot_value_and_reject_reload_atomically(self):
         boot=Arm('options_keys','opt_parse')
-        for value in ['', '0', '0.0', '0.01', '0.09', '128.1', '129', '-1', '+8', '.5', '8.', '8.00',
+        for value in ['', '0.01', '0.09', '128.1', '129', '-1', '+8', '.5', '8.', '8.00',
                       'nan', 'inf', '1e1', '0008', '999999999999999999', '8junk', '8 9', '8/']:
             text='dstr '+value
             boot.put(DSTR,80);parse(boot,text);self.assertEqual(boot.get(DSTR),80,text)
@@ -49,9 +57,16 @@ class DensityStart(unittest.TestCase):
             a.put(DENSITY,0);a.put(DSTR,n);a.run('density_prepare')
             self.assertEqual(a.get(DENSITY+8),(480000+n//2)//n,n)
             self.assertEqual(a.get(DENSITY+12),a.get(DENSITY+8),n)
-        for n in [0,1281,0xffffffff]:
+        a.put(DENSITY,0);a.put(DSTR,0);a.run('density_prepare')
+        self.assertEqual([a.get(DENSITY+k) for k in (0,4,8,12)], [1,0,0,0])
+        a.uc.reg_write(UC_ARM_REG_R0, 192)  # just above the shifted detent
+        a.run('density_adjust')
+        a.run('density_prepare')
+        self.assertEqual([a.get(DENSITY+k) for k in (4,8,12)], [1,480000,480000])
+        self.assertEqual(a.get(DSTR), 0)  # panel edit leaves the boot value intact
+        for n in [1281,0xffffffff]:
             a.put(DENSITY,0);a.put(DSTR,n);a.run('density_prepare')
-            self.assertEqual(a.get(DENSITY+8),6000,n)
+            self.assertEqual(a.get(DENSITY+8),48000,n)
         a.put(DENSITY,0);a.put(DSTR,25);a.run('density_prepare')
         self.assertEqual(a.get(DENSITY+8),19200)
         a.uc.reg_write(UC_ARM_REG_R0,4032);a.run('density_adjust')
@@ -63,9 +78,9 @@ class DensityStart(unittest.TestCase):
         a.put(DENSITY,0);a.run('density_prepare')
         self.assertEqual(a.get(DENSITY+8),12000) # new boot initializes from dstr
 
-    def test_boot_resets_dirty_startup_setting_to_eight(self):
+    def test_boot_resets_dirty_startup_setting_to_one(self):
         a,events=test_arm_updater.UpdaterHooks().run_update(None)
-        self.assertEqual(a.get(DSTR),80)
+        self.assertEqual(a.get(DSTR),10)
 
     def test_writer_round_trips_configured_rate_not_performed_rate(self):
         a=Arm('options_keys','opt_parse');a.put(0x2002A0F0,0x5354504F)
@@ -78,18 +93,18 @@ class DensityStart(unittest.TestCase):
             output.append(fmt % tuple(args[:nargs]))
             a.uc.reg_write(UC_ARM_REG_R0,len(output[-1]))
         a.calls={0x08034804:printf,0x080327a8:lambda a:a.uc.reg_write(UC_ARM_REG_R0,0)}
-        for n in (1,2,3,4,5,25,80,1279,1280):
+        for n in (0,1,2,3,4,5,10,25,80,1279,1280):
             a.put(DSTR,n);a.put(DENSITY+8,375);output.clear()
             a.run('opt_write',[0x08024566])
             written=next(x for x in ''.join(output).splitlines() if x.startswith('dstr '))
             self.assertTrue(written.startswith(f'dstr {n//10}.{n%10} '),written)
-            a.put(DSTR,0);parse(a,written);self.assertEqual(a.get(DSTR),n)
+            a.put(DSTR,0xffffffff);parse(a,written);self.assertEqual(a.get(DSTR),n)
             self.assertEqual(a.get(DENSITY+8),375)
             self.assertEqual(a.uc.reg_read(UC_ARM_REG_SP),SP)
 
     def test_reload_recalls_explicit_rates_even_when_config_unchanged(self):
         from tests.test_settings_reload import CARD, LIVE
-        for n in (1,2,3,4,5,25,80,1280):
+        for n in (0,1,2,3,4,5,25,80,1280):
             for enabled in (0,1):
                 a=arm();call(a,'reload_commit')  # initialize Morph table cache
                 a.put(DSTR,80);a.uc.mem_write(DENS,bytes([enabled]))
@@ -100,7 +115,7 @@ class DensityStart(unittest.TestCase):
                 self.assertEqual(a.get(DSTR),80)
                 self.assertEqual(a.get(DENSITY+8),375)
                 call(a,'reload_commit')
-                interval=(480000+n//2)//n
+                interval=(480000+n//2)//n if n else 0
                 self.assertEqual(a.get(DSTR),n)
                 self.assertEqual(a.get(DENSITY),1)
                 self.assertEqual(a.get(DENSITY+8),interval)
@@ -135,6 +150,43 @@ class DensityStart(unittest.TestCase):
             self.assertEqual(a.get(DSTR),80,failure)
             self.assertEqual(bytes(a.uc.mem_read(DENSITY,32)),before,failure)
             self.assertEqual(a.get(RESULT),2,failure)
+
+    @unittest.skipUnless(os.environ.get('MGMOD_FIRMWARE'), 'requires official firmware')
+    def test_zero_boot_and_explicit_zero_reload_sound_like_stock_timing(self):
+        from tests.audio import Audio
+        from tests.test_firmware_integration import images
+        from tests.test_unity_center import configure
+        # Start both engines on the same playing splice. One is booted in the
+        # configured stock detent. The reference uses dens 0 and no gestures.
+        test, stock = (Audio(images()[1]) for _ in range(2))
+        for engine in (test, stock):
+            configure(engine.a, (0, 0, 0, 0), centered=1)
+            for addr, val in ((0x20022160, 9600), (0x20021fbc, bits(9600)),
+                              (0x20021c74, 2048), (0x20021c78, 0),
+                              (0x20021c7c, 0), (0x20021c6c, 420), (DSTR, 0)):
+                engine.a.put(addr, val)
+        test.uc.mem_write(DENS, bytes([1]))
+        self.assertEqual(test.blocks(1600), stock.blocks(1600))
+        self.assertEqual(test.births, [0, 9600])
+        self.assertEqual(test.births, stock.births)
+
+        # The same configured zero must override a performed numeric rate.
+        # Start both schedulers at 8/s and allow one new Gene to be born.
+        for engine in (test, stock):
+            engine.uc.mem_write(DENS, bytes([1]))
+            engine.a.put(DENSITY, 1)
+            engine.a.put(DENSITY+8, 6000)
+            engine.a.put(DENSITY+12, 6000)
+        self.assertEqual(test.blocks(800), stock.blocks(800))
+        test.a.put(SEEN, 1 << 27)
+        test.a.put(0x2002a820+236, 0)
+        test.a.put(PENDING, 1)
+        stock.uc.mem_write(DENS, bytes([0]))
+        self.assertEqual(test.blocks(1600), stock.blocks(1600))
+        self.assertEqual(test.births, stock.births)
+        self.assertEqual(test.a.get(PENDING), 0)
+        self.assertEqual(test.a.get(DENSITY+8), 0)
+        self.assertEqual(test.uc.mem_read(DENS, 1), bytes([1]))
 
     @unittest.skipUnless(os.environ.get('MGMOD_FIRMWARE'),'requires official firmware')
     def test_audio_boundary_recall_preserves_voices_and_ten_second_interval(self):

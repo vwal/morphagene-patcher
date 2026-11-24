@@ -2,7 +2,7 @@
 
 For overdubbing and loop recording, pages 12–13 of the full guide explain how `dens`, `dstr`, `inop`, `dryk` and `sosc` interact. The examples cover a clean phrase, recording overlapping Genes into a new splice, and fading layers on a wet-only mixer return. [US Letter](../web/morphagene-manual-letter.pdf#page=12) · [A4](../web/morphagene-manual-a4.pdf#page=12)
 
-See the [c3 update guide](RELEASE_MG204_C3.md) for the Varispeed fix and [settings reference](OPTIONS.md) for trusted-card reload and the switchable `mlop` option. Armed insertion and changed options were confirmed on hardware without an audible playback interruption.
+For whole-splice speech, try forward +1×, Slide and Gene Size fully CCW, and Morph near 9 o’clock with the clock unpatched. Use `dens 1, dstr 0` to start there with ordinary timing. Hold SHIFT and turn Gene Size clockwise to introduce independent launches. A settings-only reload can recall stock timing while the existing Genes finish. [Gene timing at startup and reload](OPTIONS.md#gene-timing-at-startup-and-reload).
 
 Most performance gestures use **SHIFT**: hold SHIFT and turn a knob. When you
 let go of SHIFT after a turn, the module **doesn't** jump to the next splice,
@@ -18,7 +18,7 @@ back near where it was (pickup). That way the sound doesn't jump when you let go
 | SHIFT + Morph | Sample-rate reduction or tape warble | `fxsl` |
 | SHIFT + Varispeed | Lock to a scale (`vqnt 0`) or temporarily adjust continuously (`vqnt 1`) | `vqnt`, `octl`, `scal` |
 | SHIFT + Slide | Random Gene start positions (jitter) | always on |
-| SHIFT + Gene Size | Independent density: startup rate from `dstr` (default 8 Genes/sec); turn fully CCW for stock timing, then slightly clockwise for 0.1–128 Genes/sec. Knob rate remains until adjusted again, recalled by dstr reload or powered off; not saved across power cycles. Reload recalls explicit `dstr`; omit to keep the live rate. Overrides Turing rate | `dens 1` |
+| SHIFT + Gene Size | Independent density: startup timing from `dstr` (0 for stock, default 1.0 Gene/sec); turn fully CCW for stock timing, then slightly clockwise for 0.1–128 Genes/sec. Knob rate remains until adjusted again, recalled by dstr reload or powered off; not saved across power cycles. Reload recalls explicit `dstr`; omit to keep the live rate. Overrides Turing rate | `dens 1` |
 | SHIFT + Organize / Gene Size / Slide | Turing mode controls | `sldm 1` |
 | REC held + SHIFT taps | Input gain (stock), now remembered | `ingn` |
 | (no gesture) | Mono input: L on both channels | `mono 2` (auto) or `mono 1` |

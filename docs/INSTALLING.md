@@ -10,9 +10,9 @@ You need:
 
 Pick one:
 
-- **Web builder (easiest):** open the [mg204+c5 patcher](https://vwal.github.io/morphagene-patcher/), drop or choose
-  your `mg204.wav`, then download **mg204+c5.wav** for the first install and
-  `mgmod.bin` for later updates.
+- **Browser.** Drop or choose your official `mg204.wav` in the patcher. Download
+  **mg204-c6.wav** for the first install or **mgmod.bin** for the SD updater.
+  [Open the Morphagene patcher](https://vwal.github.io/morphagene-patcher/).
 - **Command line:**
 
   ```bash
@@ -43,7 +43,9 @@ the same procedure as an official update:
    that name.
 2. **Update.** Put the card in the module and power on. No button is needed.
    The update takes a few seconds, then the module restarts.
-3. **Check it worked.** On the card, `mgmod.bin` is now `mgmod.ok`.
+3. **Check it worked.** On the card, `mgmod.bin` is now `mgmod.ok`. After a normal mount, the rewritten settings file identifies `// firmware version 204-c6`.
+
+If your previous card contains `dens 1` and `dstr 8.0`, the explicit rate still applies. To boot with ordinary timing and keep the SHIFT density gesture, change the existing line to `dstr 0`. [Gene timing at startup and reload](OPTIONS.md#gene-timing-at-startup-and-reload).
 
 The updater checks the file's footer (`MGMD`, size, CRC32), the vector table,
 and a hard limit that never erases anything below the application (the
