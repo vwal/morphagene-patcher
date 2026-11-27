@@ -2,10 +2,12 @@
 'use strict';
 
 // ---------- options.txt ----------
-const VERSION_HEADER = '// firmware version 204+c6';
+const VERSION_HEADER = '// firmware version 204+c7';
 const MOD_HEADER = '//Morphagene extended mods';
 // In older builds this comment put "vsop 2" at the start of a 63-byte read.
 const OBSOLETE_COMMENTS = {
+  thru: ['//1 advances splices at the top of Organize. 0 off.', '//1: Organize fully CW advances splices on EOSG.'],
+  vctr: ['//Noon unity mapping: 0 original mapping, 1 +1x at calibrated noon with a 48-52 percent unity notch. The notch is enabled only with vctr 1.'],
   dens: ['//Independent Gene density: 0 off, 1 on: startup rate from dstr (default 8 Genes/sec); hold SHIFT and turn Gene Size for 0.1-128 Genes/sec; knob rate remains until adjusted again, recalled by dstr reload or powered off, not saved across power cycles; overrides Turing rate; external clock takes priority', '//Independent Gene density: 0 off, 1 SHIFT+Gene Size = 0.1-128 Genes/sec (takes priority over Turing rate); startup rate from dstr; bypassed with clock'],
   dstr: ['//Startup/reload Gene density: 0.1-128 Genes/sec, at most one decimal, default 8. Explicit dstr recalls on settings-only reload; omit to preserve live rate. Knob changes are temporary.',
          '//Startup/reload density in Genes/sec: 0.1-128, at most one decimal; default 8. Explicit dstr recalls on settings-only reload. Knob changes are not saved.'],
@@ -29,7 +31,11 @@ const KEYS = {
   evop: '//Turing evolution virtual knob preset: integer 0-100 percent. Used with sldm 1.',
   trst: '//Turing Genes per step preset: 1,2,3,4,6,8,12,16. Used with sldm 1; dens 1 takes priority over the Turing rate.',
   vuni: '//Unity recall: 0 off, 1 hold SHIFT alone >=0.5 seconds and release for forward +1x with pickup. Use with SHIFT jack unpatched.',
-  vctr: '//Noon unity mapping: 0 original mapping, 1 +1x at calibrated noon with a 48-52 percent unity notch. The notch is enabled only with vctr 1.',
+  vctr: '//0 original layout, 1 forward unity at noon.',
+  ntch: '//Unity notches: 0 off, 1 forward, 2 reverse, 3 both.',
+  thru: '//Organize CW: 0 off, 1 next, 2 follow direction.',
+  bank: '//0 off, 1 card root, 2-8 folders. Normal mount only.',
+  audt: '//Bank picker: 0 audition, 1 keep current playback.',
   mlop: '//Morph Loop: 0 stock gaps (default), 1 seamless loop at minimum Morph',
   dstr: '//0 stock timing, 0.1-128 Genes/sec. Default 1.0. Omit on settings-only reload to keep live timing.',
   dens: '//SHIFT+Gene Size: CCW stock timing, then 0.1-128 Hz.',
@@ -64,10 +70,11 @@ const TURING_STEPS = Object.freeze([1,2,3,4,6,8,12,16]);
 const DEFAULTS = Object.freeze({mpos:'0', gpos:'0', spos:'0', vpos:'0', sosp:'0', splc:'1', srrp:'0', jitp:'0', wrbp:'0', fbkp:'0', evop:'0', trst:'1', vuni:'0', vctr:'0', dstr:'1', mlop:'0', vsop:'0', vqnt:'0', dens:'0', vrng:'0', dryk:'0', sosc:'0', dlen:'0', tape:'1', octl:'1', scal:'0', fxsl:'1', cpul:'0',
   mcap:'3', sldm:'0', root:'50', tlen:'8', ingn:'0', mono:'0', gnsm:'0',
   inop:'0', pmin:'0', omod:'0', rsop:'0', pmod:'0', ckop:'0', cvop:'0',
-  mcr1:'2', mcr2:'1.5', mcr3:'1.33333'});
+  mcr1:'2', mcr2:'1.5', mcr3:'1.33333', ntch:'', thru:'0', bank:'0', audt:'0'});
 const LIMITS = {mpos:[0,100], gpos:[0,100], spos:[0,100], vpos:[0,100], sosp:[0,100], splc:[1,300], srrp:[0,100], jitp:[0,100], wrbp:[0,100], fbkp:[0,100], evop:[0,100], vuni:[0,1], vctr:[0,1], mlop:[0,1], vsop:[0,2], vqnt:[0,1], dens:[0,1], vrng:[0,1], dryk:[0,3], sosc:[0,2], dlen:[0,1], tape:[0,1], octl:[0,4], fxsl:[0,2], cpul:[0,1],
   mcap:[0,9], sldm:[0,1], root:[0,100], tlen:[1,16], ingn:[0,3], mono:[0,2], gnsm:[0,1],
-  inop:[0,1], pmin:[0,1], omod:[0,1], rsop:[0,1], pmod:[0,2], ckop:[0,2], cvop:[0,1]};
+  inop:[0,1], pmin:[0,1], omod:[0,1], rsop:[0,1], pmod:[0,2], ckop:[0,2], cvop:[0,1],
+  ntch:[0,3], thru:[0,2], bank:[0,8], audt:[0,1]};
 function optionValue(key, raw) {
   if (CHORD_KEYS.includes(key)) {
     const token = raw.trim();
@@ -76,7 +83,7 @@ function optionValue(key, raw) {
     if (magnitude === 0) return '0.0625';
     return magnitude >= 0.0625 && magnitude <= 16 ? token : null;
   }
-  if (key === 'dryk' || key === 'dlen' || key === 'sosc') return /^\d$/.test(raw) && Number(raw) <= LIMITS[key][1] ? raw : null;
+  if (['dryk','dlen','sosc','ntch','thru','bank','audt'].includes(key)) return /^\d$/.test(raw) && Number(raw) <= LIMITS[key][1] ? raw : null;
   if (key === 'dstr') return /^\d{1,3}(?:\.\d)?$/.test(raw) && Number(raw)<=128 ? String(Number(raw)) : null;
   // A zero written for a positive-only count recalls its smallest count.
   if ((key === 'splc' || key === 'trst') && /^0{1,3}$/.test(raw)) return '1';
@@ -115,6 +122,7 @@ function chosenOptions() {
   for (const k of FIELDS) {
     if (omittedStock(k)) continue;
     const el = $('opt-' + k);
+    if ((k === 'ntch' || k === 'thru') && el.value === '') continue;
     const value = optionValue(k, el.value) ?? DEFAULTS[k];
     if (CHORD_KEYS.includes(k)) {
       values[k] = el.dataset.ratioToken ?? value;
@@ -215,6 +223,7 @@ function populateEditor(text) {
     const field = $('opt-'+k);
     const parsed = entries.has(k) ? optionValue(k, entries.get(k)) : null;
     let value = parsed ?? DEFAULTS[k];
+    if (text && k === 'thru' && !entries.has(k)) value = '';
     if (PRESET_KEYS.includes(k)) {
       $('recall-'+k).checked = parsed !== null;
       // A partial card keeps the visible choice for an explicit later recall.

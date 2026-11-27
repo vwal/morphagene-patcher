@@ -96,6 +96,8 @@ class Module:
     options_keys: list = field(default_factory=list)
     gestures: list = field(default_factory=list)
     directory: Path = None
+    # An overlay may wrap an earlier guarded hook at the same start address.
+    replaces_hooks: dict = field(default_factory=dict)  # hook address -> previous module name
 
     def sites(self):
         """Flash byte ranges this module overwrites in the stock image."""
@@ -108,8 +110,10 @@ class Module:
         out = bytearray(image)
         for address, original, new in self.patches:
             old, new = bytes.fromhex(original), bytes.fromhex(new)
+            if len(old) != len(new):
+                raise ValueError(f'{self.name}: in-place patch changes size at {address:#x}')
             o = address - BASE
-            if out[o:o + len(old)] != old:
+            if o < 0 or out[o:o + len(old)] != old:
                 raise ValueError(f'{self.name}: unexpected bytes at {address:#x}')
             out[o:o + len(new)] = new
         if self.source:
@@ -118,7 +122,7 @@ class Module:
             for address, original, symbol in self.hooks:
                 old = bytes.fromhex(original)
                 o = address - BASE
-                if out[o:o + len(old)] != old:
+                if o < 0 or o + len(old) > len(image) or out[o:o + len(old)] != old:
                     raise ValueError(f'{self.name}: unexpected bytes at {address:#x}')
                 out[o:o + len(old)] = branch_w(address, symbols[symbol]) + b'\x00\xbf' * ((len(old) - 4) // 2)
             if len(out) % 1024:

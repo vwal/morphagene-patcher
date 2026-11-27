@@ -757,5 +757,6 @@ opt_version:
     addw r0, sp, #1396
     b.w VERSION_RETURN
 fmt_version:
-    .asciz "// firmware version 204+c6\n"
-    .space 8   @ Retain the version field footprint across test and release labels.
+    .asciz "// firmware version 204+c7\n"
+    .space 6, 0                @ preserve the linked option table and downstream hooks
+    .space 5   @ Retain the version field footprint across test and release labels.

@@ -42,6 +42,15 @@ writes and truncate/open. Recording/card activity while disconnected invalidates
 it too. After ordinary writes have synced, the next idle pass captures a new
 snapshot without scanning the reel. Unrelated options/log writes do not dirty it.
 
+The main WAV can stay open while the player browses another bank or reel. Its
+three native open call sites (0x0802309a, 0x080231f8, 0x0802371e) pass through
+the existing FatFs hook. A successful open captures the physical bank and
+slot at 0x20028ff0–0x20028ff1 and the exact WAV pathname. An unsuccessful open
+or a new ordinary mount clears the identity. Browsing leaves the identity
+intact. Settings-only insertion validates a `bank` line (0–8) and keeps the
+current browse selection. Reconnect opens the captured pathname directly. A
+missing file, missing folder, incorrect size or I/O error rejects the card.
+
 On an owned insertion, reuse the successful mount, parse options into staging, open the
 existing reel with mode 3 (read/write, no create), compare file size, and seek to
 the old fptr. Reopening refreshes filesystem ID, cluster chain and directory
@@ -54,8 +63,8 @@ The input gain codec update is deferred to the existing main-loop hook.
 State ABI at 0x2002A820: phase/start/owned/pending/result/finish/absent at +0..24;
 seen mask +28; original 26 option values +32..135; valid +136; reel +140;
 reels +144; data_start +148; size +152; cluster +156; position +160;
-CID +164..179; directory sector +180; directory offset +184; S.O.S. curve token +188 (zero for omitted, 1–3 for an explicit curve);
-reserved +192..215; dlen staging +216; snapshot_ready +220; live FIL pointer +224; reserved scanning
+opened WAV path +164..179; directory sector +180; directory offset +184; S.O.S. curve token +188 (zero for omitted, 1–3 for an explicit curve);
+notch token +192; thru token +196; bank token +200; snapshot bank +204; reserved +208..215; dlen staging +216; snapshot_ready +220; live FIL pointer +224; reserved scanning
 +228 (always zero); mlop staged value +232, dstr +236, mount_ready +240 (1 owned fresh mount,
 2 normal load in progress). Preserving the earlier offsets avoids
 changing the assembly ABI. Scratch FIL starts 0x2002A920, 512-byte buffer at

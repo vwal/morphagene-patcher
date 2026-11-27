@@ -23,6 +23,8 @@ def remember(a, fs=FS, live=LIVE):
     a.uc.mem_write(CID,b'original-card-id')  # 16 bytes
     a.put(live,fs);a.uc.mem_write(live+4,struct.pack('<HBB',1,3,0))
     for offset,value in [(8,96),(12,512),(16,3),(28,65),(32,fs+88)]:a.put(live+offset,value)
+    a.uc.mem_write(0x20028000,b'mg9.wav\0')
+    call(a,'reload_file_opened',live,0x20028000,0)
     Disk(a,b'header\nvqnt 1\n')
     call(a,'reload_service',fs,live)
     assert a.get(VALID)==1
@@ -180,6 +182,38 @@ class ReloadGesture(unittest.TestCase):
                 self.assertEqual(call(a,'reload_led_mask',0xa550),0xa550|on)
 
 class ReloadParser(unittest.TestCase):
+    def test_bank_validates_without_changing_the_browsed_or_open_bank(self):
+        bank = 0x2002a61f
+        for value in range(9):
+            with self.subTest(bank=value):
+                a=arm()
+                a.uc.mem_write(bank,bytes([2]))
+                stage(a,f'1 45875 0\nbank {value}\n'.encode())
+                call(a,'reload_commit')
+                self.assertEqual(a.get(CARD),1)
+                self.assertEqual(a.uc.mem_read(bank,1),bytes([2]))
+                self.assertEqual(a.uc.mem_read(0x20028ff0,2),bytes([1,9]))
+        for value in ('', '9', '00', '3.0', '2 junk', '1\nbank 2'):
+            with self.subTest(bad=value):
+                a=arm()
+                stage(a,f'1 45875 0\nvqnt 1\nbank {value}\n'.encode())
+                self.assertEqual(a.get(RESULT),2)
+                self.assertEqual(a.get(PENDING),0)
+                self.assertEqual(a.uc.mem_read(0x2002a610,1),bytes(1))
+
+    def test_primary_open_forgets_previous_identity_after_failure(self):
+        for path,error in [('bank2/mgw.wav',4),('mg0.wav',0),('bank9/mg1.wav',0),
+                           ('bank2/mgx.wav',0),('bank2/mg1.wav.tmp',0)]:
+            with self.subTest(path=path,error=error):
+                a=arm()
+                a.uc.mem_write(0x20028000,path.encode()+bytes(1))
+                call(a,'reload_file_opened',LIVE,0x20028000,error)
+                self.assertEqual(a.uc.mem_read(0x20028ff0,2),bytes(2))
+                self.assertEqual(a.get(HASH_READY),0)
+                d=stage(a)
+                self.assertEqual(d.events,[('unmount',0)])
+                self.assertEqual(a.get(CARD),0)
+
     def test_all_keys_bounds_and_fractional_chords(self):
         keys=[('vsop',2),('pmod',2),('omod',1),('cvop',1),('ckop',2),('rsop',1),
               ('pmin',1),('inop',1),('gnsm',1),('mcr1','-0.06250'),('mcr2','1.49831'),

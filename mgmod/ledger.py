@@ -24,6 +24,7 @@ def check(modules):
                 problems.append(f'{module.name}: setting offset must be in 0..15')
             memory.append((SETTINGS_BASE + offset, SETTINGS_BASE + offset))
         claims = {'flash site': list(module.sites()), 'RAM': memory}
+        replacements = {}
         for kind, ranges in claims.items():
             for first, last in ranges:
                 if first > last:
@@ -31,9 +32,15 @@ def check(modules):
                 if kind == 'RAM' and not (0x200243C8 <= first <= last < 0x2002B800):
                     problems.append(f'{module.name}: RAM claim outside the initialized mod arena')
                 for other, previous in seen.get(kind, []):
+                    if (kind == 'flash site' and first == previous[0] and last <= previous[1]
+                            and module.replaces_hooks.get(first) == other):
+                        replacements[first] = other
+                        continue
                     if overlaps((first, last), previous):
                         problems.append(f'{module.name} and {other} both claim {kind} {first:#x}..{last:#x}')
                 seen.setdefault(kind, []).append((module.name, (first, last)))
+        if replacements != module.replaces_hooks:
+            problems.append(f'{module.name}: declared replacement does not match an earlier hook')
         for kind, values in (('options.txt key', module.options_keys), ('gesture', module.gestures)):
             for value in values:
                 for other, previous in seen.get(kind, []):

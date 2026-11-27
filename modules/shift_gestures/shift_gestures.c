@@ -9,6 +9,7 @@
 #define U8(a) (*(volatile uint8_t *)(a))
 #define VUNI U8(0x2002a618)
 #define VCTR U8(0x2002a619)
+#define NTCH U8(0x2002a61d) /* 0: inherit c6; 1..4: explicit ntch 0..3 */
 #define MOD 0x2002a000
 #define CARD U32(0x20001290)
 #define SAMPLES U32(0x20021c88)
@@ -72,6 +73,17 @@ static float unity_position(unsigned vsop, unsigned range) {
     return vsop == 2 ? (range ? 212.5f / 376.f : 212.5f / 328.f) : 344.5f / 400.f;
 }
 
+/* Widen an exact rate by 2% of physical travel on each side. Pin both
+ * ends of this interval so stop and the opposite direction do not move. */
+static float notch_position(float x, float start, float center, float end,
+                            unsigned *in_notch) {
+    const float lower = center - .02f, upper = center + .02f;
+    if (x < lower) return start + (x-start) * ((center-start)/(lower-start));
+    if (x > upper) return center + (x-upper) * ((end-center)/(end-upper));
+    *in_notch = 1;
+    return center;
+}
+
 /* The lookup/quantizer has a cell around unity, not a single point. Merely
  * moving that point to noon leaves most of its cell on the clockwise side:
  * bidirectional mode has much more lookup range below +1 than above it.
@@ -80,7 +92,7 @@ static float unity_position(unsigned vsop, unsigned range) {
  */
 static float centered_position(float x, float unity, unsigned vsop,
                                unsigned range, unsigned quantized,
-                               unsigned mask) {
+                               unsigned mask, unsigned notches, unsigned *in_notch) {
     float factor = vsop == 2 ? (range ? 376.f : 328.f) : 400.f;
     float a, b;
     if (quantized) {
@@ -101,17 +113,30 @@ static float centered_position(float x, float unity, unsigned vsop,
         a = 344.f / 400.f;
         b = (vsop == 1 && !range ? 348.f : 346.f) / 400.f;
     }
-    /* Preserve the former cell's extent outside its explicit detent, sharing
-     * that extent equally around the new 48..52% detent. Both neighbors exist
-     * in every supported layout/range, so no artificial width cap is needed. */
-    float old_side = quantized ? .495f : .48f;
-    float width = .02f + .5f * old_side *
+    /* Center the scale or native lookup cell around the optional 4% extra
+     * detent. With zero added width, the two inner slopes meet at noon. */
+    float half_notch = (notches & 1) ? .02f : 0.f;
+    float lower = .5f-half_notch, upper = .5f+half_notch;
+    float old_side = quantized ? .495f : lower;
+    float width = half_notch + .5f * old_side *
         ((unity-a)/unity + (b-unity)/(1.f-unity));
     float left = .5f-width, right = .5f+width;
-    if (x < left) return a * x / left;
-    if (x < .48f) return a + (unity-a) * ((x-left)/(.48f-left));
-    if (x <= .52f) return unity;
-    if (x < right) return unity + (b-unity) * ((x-.52f)/(right-.52f));
+    if (x < left) {
+        if (notches & 2) {
+            /* The entire reverse range is on this first linear segment.
+             * Convert the native -1x and stop positions to physical travel. */
+            float travel = left/a;
+            float stop = .5f * travel;
+            if (x < stop) x = notch_position(x, 0.f, (52.5f/400.f)*travel, stop, in_notch);
+        }
+        return a * x / left;
+    }
+    if (x < lower) return a + (unity-a) * ((x-left)/(lower-left));
+    if (x <= upper) {
+        *in_notch = notches & 1;
+        return unity;
+    }
+    if (x < right) return unity + (b-unity) * ((x-upper)/(right-upper));
     return b + (1.f-b) * ((x-right)/(1.f-right));
 }
 
@@ -192,8 +217,8 @@ unsigned preset_varispeed_prepare(unsigned physical) {
 
 /* Integer ABI keeps the assembly wrapper independent of soft/hard FP calling
  * conventions. s18 is already calibrated/clamped by stock code. The midpoint
- * detent spans 48..52% in every mode. The curve depends on configured options,
- * never the current gesture, so SHIFT's temporary free mode keeps that curve.
+ * forward detent spans 48..52% when selected with vctr 1. The curve depends
+ * on configured options, so SHIFT's temporary free mode keeps that curve.
  */
 uint32_t unity_map(uint32_t input) {
     if (PRESET->magic == PRESET_MAGIC && PRESET_EXT->aux[13]) {
@@ -202,8 +227,11 @@ uint32_t unity_map(uint32_t input) {
     } else input = preset_varispeed(input);
     union { uint32_t u; float f; } x = {.u=input}, out;
     unsigned enabled = VUNI == 1, centered = VCTR == 1;
+    unsigned setting = NTCH;
+    if (setting > 4) setting = 0;
+    unsigned notches = setting ? setting-1 : centered;
     S->force_glide = S->override = 0;
-    if (!enabled && !centered) {
+    if (!enabled && !centered && !notches) {
         if (S->config) {
             U32(0x20021df8) = 0xc0000000; /* invalidate stock Varispeed cache: -2 */
             U8(MOD + 7) = 0;
@@ -213,6 +241,7 @@ uint32_t unity_map(uint32_t input) {
     }
     unsigned vsop = U32(0x200012a8), range = U8(0x2002a606) == 1;
     if (vsop > 2) vsop = 0;
+    if (vsop == 2) notches &= 1; /* forward-only */
     unsigned scale = U8(0x2002a0f5);
     if (scale > 4) scale = 1;
     unsigned mask = scale == 2 ? 0x81u : scale == 3 ? 0xfffu :
@@ -222,7 +251,7 @@ uint32_t unity_map(uint32_t input) {
      * the previous quantizer latch and stock lookup cache. ABI stays 64 B. */
     unsigned config = 0x80000000u | vsop | (scale << 2) | (mask << 5) |
                       (quantized << 17) | (range << 18) |
-                      (centered << 19) | (enabled << 24);
+                      (centered << 19) | (setting << 20) | (enabled << 24);
     if (config != S->config) {
         S->config = config;
         S->last_x = x.f;
@@ -231,7 +260,7 @@ uint32_t unity_map(uint32_t input) {
     }
     float unity = unity_position(vsop, range);
     float pickup = centered ? .5f : unity;
-    float margin = centered ? .02f : .00125f;
+    float margin = (notches & 1) ? .02f : setting ? .00025f : .00125f;
     if (!enabled) S->held = S->request = 0;
     else if (S->request) {
         S->request = 0;
@@ -246,13 +275,23 @@ uint32_t unity_map(uint32_t input) {
         U32(0x20021df8) = 0xc0000000;
     }
     S->last_x = x.f;
-    if (S->held || (centered && x.f >= .48f && x.f <= .52f)) {
+    unsigned in_notch = 0;
+    if (S->held) {
+        out.f = unity;
+    } else if ((notches & 1) && centered && x.f >= .48f && x.f <= .52f) {
+        in_notch = 1;
+        out.f = unity;
+    } else if (centered) {
+        out.f = centered_position(x.f, unity, vsop, range, quantized, mask, notches, &in_notch);
+    } else if ((notches & 2) && x.f < .5f) {
+        out.f = notch_position(x.f, 0.f, 52.5f/400.f, .5f, &in_notch);
+    } else if ((notches & 1) && (vsop == 2 || x.f >= .5f)) {
+        out.f = notch_position(x.f, vsop == 2 ? 0.f : .5f, unity, 1.f, &in_notch);
+    } else out = x;
+    if (S->held || in_notch) {
         S->override = S->force_glide = 1;
         U8(MOD + 7) = 0;
         U32(0x20021df8) = 0xc0000000;
-        out.f = unity;
-    } else if (centered) {
-        out.f = centered_position(x.f, unity, vsop, range, quantized, mask);
-    } else out = x;
+    }
     return out.u;
 }

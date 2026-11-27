@@ -1,5 +1,15 @@
 # Version history
 
+## mg204+c7 — 2026-11-26
+
+- Added up to eight banks with 32 reel slots each. Bank 1 is the card root. The long SPLICE → REC hold opens the bank, reel and splice picker. Existing empty bank folders can be selected for a new recording. The short chord retains the current-bank reel browser.
+- Added read-only reel and splice audition. With `audt 0` (default), recorded choices preview forward at +1× while the original reel continues underneath. SHIFT cancels back to its current playhead. Use `audt 1` for uninterrupted performance audio while choosing. Final confirmation follows `omod` on the same reel and across reels or banks.
+- Added Organize play-through in the top 5% of the dial. `thru 1` advances through splices and wraps. `thru 2` follows Varispeed direction, including reverse wraparound. The default, `thru 0`, gives the entire dial to manual selection.
+- Added `ntch` for forward (+1×), reverse (−1×), both or neither unity notch. `vctr` independently sets forward unity at noon. Omitting `ntch` on startup keeps c6’s original response.
+- Improved idle SD card-removal detection and rearming of repeated settings-only reloads, including from the reel browser.
+- Updated both editors, the guide and the quick card. The module and both editors write `// firmware version 204+c7`.
+- Splice play-through and reel banks draw on Carlos de Paula’s MIT-licensed fork of Briskcat’s mods. [Fork source](https://github.com/carlosedp/morphagene-mods/tree/3305b8566641ed24bb176c98e243831bbf1e21f8).
+
 ## mg204+c6 — 2026-11-24
 
 - With `dens 1`, `dstr 0` (or `0.0`) now selects stock Gene timing on power-up and settings-only reload. SHIFT + Gene Size remains available for independent density. Already-playing Genes finish when timing changes.

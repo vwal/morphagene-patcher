@@ -1,0 +1,45 @@
+.syntax unified
+.cpu cortex-m4
+.thumb
+.global BOOT_RETURN
+.thumb_set BOOT_RETURN, 0x080236da
+.global HOLD_WAIT
+.thumb_set HOLD_WAIT, 0x080248fc
+.global HOLD_RELEASED
+.thumb_set HOLD_RELEASED, 0x0802526e
+.global LED_RETURN
+.thumb_set LED_RETURN, 0x080249cc
+.global MAIN_ON
+.thumb_set MAIN_ON, 0x08022fc2
+.global MAIN_OFF
+.thumb_set MAIN_OFF, 0x08022f96
+.global MOUNT_DEFER
+.thumb_set MOUNT_DEFER, 0x08023b02
+.global MOUNT_FAIL
+.thumb_set MOUNT_FAIL, 0x0802380e
+.global MAINT_STOCK
+.thumb_set MAINT_STOCK, 0x0802301c
+.global MAINT_RESUME
+.thumb_set MAINT_RESUME, 0x08023050
+.global AFTER_STOCK
+.thumb_set AFTER_STOCK, 0x0802377c
+.global AFTER_RESUME
+.thumb_set AFTER_RESUME, 0x080237b0
+.global DELETE_STOCK
+.thumb_set DELETE_STOCK, 0x080222f4
+.global DELETE_CALL_RETURN
+.thumb_set DELETE_CALL_RETURN, 0x08024352
+.global NEW_RETURN
+.thumb_set NEW_RETURN, 0x08023072
+.global BROWSE_RETURN
+.thumb_set BROWSE_RETURN, 0x08028708
+.global FIRST_RETURN
+.thumb_set FIRST_RETURN, 0x08023158
+.global PREVIEW_QUEUE
+.thumb_set PREVIEW_QUEUE, 0x0802ad58
+.global PREVIEW_DONE
+.thumb_set PREVIEW_DONE, 0x0802888e
+.global CONFIRM_RETURN
+.thumb_set CONFIRM_RETURN, 0x08025532
+.global CLOSE_AND_UNMOUNT
+.thumb_set CLOSE_AND_UNMOUNT, 0x08023808

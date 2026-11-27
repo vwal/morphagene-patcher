@@ -23,13 +23,28 @@ assert.ok(link, 'The patcher offers the standalone HTML as a download');
 
 async function editStockSettings(page) {
   const headers = page.locator('.option-header');
-  assert.equal(await headers.count(), 45);
+  assert.equal(await headers.count(), 49);
   const origins = await headers.locator('.option-origin').allTextContents();
-  assert.equal(origins.filter(origin => origin === 'Stock').length, 12);
-  assert.equal(origins.filter(origin => origin === 'Enhancement').length, 33);
+  assert.equal(origins.filter(origin => origin === 'Stock').length, 6);
+  assert.equal(origins.filter(origin => origin === 'Stock+').length, 6);
+  assert.equal(origins.filter(origin => origin === 'Enhancement').length, 37);
   const optional = await headers.locator('.optional-marker').allTextContents();
   assert.deepEqual(optional, Array(13).fill('OPTIONAL:'));
 
+  const notch = page.locator('#opt-ntch');
+  assert.equal(await notch.inputValue(), '');
+  await notch.selectOption('3');
+  await page.locator('#opt-thru').selectOption('2');
+  const audition = page.locator('#opt-audt');
+  assert.equal(await audition.inputValue(), '0');
+  await audition.selectOption('1');
+  assert.match(await page.locator('#options-text').inputValue(), /^audt 1 /m);
+  const bank = page.locator('#opt-bank');
+  assert.equal(await bank.inputValue(), '0');
+  await bank.selectOption('8');
+  assert.match(await page.locator('#options-text').inputValue(), /^bank 8 /m);
+  assert.match(await page.locator('#options-text').inputValue(), /^ntch 3 /m);
+  assert.match(await page.locator('#options-text').inputValue(), /^thru 2 /m);
   const inop = page.locator('#opt-inop');
   assert.equal(await inop.inputValue(), '');
   assert.equal(await page.locator('#opt-mcr1').inputValue(), '2');
@@ -104,7 +119,7 @@ async function checkReset(page) {
     assert.equal(controls[key], defaultValue, key);
     if (key in checked) assert.equal(checked[key], key === 'dstr', key);
     const entry = result.split('\n').find(line => line.startsWith(key+' '));
-    if (checked[key] === false) assert.equal(entry, undefined, key);
+    if (checked[key] === false || defaultValue === '') assert.equal(entry, undefined, key);
     else assert.equal(entry?.split(/\s+/)[1], defaultValue, key);
   }
   const [download] = await Promise.all([page.waitForEvent('download'), page.locator('#options-save').click()]);
@@ -183,13 +198,14 @@ try {
   assert.equal(await readFile(cardOptions, 'utf8'), imported);
   const lines = saved.split(/\r?\n/);
   assert.equal(lines[0], '7 45875 0');
-  assert.equal(lines[1], '// firmware version 204+c6');
+  assert.equal(lines[1], '// firmware version 204+c7');
   assert.equal(lines.filter(l => /^\/\/ firmware version /.test(l)).length, 1);
   for (const line of ['// annotated performance reel', 'future_setting 12 // preserve me',
                       'mcr1 2.00000 // stock chord', 'vsop 1', 'dryk 3 // send', 'mpos 19 // starting position']) {
     assert.ok(lines.includes(line), line);
   }
   assert.match(saved, /^sosc 2(?:\s|$)/m);
+  assert.match(saved, /^bank 8 /m);
   assert.match(saved, /^dlen 1(?:\s|$)/m);
   assert.match(saved, /^inop 1 /m);
   assert.match(saved, /^pmod 2 /m);
@@ -244,6 +260,25 @@ try {
   const web = await hosted.newPage();
   web.on('pageerror', e => errors.push(e.message));
   await web.goto(siteUrl+'#options');
+  const history = web.locator('#versions');
+  const summary = history.locator('summary');
+  assert.equal(await history.evaluate(el => el.open), false);
+  await summary.focus();
+  await web.keyboard.press('Enter');
+  for (const width of [1200, 375]) {
+    await web.setViewportSize({width, height: 900});
+    const bounds = await history.locator('.history-content section').evaluateAll(rows =>
+      rows.map(row => {
+        const box = row.getBoundingClientRect();
+        return {top:box.top, bottom:box.bottom, left:box.left, right:box.right};
+      }));
+    assert.equal(bounds.length, 7);
+    assert.ok(bounds.every((box, i) => box.bottom > box.top && box.right <= width &&
+      box.left >= 0 && (i === 0 || box.top >= bounds[i-1].bottom)), 'Vertical history at width '+width);
+  }
+  await summary.click();
+  assert.equal(await history.evaluate(el => el.open), false);
+  await web.setViewportSize({width:1280, height:900});
   const [editorDownload] = await Promise.all([
     web.waitForEvent('download'), web.getByRole('link', {name: 'Download the offline options editor'}).click()
   ]);

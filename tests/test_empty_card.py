@@ -30,7 +30,7 @@ def mounted_reel(fat32=False, data=HEADER):
         a.uc.mem_write(address, branch_w(address, a.syms[symbol]))
     a.uc.ctl_remove_cache(0x08020000, 0x08060000)
     a.uc.mem_write(PATH, b'\0mg9.wav\0')
-    a.syms.update(mount=0x0803219c, open=OPEN, seek=0x08032be8,
+    a.syms.update(mount=0x0803219c, primary_open=0x0802371e, seek=0x08032be8,
                   write=0x08032688, sync=0x080326e0, idle=0x08022fbc)
     disk = FatDisk(a, fat32=fat32)
     disk.file(1, b'MG9     WAV', disk.reel_cluster, data)
@@ -47,7 +47,7 @@ def mounted_reel(fat32=False, data=HEADER):
     a.put(0x200012a0, 1)
     a.put(CARD, 1)
     assert call(a, 'mount', FS, PATH, 1) == 0
-    assert call(a, 'open', FILE, PATH + 1, 3) == 0
+    assert call(a, 'primary_open', FILE, PATH + 1, 3, stops=[0x08023722]) == 0
     assert call(a, 'seek', FILE, len(data)) == 0
     call(a, 'reload_service', FS, FILE)
     assert a.get(HASH_READY) == 1

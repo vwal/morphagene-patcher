@@ -31,6 +31,9 @@ class CurveOptions(unittest.TestCase):
                                  ('sosc 0', 0), ('sosc 01', 0), ('sosc 3', 0)):
             a.uc.mem_write(SOSC-1, b'\x01\x02\xa5')
             normal.begin(a)
+            # The normal file boundary clears an omitted ntch. Seed the
+            # adjacent byte afterwards to isolate writes by the sosc parser.
+            a.uc.mem_write(SOSC+1, b'\xa5')
             normal.feed(a, '1 0 0\n'+source+'\r\n')
             self.assertEqual(bytes(a.uc.mem_read(SOSC-1, 3)), bytes([1, expected, 165]))
             calls.clear()

@@ -284,13 +284,10 @@ input:disabled + span { cursor:default; }
 .option-group{grid-column:1/-1;margin:18px 0 -8px;font-size:22px;color:var(--green)}
 .preset-explainer{margin:24px 0;padding:24px;border-left:4px solid var(--green);background:var(--card)}
 .preset-explainer h3{margin:0 0 12px}.preset-explainer p:last-child{margin-bottom:0}
-.version-history{margin:40px 0;padding:24px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
-.version-history summary{font-size:21px;font-weight:650;cursor:pointer;color:var(--green)}
-.version-history summary:focus-visible{outline:3px solid var(--orange);outline-offset:5px}
-.version-entries{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:32px;margin-top:20px}
-.version-entries h3{font-size:18px}.version-entries p{font-size:14px;line-height:1.6}
+.release-history summary:focus-visible{outline:3px solid var(--orange);outline-offset:5px}
+.release-history summary h2{margin:0}
+.history-content ul{font-size:14px}
 .site-footer{flex-wrap:wrap}.site-footer p:nth-child(n+3){flex-basis:100%;margin:0}
-@media(max-width:650px){.version-entries{grid-template-columns:1fr;gap:10px}}
 /* First installation appears before the firmware builder. */
 .first-install{margin:0 0 32px;gap:22px 36px}
 .first-install-heading{grid-column:1/-1;margin:0;flex-wrap:wrap}

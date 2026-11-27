@@ -96,7 +96,8 @@ upd_hook:
     strb    r1, [r0, #13]              @ mlop 0: stock Morph gaps; applied cache resets at boot
     strh    r1, [r0, #20]              @ vuni/vctr off by default
     strh    r1, [r0, #22]              @ dryk 0 normal routing; dlen 0 fixed length
-    strb    r1, [r0, #24]              @ sosc 0, including boot without a card
+    strh    r1, [r0, #24]              @ sosc 0; ntch omitted follows vctr
+    strh    r1, [r0, #26]              @ thru off and bank 0 on every normal mount
     movs    r1, #10                    @ dstr 1.0 Gene/sec, stored in tenths
     str     r1, [r0, #16]              @ 0x2002A614
     ldr     r0, =0x2002A700             @ warble state (tape_mode, fxsl 2): start

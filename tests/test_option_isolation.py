@@ -41,20 +41,23 @@ OPTIONS = (
 PRESETS = tuple((key, preset.value_addr(i), 4,
                  {'splc': range(1, 301), 'trst': preset.STEPS}.get(key, range(101)))
                 for i, key in enumerate(preset.KEYS))
+MODES = (('ntch', 0x2002a61d, 1, range(4)), ('thru', 0x2002a61e, 1, range(3)))
+ALL_OPTIONS = OPTIONS + MODES + PRESETS
+BANK = ('bank', 0x2002a61f, 1, range(9))  # ordinary mounts only
 
 
 def input_cases():
     # Explicit zero chooses the lowest forward ratio or the first count. For
     # unaligned card slots and near-identical keys, check original destinations,
     # widths and neighboring values through both ordinary and live readers.
-    for key, address, width, _ in OPTIONS + PRESETS:
+    for key, address, width, _ in ALL_OPTIONS:
         if key.startswith('mcr'):
             for token in ('0', '+0', '-0', '0.00000', '-000.00000000'):
                 yield key, (address, width), f'{key} {token}', 0.0625
         if key in ('tlen', 'splc', 'trst'):
             for token in ('0', '00', '000'):
                 yield key, (address, width), f'{key} {token}', 1
-    for key, address, width, domain in OPTIONS + PRESETS:
+    for key, address, width, domain in ALL_OPTIONS:
         for expected in domain:
             if key == 'scal':
                 text = ','.join(str(n) for n in range(1, 12) if expected & (1 << n)) or '0'
@@ -62,7 +65,8 @@ def input_cases():
                 text = f'{expected // 10}.{expected % 10}'
             else:
                 text = str(expected)
-            yield key, (address, width), f'{key} {text}', expected
+            stored = expected + 1 if key == 'ntch' else expected
+            yield key, (address, width), f'{key} {text}', stored
 
 
 def record_writes(a):
@@ -98,6 +102,8 @@ def live_slots():
         slots[key] = (slot, live.SEEN, 1 << i)
     for i, key in enumerate(preset.KEYS):
         slots[key] = (preset.LIVE + 4 + 4*i, preset.LIVE, 1 << i)
+    slots['ntch'] = (live.STATE+192, None, None)
+    slots['thru'] = (live.STATE+196, None, None)
     return slots
 
 
@@ -113,20 +119,27 @@ class OptionWriteIsolation(unittest.TestCase):
         a = live.arm()
         writes = record_writes(a)
         staged = live_slots()
-        active_bytes = storage_bytes((address, width) for _, address, width, _ in OPTIONS + PRESETS)
+        active_bytes = storage_bytes((address, width) for _, address, width, _ in ALL_OPTIONS)
         for key, target, line, expected in input_cases():
             address, width = target
             slot, mask, bit = staged[key]
             a.put(live.SEEN, 0)
             a.put(preset.LIVE, 0)
+            for mode, *_ in MODES:
+                a.put(staged[mode][0], 0)
             a.put(live.PENDING, 1)
             # Force a real write even when two cases round to the same value.
             a.uc.mem_write(address, b'\xaa' * width)
             writes.clear()
             self.assertEqual(live.line(a, line), 1, line)
-            self.assertEqual(writes, {(slot, 4), (mask, 4)}, line)
-            self.assertEqual(a.get(mask), bit, line)
+            expected_writes = {(slot, 4)}
+            if mask is not None:
+                expected_writes.add((mask, 4))
+                self.assertEqual(a.get(mask), bit, line)
+            self.assertEqual(writes, expected_writes, line)
             parsed = a.get(slot)
+            if key == 'thru':
+                parsed -= 1  # zero token means absent for either new option
             self.check_value(parsed, key, expected, line)
             writes.clear()
             live.call(a, 'reload_commit')
@@ -153,7 +166,7 @@ class OptionWriteIsolation(unittest.TestCase):
         normal.begin(a)
         normal.feed(a, '6 46345 0\n', run_stock=True)
         preset_slots = {key: (normal.NORMAL + 4 + 4*i, 4) for i, key in enumerate(preset.KEYS)}
-        slots = [(address, width) for _, address, width, _ in OPTIONS + PRESETS]
+        slots = [(address, width) for _, address, width, _ in ALL_OPTIONS + (BANK,)]
         watched = storage_bytes(slots + list(preset_slots.values()))
         writes = record_writes(a)
         # These older stock keys are absent from the editor and live reader.
@@ -161,7 +174,8 @@ class OptionWriteIsolation(unittest.TestCase):
         legacy = ((key, (address, 4), f'{key} {n}', n)
                   for key, address in [('step', 0x200012a8), ('rmod', 0x200012b8)]
                   for n in range(10))
-        for key, target, line, expected in chain(input_cases(), legacy):
+        bank_cases = (('bank', (BANK[1], BANK[2]), f'bank {n}', n) for n in BANK[3])
+        for key, target, line, expected in chain(input_cases(), bank_cases, legacy):
             expected_target = preset_slots.get(key, target)
             writes.clear()
             normal.feed(a, line+'\n', run_stock=True)

@@ -15,6 +15,9 @@ def build(remix, image):
         image = module.apply(image)
     if len(image) > MAX_IMAGE:
         raise ValueError('image too large for the SD updater')
+    if remix.get('fixed_layout') and hashlib.sha256(image).hexdigest() != remix['sha256']:
+        raise ValueError('the linked image differs from the verified fixed-address build; '
+                         'use the pinned Arm GNU toolchain and matching release sources')
     return image
 
 

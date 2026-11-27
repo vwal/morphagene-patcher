@@ -9,6 +9,18 @@ def image(length=card.MIN_IMAGE):
 class BuildChecks(unittest.TestCase):
     def test_bundled_remixes_have_no_collisions(self):
         for name in registry.all_remixes():ledger.check(registry.remix(name)['modules'])
+    def test_only_an_explicit_replacement_can_wrap_an_existing_hook(self):
+        owner = mod('owner', hooks=[(0x08020040, '0123456789ab', 'first')])
+        next_hook = [(0x08020040, '12345678', 'second')]
+        valid = mod('wrap', hooks=next_hook, replaces_hooks={0x08020040: 'owner'})
+        ledger.check([owner, valid])
+        for invalid in (mod('wrap', hooks=next_hook), valid,
+                        mod('wrap', hooks=next_hook, replaces_hooks={0x08020040: 'wrong'}),
+                        mod('wrap', hooks=[(0x08020040, '00'*8, 'second')],
+                            replaces_hooks={0x08020040: 'owner'})):
+            with self.assertRaises(ValueError):
+                ledger.check([invalid] if invalid is valid else [owner, invalid])
+
     def test_cross_category_memory_collisions(self):
         for offset,address,kind in [(0,0x2002A000,'mod_bytes'),(4,0x2002A0F4,'settings')]:
             claim={'mod_bytes':[(offset,offset)]} if kind=='mod_bytes' else {'settings':[offset]}

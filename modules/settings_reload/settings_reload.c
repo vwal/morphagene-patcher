@@ -25,14 +25,17 @@
 #define REEL U32(0x20001040)
 #define REELS U32(0x200012a0)
 #define DATA_START U32(0x20001064)
-#define CID ((volatile uint32_t *)0x2002427c)
+#define LOADED_BANK U8(0x20028ff0)  /* 1=root, 2..8=bank folders, 0=unknown */
+#define LOADED_REEL U8(0x20028ff1)
 
 typedef struct {
     uint32_t phase, started, owned, pending, result, finished, absent;
     uint32_t seen, values[26];
     uint32_t valid, reel, reels, data_start, size, cluster, position;
-    uint32_t cid[4], dir_sector, dir_offset;
-    uint32_t sosc_token, reserved[6], dlen_value, snapshot_ready, live_file, scanning;
+    char loaded_path[16]; /* exact native WAV path, up to bank8/mgw.wav */
+    uint32_t dir_sector, dir_offset;
+    uint32_t sosc_token, notch_token, thru_token, bank_token, snapshot_bank, reserved[2];
+    uint32_t dlen_value, snapshot_ready, live_file, scanning;
     uint32_t morph_loop_value; /* separate slot preserves the assembly state ABI */
     uint32_t density_start_value;
     uint32_t mount_ready; /* 1: owned fresh mount; 2: normal load in progress */
@@ -51,22 +54,18 @@ typedef int (*Read)(void *, void *, unsigned, uint32_t *);
 typedef int (*Close)(void *);
 typedef int (*Mount)(void *, const char *, unsigned);
 typedef int (*Seek)(void *, uint32_t);
-typedef void (*Name)(char *, unsigned);
-typedef int (*Stat)(const char *, void *);
 #define f_open ((Open)0x08032261)
 #define f_read ((Read)0x080323fd)
 #define f_close ((Close)0x080327a9)
 #define f_mount ((Mount)0x0803219d)
 #define f_lseek ((Seek)0x08032be9)
-#define reel_name ((Name)0x08021f75)
-#define splice_name ((Name)0x08022061)
-#define f_stat ((Stat)0x08033129)
 
 static int shifted(void) { return (U32(0x40020810) & 2u) != 0; }
 static int quiet(void) { return !REC && !REC_REQUEST && !(FLAGS & ~0x80u); }
 static int same_live_reel(void) {
-    return S->valid && REEL == S->reel && REELS == S->reels &&
-           DATA_START == S->data_start;
+    return S->valid && LOADED_BANK == S->snapshot_bank && LOADED_REEL == S->reel &&
+           DATA_START == S->data_start &&
+           (U8(BANK_ADDRESS) || (REEL == S->reel && REELS == S->reels));
 }
 static uint32_t lock(void) {
     uint32_t p;
@@ -155,6 +154,8 @@ unsigned reload_mounted(unsigned result) {
         return 1;
     }
     S->phase = PHASE_IDLE;
+    LOADED_BANK = LOADED_REEL = 0;
+    S->valid = S->snapshot_ready = S->live_file = 0;
     S->mount_ready = 2; /* suppress arming while stock loads the normal reel */
     unlock(p);
     return 0;
@@ -274,6 +275,15 @@ static int scale(const char *p, uint32_t *out) {
     }
 }
 
+/* The legacy presence mask is full. A zero token marks an omitted mode and
+ * digit + 1 an explicit value, including zero. */
+static int stage_mode(volatile uint32_t *token, const char *p, unsigned maximum) {
+    uint32_t mode;
+    if (*token || !mode_digit(p, maximum, &mode)) return 0;
+    *token = mode + 1;
+    return 1;
+}
+
 /* Unknown keys are ignored for compatibility; malformed/duplicate recognized
  * keys reject the entire transaction. Missing keys retain their live values.
  */
@@ -294,14 +304,12 @@ int reload_parse_line(const char *line) {
         if (!p[i]) return 1;
         key |= (uint32_t)(uint8_t)p[i] << (8*i);
     }
-    /* All 32 legacy presence bits are in use. Zero denotes an omitted
-     * curve; 1..3 represent explicit values 0..2 until atomic commit. */
-    if (key == KEY('s','o','s','c')) {
-        uint32_t mode;
-        if (S->sosc_token || !mode_digit(p+4, 2, &mode)) return 0;
-        S->sosc_token = mode + 1;
-        return 1;
-    }
+    if (key == KEY('s','o','s','c')) return stage_mode(&S->sosc_token, p+4, 2);
+    if (key == KEY('n','t','c','h')) return stage_mode(&S->notch_token, p+4, 3);
+    if (key == KEY('t','h','r','u')) return stage_mode(&S->thru_token, p+4, 2);
+    /* Bank selection belongs to ordinary mount. Validate it here so a typo
+     * cannot silently apply the rest of a settings-only transaction. */
+    if (key == KEY('b','a','n','k')) return stage_mode(&S->bank_token, p+4, 8);
     unsigned i;
     for (i=0; i<OPTION_COUNT && options[i].key != key; ++i) {}
     if (i == OPTION_COUNT) return 1;
@@ -330,6 +338,9 @@ int reload_parse_line(const char *line) {
  */
 static int read_options(void) {
     S->sosc_token = 0;
+    S->notch_token = 0;
+    S->thru_token = 0;
+    S->bank_token = 0;
     PRESET_LIVE->mask = 0;
     PRESET_LIVE->ready = 0;
     if (f_open(FIL, "options.txt", 1)) return 0;
@@ -363,7 +374,33 @@ static int read_options(void) {
         if (line && !reload_parse_line(LINE)) valid = 0;
     }
     if (f_close(FIL)) valid = 0;
-    return valid && line && (S->seen || PRESET_LIVE->mask || S->sosc_token);
+    return valid && line && (S->seen || PRESET_LIVE->mask || S->sosc_token ||
+                              S->notch_token || S->thru_token || S->bank_token);
+}
+
+/* Called only after a native open of the main WAV. Browsing can already have
+ * changed both stock reel counters while the previous WAV is still playing. */
+void reload_file_opened(uintptr_t file, const char *path, unsigned result) {
+    LOADED_BANK = LOADED_REEL = 0;
+    S->valid = S->snapshot_ready = S->live_file = 0;
+    if (result) return;
+    unsigned bank = 1;
+    const char *p = path;
+    if (p[0]=='b' && p[1]=='a' && p[2]=='n' && p[3]=='k' &&
+        p[4]>='2' && p[4]<='8' && p[5]=='/') {
+        bank = (unsigned)(p[4]-'0');
+        p += 6;
+    }
+    if (p[0]!='m' || p[1]!='g') return;
+    unsigned reel;
+    if (p[2]>='1' && p[2]<='9') reel = (unsigned)(p[2]-'0');
+    else if (p[2]>='a' && p[2]<='w') reel = 10u+(unsigned)(p[2]-'a');
+    else return;
+    if (p[3]!='.' || p[4]!='w' || p[5]!='a' || p[6]!='v' || p[7]) return;
+    for (unsigned i=0; i<=(unsigned)(p+7-path); ++i) S->loaded_path[i]=path[i];
+    S->live_file = file;
+    LOADED_REEL = (uint8_t)reel;
+    LOADED_BANK = (uint8_t)bank;
 }
 
 /* Called before FatFs's common write core (also used by f_printf), and before
@@ -378,12 +415,10 @@ void reload_dirty(uintptr_t file) {
 /* mg204's FatFs FIL: fs+0, id+4, flag+6, err+7, fptr+8, fsize+12,
  * sclust+16, clust+20, dsect+24, dir_sect+28, dir_ptr+32, cltbl+36,
  * sector buffer+40 (512 bytes). Capture only clean, idle mounted state.
- * CID is the four CMD2 response words saved by the stock SD driver.
  */
 static void remember(void *fatfs, volatile uint32_t *file) {
     uint32_t primask = lock();
-    S->live_file = (uintptr_t)file;
-    if (!quiet() || U8((uintptr_t)file+7) ||
+    if (!LOADED_BANK || S->live_file != (uintptr_t)file || !quiet() || U8((uintptr_t)file+7) ||
         (U8((uintptr_t)file+6) & 0x62u) != 2u) {
         S->valid = S->snapshot_ready = 0;
         unlock(primask);
@@ -394,27 +429,22 @@ static void remember(void *fatfs, volatile uint32_t *file) {
         unlock(primask);
         return;
     }
-    int same = same_live_reel() && S->size==file[3] && S->cluster==file[4] &&
-        S->dir_sector==file[7] && S->dir_offset==file[8]-(uintptr_t)fatfs;
-    for (unsigned i=0;i<4;++i) if (S->cid[i]!=CID[i]) same=0;
-    if (!same) S->snapshot_ready=0;
-    S->reel = REEL; S->reels = REELS; S->data_start = DATA_START;
+    S->snapshot_bank = LOADED_BANK;
+    S->reel = LOADED_REEL; S->reels = REELS; S->data_start = DATA_START;
     S->position = file[2]; S->size = file[3]; S->cluster = file[4];
     S->dir_sector = file[7]; S->dir_offset = file[8] - (uintptr_t)fatfs;
-    for (unsigned i=0; i<4; ++i) S->cid[i] = CID[i];
     S->valid = 1;
-    unlock(primask);
     /* Trusted-card workflow: no audio scan, hashing or SD I/O here. */
     S->snapshot_ready = 1;
+    unlock(primask);
 }
 
 static int reconnect(void *fatfs, volatile uint32_t *file) {
     (void)fatfs;
-    if (!same_live_reel() || S->snapshot_ready!=1) return 0;
-    reel_name(LINE, S->reel);
+    if (!same_live_reel() || S->snapshot_ready!=1 || S->live_file!=(uintptr_t)file) return 0;
     /* Existing file only: never create or truncate a reel. Opening refreshes
      * the mount ID, FAT chain and directory pointers invalidated by remount. */
-    if (f_open((void *)file, LINE, 3)) return 0;
+    if (f_open((void *)file, (const char *)S->loaded_path, 3)) return 0;
     /* Size is a basic sanity check, NOT content verification. Users must keep
      * WAVs, splice sidecars and the complete reel-name inventory identical. */
     int valid = file[3] == S->size && S->position <= file[3];
@@ -482,7 +512,6 @@ unsigned reload_service(void *fatfs, volatile uint32_t *file) {
         /* The trusted replacement now owns the fresh on-disk identity. */
         S->cluster=file[4];S->dir_sector=file[7];
         S->dir_offset=file[8]-(uintptr_t)fatfs;
-        for (unsigned i=0;i<4;++i) S->cid[i]=CID[i];
         S->phase = PHASE_READY;
         __asm__ volatile("dmb" ::: "memory");
         S->pending = 1;
@@ -564,6 +593,11 @@ void reload_commit(void) {
     }
     uint8_t curve = S->sosc_token ? (uint8_t)(S->sosc_token-1u) : 0;
     if (U8(SOSC_ADDRESS) != curve) U8(SOSC_ADDRESS) = curve;
+    if (S->notch_token && S->notch_token != U8(NTCH_ADDRESS)) {
+        U8(NTCH_ADDRESS) = (uint8_t)S->notch_token;
+        U8(0x2002a007) = 0; /* release a scale lock made under the old mapping */
+    }
+    if (S->thru_token) U8(THRU_ADDRESS) = (uint8_t)(S->thru_token - 1);
     presets_publish(PRESET_LIVE);
     morph_loop_apply();
     S->pending = 0;

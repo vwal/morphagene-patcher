@@ -380,6 +380,9 @@ p5_octave:
     cmp     r0, r1
     beq     unity_map_call
     ldr     r0, =0x2002A618
+    ldrb    r1, [r0, #5]                @ explicit ntch 1..3 activates uncentered notches
+    cmp     r1, #2
+    bhs     unity_map_call
     ldrh    r0, [r0]
     cbnz    r0, unity_map_call
     ldr     r0, =0x2002A654             @ enabled-config marker: process disabling once

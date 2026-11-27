@@ -208,6 +208,26 @@ reload_open:
     ldr r0, [sp, #72]
     bl reload_dirty
     restore_call
-1:  push {r4-r9,lr}
+1:  @ Only these three callers replace the primary reel FIL. Other opens
+    @ (including reconnect itself) must never change its remembered pathname.
+    ldr r3, =0x0802309f               @ select reel
+    cmp lr, r3
+    beq 2f
+    ldr r3, =0x080231fd               @ create reel
+    cmp lr, r3
+    beq 2f
+    ldr r3, =0x08023723               @ normal card mount
+    cmp lr, r3
+    bne 3f
+2:  push {r0,r1,r4,lr}               @ preserve FIL, path, caller and alignment
+    bl 3f
+    mov r4, r0
+    mov r2, r0
+    ldrd r0, r1, [sp]
+    bl reload_file_opened
+    mov r0, r4
+    add sp, #8
+    pop {r4,pc}
+3:  push {r4-r9,lr}
     b.w OPEN_RETURN
 .ltorg

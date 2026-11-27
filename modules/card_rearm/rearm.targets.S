@@ -1,0 +1,13 @@
+.syntax unified
+.cpu cortex-m4
+.thumb
+.global TICK_ACCEPT, TICK_CANCEL, TICK_OWNER, MOUNT_OWNER, MOUNT_ACCEPT
+.global MOUNT_NORMAL, PARK_PROBE, SERVICE_DONE
+.thumb_set TICK_ACCEPT,  0x0805027e
+.thumb_set TICK_CANCEL,  0x08050276
+.thumb_set TICK_OWNER,   0x08050270
+.thumb_set MOUNT_OWNER,  0x080502f2
+.thumb_set MOUNT_ACCEPT, 0x080502fc
+.thumb_set MOUNT_NORMAL, 0x08050318
+.thumb_set PARK_PROBE,   0x08050a24
+.thumb_set SERVICE_DONE, 0x0805094a

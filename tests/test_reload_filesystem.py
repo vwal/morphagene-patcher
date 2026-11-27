@@ -75,7 +75,8 @@ class FatDisk:
 
 @unittest.skipUnless(os.environ.get('MGMOD_FIRMWARE'),'set MGMOD_FIRMWARE for real FatFs')
 class ReloadFilesystem(unittest.TestCase):
-    def setup_disk(self,*,fat32=False,markers=None):
+    def setup_disk(self,*,fat32=False,markers=None,prepare=None,active_path='mg9.wav',
+                   open_site=0x0802371e):
         from mgmod import stock
         image=stock.load(os.environ['MGMOD_FIRMWARE'])
         a=arm();a.uc.mem_write(0x08020000,image)
@@ -91,15 +92,19 @@ class ReloadFilesystem(unittest.TestCase):
         if markers is not None:d.file(2,b'SPLICE9 TXT',8,markers)
         for name,address in [('mount',MOUNT),('open',OPEN),('close',CLOSE),('seek',SEEK),
                              ('write',0x08032688),('sync',0x080326E0)]:a.syms[name]=address
-        a.uc.mem_write(0x20028000,b'\0mg9.wav\0')
+        a.uc.mem_write(0x20028000,b'\0'+active_path.encode()+b'\0')
         self.assertEqual(call(a,'mount',FS,0x20028000,1),0)
-        self.assertEqual(call(a,'open',LIVE,0x20028001,3),0)
+        if prepare:
+            prepare(a,d)
+        a.syms['primary_open']=open_site
+        self.assertEqual(call(a,'primary_open',LIVE,0x20028001,3,stops=[open_site+4]),0)
         self.assertEqual(call(a,'seek',LIVE,96),0)
         a.put(CARD,1);call(a,'reload_service',FS,LIVE)
         self.assertEqual(a.get(VALID),1)
         self.assertEqual(a.get(HASH_READY),1)
         import hashlib
         self.assertEqual(a.get(LIVE+8),96)
+        d.writes.clear()
         # Same removal path as stock: the absent driver makes close fail,
         # deregistering the filesystem invalidates its old mount ID.
         d.inserted=False;a.put(DETECT,8192)
@@ -108,6 +113,83 @@ class ReloadFilesystem(unittest.TestCase):
         a.put(CARD,0)
         d.inserted=True;a.put(DETECT,0);a.put(PHASE,3)
         return a,d
+
+    def banked_card(self, *, fat32=False, site=0x0802371e):
+        # The three same-name, same-length WAVs have distinct audio. Build the
+        # directories and files through mg204 FatFs on the simulated card.
+        addresses = {}
+        def prepare(a, d):
+            d.file(0,b'OPTIONS TXT',d.options_cluster,b'1 0 0\nbank 8\nvqnt 1\n')
+            a.syms['mkdir'] = 0x080334d4
+            path, data, written, scratch_file = 0x20028040, 0x20028100, 0x20028300, 0x20028400
+            for bank in (1, 2, 3):
+                prefix = '' if bank==1 else f'bank{bank}/'
+                if prefix:
+                    a.uc.mem_write(path, prefix[:-1].encode()+bytes(1))
+                    self.assertEqual(call(a, 'mkdir', path), 0)
+                a.uc.mem_write(path, (prefix+'mg1.wav').encode()+bytes(1))
+                self.assertEqual(call(a, 'open', scratch_file, path, 10), 0)
+                a.uc.mem_write(data, bytes([bank])*512)
+                self.assertEqual(call(a, 'write', scratch_file, data, 512, written), 0)
+                addresses[bank] = (d.sector(a.get(scratch_file+16)), a.get(scratch_file+28))
+                self.assertEqual(call(a, 'close', scratch_file), 0)
+            # Browsing bank 3 points stock counters at another selection. The
+            # open FIL remains bank2/mg1.wav, even at the next idle snapshot.
+            a.uc.mem_write(0x2002a61f,bytes([3]))
+            a.put(0x20001040,7)
+            a.put(0x200012a0,8)
+        a,d = self.setup_disk(fat32=fat32, prepare=prepare,
+                              active_path='bank2/mg1.wav', open_site=site)
+        self.assertEqual(a.uc.mem_read(0x20028ff0,2),bytes([2,1]))
+        a.put(0x20001040,4)
+        a.put(0x200012a0,2)
+        return a,d,addresses
+
+    def test_live_reopens_loaded_bank_after_browsing_and_writes_only_its_wav(self):
+        for fat32 in (False, True):
+            for site in (0x0802309a, 0x080231f8, 0x0802371e):
+                with self.subTest(fat32=fat32, primary_open=hex(site)):
+                    a,d,files = self.banked_card(fat32=fat32, site=site)
+                    self.assertEqual(call(a,'reload_service',FS,LIVE),1)
+                    self.assertEqual(d.writes,[])
+                    call(a,'reload_commit')
+                    self.assertEqual(a.get(CARD),1)
+                    self.assertEqual(a.uc.mem_read(0x2002a610,1),bytes([1]))
+                    self.assertEqual(a.uc.mem_read(0x2002a61f,1),bytes([3]))
+                    self.assertEqual(a.uc.mem_read(0x20028ff0,2),bytes([2,1]))
+                    self.assertEqual(a.get(0x20001040),4)
+                    self.assertEqual(a.get(LIVE+8),96)
+                    a.uc.mem_write(0x20028100,b'live')
+                    self.assertEqual(call(a,'write',LIVE,0x20028100,4,0x20028300),0)
+                    self.assertEqual(call(a,'sync',LIVE),0)
+                    for bank,(sector,_) in files.items():
+                        expected = bytearray([bank])*512
+                        if bank==2: expected[96:100] = b'live'
+                        self.assertEqual(d.sectors[sector],expected)
+
+    def test_bank_reload_never_substitutes_another_same_size_wav(self):
+        for fault in ('missing WAV', 'missing bank', 'bank read error'):
+            with self.subTest(fault=fault):
+                a,d,files = self.banked_card()
+                folder_sector = files[2][1]
+                if fault=='bank read error':
+                    def read(a):
+                        sector = a.uc.reg_read(UC_ARM_REG_R2)
+                        if sector==folder_sector: d.result(1)
+                        else: d.read(a)
+                    a.calls[0x0802f8fc] = read
+                else:
+                    sector,entry = ((folder_sector,b'MG1     WAV') if fault=='missing WAV'
+                                    else (d.root_sector,b'BANK2      '))
+                    contents = bytearray(d.sectors[sector])
+                    contents[contents.index(entry)] = 0xe5
+                    d.sectors[sector] = bytes(contents)
+                self.assertEqual(call(a,'reload_service',FS,LIVE),0)
+                self.assertEqual(a.get(CARD),0)
+                self.assertEqual(a.get(RESULT),2)
+                self.assertEqual(a.get(LIVE),0)
+                self.assertEqual(a.get(PENDING),0)
+                self.assertEqual(d.writes,[])
 
     def test_actual_fatfs_reconnect_and_stock_recording_write_path(self):
         for fat32 in (False,True):

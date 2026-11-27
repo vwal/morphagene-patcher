@@ -1,3 +1,17 @@
+# mg204+c7 release validation
+
+The owner tested the bank picker and audition on Morphagene, including uninterrupted browsing, selection timing, and recording in the chosen bank. The release application matches that Development 24 build byte for byte outside the options-file version comment.
+
+- Both CLI build names produce the same 223,232-byte application under Arm GNU 14.2.rel1. Its SHA-256 is `6947fd4ef33b750a1dd9ad6afa6f8a781543b937e1b5c9ca2188f2f973b887e1`.
+- The patcher accepted the official Make Noise `mg204.wav`. The browser’s SD download matched the CLI byte for byte. The browser and CLI update WAVs decoded to the release application.
+- Two successive native card mounts on both FAT16 and FAT32 wrote `// firmware version 204+c7` and retained the selected `vsop`, `ntch`, `thru`, `bank` and `audt` values.
+- All 314 tests in the public firmware suite passed locally with the private stock and historical reference images available.
+- The stereo audition checks exercised the release binary with recorded reels, legacy and embedded splice markers, SHIFT cancellation, confirmation under both `omod` modes, card removal and a slow SD reader. Tests compared protected playback and the position reached after cancellation with an uninterrupted reference performance.
+- Both editors export the public header. Tests cover 49 settings, 4,876 field/value combinations and 8,052 wrapped line chunks. Chromium checks cover the WAV drop area, offline editing and the collapsed history on desktop and mobile.
+- Both 15-page guides and both one-page quick cards were rendered and inspected. The US Letter and A4 downloads carry the complete license.
+
+---
+
 # mg204+c6 release validation
 
 The owner confirmed the stock-timing refinement resolved the reported playback repeat on the module. The release application matched the tested Development 13 image byte for byte outside the fixed-size version comment. The module and both editors now write `// firmware version 204+c6`.

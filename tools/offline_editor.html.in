@@ -34,7 +34,7 @@
       $fields_and_save
     </main>
     <footer>
-      <p>© 2026 vwal · Built on Briskcat’s Morphagene mods. Independent customization. Not an official Make Noise release.</p>
+      <p>© 2026 vwal · Built on Briskcat’s Morphagene mods, with reel bank and play-through contributions from Carlos de Paula’s fork. Independent customization. Not an official Make Noise release.</p>
       <details class="offline-license"><summary>License and credits</summary><pre>$license_text</pre></details>
     </footer>
   </div>

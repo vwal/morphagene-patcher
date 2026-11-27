@@ -10,6 +10,19 @@ take effect.
 Adds `vrng` (0 standard, 1 extended bidirectional range), `tape`, `octl`, `scal`, `fxsl`, `cpul`, `mcap`, `sldm`, `root`,
 `tlen`, `ingn` and `mono` to `options.txt` (see [docs/OPTIONS.md](../../docs/OPTIONS.md)).
 
+The release adds two single-digit playback options. An explicit `ntch 0` through
+`ntch 3` is stored as 1 through 4 at 0x2002A61D. An omitted line stores zero,
+which follows the c6 `vctr` behavior. The writer preserves the omission.
+`thru` uses a separate byte at 0x2002A61E and defaults to 0 on normal mount.
+A settings-only reload preserves either value when its line is omitted.
+
+The bank selector reads `bank 0` through `bank 8` on normal mounts. Its byte at
+0x2002A61F defaults to zero, which uses the card root with bank switching off.
+With bank switching enabled, 1 selects the root and 2 through 8 select
+`bank2` through `bank8`. The writer stores the current selection. A
+settings-only reload keeps the loaded reel and its bank. The picker auditions by default
+(`audt 0`). With `audt 1` the current performance continues audibly. A successful settings-only reload without `audt` restores its default.
+
 - **Parser hook** (0x08023326): checks our keys before the stock key dispatch.
   On/off keys accept 0 or 1, `octl` 0–4, `fxsl` 0–2 and `mcap` 0–9 (one
   digit); `root` (0–100) and `tlen` (1–16) read up to four digits. `scal`

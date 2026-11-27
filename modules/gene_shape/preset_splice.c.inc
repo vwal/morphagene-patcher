@@ -1,27 +1,36 @@
 /* Development 8 selected-splice recall. Included by gene_shape.c.
  * Only the stock 1-based Organize/SHIFT request is changed. Stock omod decides
  * when that request becomes the playback splice; voices/playheads stay stock.
- * aux[0..2]: reel, splice count, most recently observed request during pickup.
+ * aux[0..3]: reel, splice count, latest request and play-through layout during pickup.
  */
 #define SPLICE_REQUEST PRESET_U32(0x20021cbc)
 #define SPLICE_COUNT PRESET_U32(0x2002208c)
 #define ORGANIZE_ADC PRESET_U32(0x20021c70)
 #define ORGANIZE_LAST PRESET_U32(0x200220ac)
 
-static unsigned organize_cell(unsigned physical, unsigned count) {
+static unsigned organize_cell(unsigned physical, unsigned count, unsigned thru) {
     unsigned low = PRESET_U32(0x20022080), high = PRESET_U32(0x20022078);
     if (low >= high || high > 4095) { low = 0; high = 4095; }
-    float x = physical <= low ? 0.f : physical >= high ? 1.f :
-              (float)(physical-low)/(float)(high-low);
+    float offset = physical <= low ? 0.f : (float)(physical-low);
+    /* In the play-through layout, match the firmware's calibrated multiplication.
+     * At exactly 95%, a rounded division can land on the other side. */
+    float x = 1.f;
+    if (physical < high)
+        x = thru ? offset * *(volatile const float *)0x200220a0 : offset/(float)(high-low);
+    if (thru) {
+        if (x >= .95f) return 0; /* play-through has no absolute splice number */
+        x *= 1.f/.95f;
+    }
     /* Same first-splice bias and signed truncation as stock 0x080277b0. */
     int selected = (int)((float)count * (x-.001f)) + 1;
     return selected < 1 ? 1u : (unsigned)selected > count ? count : (unsigned)selected;
 }
 
-static unsigned organize_center(unsigned selected, unsigned count) {
+static unsigned organize_center(unsigned selected, unsigned count, unsigned thru) {
     unsigned low = PRESET_U32(0x20022080), high = PRESET_U32(0x20022078);
     if (low >= high || high > 4095) { low = 0; high = 4095; }
     float x = ((float)selected-.5f)/(float)count + .001f;
+    if (thru) x *= .95f;
     unsigned value = low + (unsigned)(x*(float)(high-low) + .5f);
     return value > 4095 ? 4095 : value;
 }
@@ -57,11 +66,9 @@ unsigned preset_organize(unsigned effective) {
             lane->effective = effective > 4095 ? 4095 : effective;
             ORGANIZE_LAST = lane->effective;
             lane->last_physical = physical;
-            lane->target = organize_center(selected, count);
             lane->held = lane->initialized = 1;
             PRESET->aux[0] = reel;
             PRESET->aux[1] = count;
-            PRESET->aux[2] = selected;
             PRESET_U8(0x2002a082) = 0; /* supersede old Turing Organize pickup */
             recalled = 1;
         }
@@ -74,11 +81,14 @@ unsigned preset_organize(unsigned effective) {
     }
     unsigned selected = SPLICE_REQUEST;
     if (!selected || selected > count) { lane->held = 0; return effective; }
-    if (selected != PRESET->aux[2]) {
-        /* SHIFT navigation remains stock. Pickup follows the newly requested
-         * splice rather than pulling a later navigation back to the preset. */
+    unsigned thru = PRESET_U32(0x2002a0f0) == 0x5354504fu &&
+                    PRESET_U8(0x2002a61e) == 1;
+    if (recalled || selected != PRESET->aux[2] || thru != PRESET->aux[3]) {
+        /* Follow manual or automatic navigation, and a live thru layout change,
+         * without replacing the selection or releasing pickup on the mode change. */
         PRESET->aux[2] = selected;
-        lane->target = organize_center(selected, count);
+        PRESET->aux[3] = thru;
+        lane->target = organize_center(selected, count, thru);
         lane->last_physical = physical;
     }
     unsigned shift = PRESET_U8(0x2002a004);
@@ -88,7 +98,7 @@ unsigned preset_organize(unsigned effective) {
      * also be stale after sldm is switched off by an options-only reload. */
     if (!recalled && !shift) {
         unsigned target = lane->target, previous = lane->last_physical;
-        if (organize_cell(physical, count) == selected ||
+        if (organize_cell(physical, count, thru) == selected ||
             (previous < target && physical >= target) ||
             (previous > target && physical <= target)) {
             lane->held = 0;

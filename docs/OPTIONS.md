@@ -1,5 +1,7 @@
 # Settings (`options.txt`)
 
+For bank folder names, the bank → reel → splice gesture, New Reel, audition and confirmation timing, see [Banks and splice selection](USING.md#banks-and-splice-selection).
+
 ## Gene timing at startup and reload
 
 With `dens 1`, **mg204+c6** lets a prepared card recall a timing mode as well as a rate. The primary Gene Size control sets length in either mode.
@@ -48,7 +50,7 @@ review the file again before using it as a preserve-density card.
 
 Leave the file's **first line** as it is; the Morphagene keeps its own state
 there. Both editors and the module write
-`// firmware version 204+c6` on a comment line below it.
+`// firmware version 204+c7` on a comment line below it.
 
 For a settings-only reload, include one `dryk` line to choose the new routing. Include `dlen 0` or `dlen 1` to select the overdub length behavior. Omitting either setting preserves its live value.
 Including `sosc` selects the main S.O.S. curve. Omitting it selects the default crossfade on every successful load. A duplicate or malformed value rejects the entire live settings change. An empty reel always records the first take at full input gain. For a full-splice tape pass use forward 1×, Gene Size fully CCW and Slide at the start.
@@ -66,7 +68,7 @@ its start.
 
 ## How zero is read
 
-Both editors and both card readers accept an explicit zero for all 45 settings. Six settings translate zero to the smallest supported value. For `tlen`, `splc` and `trst`, zero selects 1. For `mcr1`, `mcr2` and `mcr3`, zero selects the smallest supported forward speed ratio, +0.0625. To omit a splice or Genes-per-step recall, remove that line or uncheck its Recall box. For `dstr`, zero selects stock timing with independent density still available.
+Both editors and both card readers accept an explicit zero for all 49 settings. Six settings translate zero to the smallest supported value. For `tlen`, `splc` and `trst`, zero selects 1. For `mcr1`, `mcr2` and `mcr3`, zero selects the smallest supported forward speed ratio, +0.0625. To omit a splice or Genes-per-step recall, remove that line or uncheck its Recall box. For `dstr`, zero selects stock timing with independent density still available.
 
 ## The settings
 
@@ -99,7 +101,11 @@ or crosses the recalled position; secondary effects use their SHIFT gesture.
 | `evop` | Integer 0–100 | Omitted | SHIFT + Organize Turing evolution: 0 locked, 100 fresh; nonlinear curve |
 | `trst` | 1, 2, 3, 4, 6, 8, 12, 16 | Omitted | Turing Genes per step; independent density gesture keeps priority |
 | `vuni` | 0, 1 | 0 | Hold SHIFT alone at least 0.5 seconds and release to recall forward +1× with automatic pickup. Use with SHIFT input unpatched; other controls cancel |
-| `vctr` | 0, 1 | 0 | Exact +1× at calibrated noon, all layouts/ranges/scales; 48–52% explicit notch and centered unity cell only when vctr 1; preserves endpoints and compresses reverse/stop into the left half |
+| `vctr` | 0, 1 | 0 | Places forward unity at calibrated noon in all layouts, ranges and scales. Bidirectional modes fit reverse and stop into the left half. |
+| `ntch` | 0–3 | Omitted | 0 adds no unity notch, 1 widens forward +1×, 2 widens reverse −1× where available, 3 widens both. On normal mount, omitting the line gives the c6 response (forward notch when centered). On settings-only reload, omission preserves the active choice. |
+| `thru` | 0–2 | 0 | 0 gives Organize its usual full span. At the clockwise end, 1 advances through splices and wraps, 2 follows Varispeed direction. Omission on a settings-only reload preserves the current mode. |
+| `bank` | 0–8 | 0 | 0 uses the ordinary root browser. 1 enables bank selection starting at the root. 2–8 select bank folders on a normal mount. A settings-only reload reconnects the live reel in its existing bank. |
+| `audt` | 0, 1 | 0 | 0 previews recorded choices at +1× in the long bank picker. 1 keeps the current performance audible until confirmation. Omitting the line selects 0 on startup and on a successful settings-only reload. |
 | `mlop` | 0, 1 | 0 | **0** stock Morph gaps; **1** seamless loop at minimum Morph. Included in Full |
 | `dens` | 0, 1 | 0 | Independent density: startup rate from `dstr` (default 1.0 Gene/sec). Hold SHIFT and turn Gene Size fully CCW for stock timing. Just above the endpoint selects 0.1 Genes/sec, noon gives 8 and fully CW gives 128. The unshifted control sets Gene length in either case. Knob changes remain until adjusted again, recalled by dstr reload or powered off; they are not saved across power cycles. Takes priority over Turing rate |
 | `dstr` | 0 or 0.1–128, at most one decimal | 1.0 | 0 selects stock Gene timing. A positive value sets Genes/sec. An explicit value recalls that choice on settings-only reload, even if unchanged. Omit the line to keep the live timing. Requires `dens 1`; external clock takes priority. The configured value stays in options.txt |
@@ -184,5 +190,5 @@ The module then uses the default settings.
 
 ## Stock settings
 
-Make Noise’s manual covers the stock keys above the mod section, including `vsop`, `inop`, `gnsm` and `pmod`. Both editors label these settings **Stock**. For a chord ratio entered as zero, c6 uses +0.0625. If an older build of
+Make Noise’s manual covers the stock keys above the mod section, including `vsop`, `inop`, `gnsm` and `pmod`. Both editors label these settings **Stock** or **Stock+** where the enhancements extend their behavior. For a chord ratio entered as zero, c6 uses +0.0625. If an older build of
 these mods left `gnsm 2` in your file, it now behaves like `gnsm 1` (smooth).

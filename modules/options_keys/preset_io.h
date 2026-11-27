@@ -9,6 +9,9 @@
 #define DRYK_ADDRESS 0x2002a61au
 #define DLEN_ADDRESS 0x2002a61bu
 #define SOSC_ADDRESS 0x2002a61cu
+#define NTCH_ADDRESS 0x2002a61du /* 0 follows vctr; 1..4 encode explicit 0..3 */
+#define THRU_ADDRESS 0x2002a61eu
+#define BANK_ADDRESS 0x2002a61fu /* 0: stock root, 1: banked root, 2..8: bank folders */
 typedef struct {
     uint32_t mask, values[PRESET_COUNT], ready;
     uint32_t scan_state, parse_mode; /* normal fgets logical-line tracking */

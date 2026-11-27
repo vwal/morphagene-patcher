@@ -16,6 +16,6 @@ MODULE = Module(
         (0x08031124, '2de9f04f', 'reload_write'),
         (0x08032260, '2de9f043', 'reload_open'),
     ],
-    ram=[(0x2002A820, 0x2002AFFF)],
+    ram=[(0x20028FF0, 0x20028FF1), (0x2002A820, 0x2002AFFF)],
     gestures=['SHIFT held for 1 second before SD insertion'],
 )

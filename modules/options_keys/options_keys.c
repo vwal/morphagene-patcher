@@ -6,6 +6,9 @@ enum { ORDINARY_KEYS = 0, INCLUDE_PRESETS = 1, SKIP_CHUNK = 2 };
 
 void presets_normal_begin(void) {
     PRESET_U8(SOSC_ADDRESS) = 0; /* A file without sosc selects the default curve. */
+    PRESET_U8(NTCH_ADDRESS) = 0; /* Ordinary mounts with no ntch follow vctr. */
+    PRESET_U8(THRU_ADDRESS) = 0;
+    PRESET_U8(BANK_ADDRESS) = 0;
     PRESET_NORMAL->mask = 0;
     PRESET_NORMAL->ready = 1;
     PRESET_NORMAL->scan_state = 1; /* first logical line is the stock header */
@@ -73,11 +76,23 @@ unsigned presets_normal_parse(const char *p) {
         PRESET_U8(0x2002a0fcu) = 1;
         return 1;
     }
+    uint32_t mode;
+    if (p[0] == 'n' && p[1] == 't' && p[2] == 'c' && p[3] == 'h') {
+        if (mode_digit(p+4, 3, &mode)) PRESET_U8(NTCH_ADDRESS) = (uint8_t)(mode + 1);
+        return 1;
+    }
+    if (p[0] == 't' && p[1] == 'h' && p[2] == 'r' && p[3] == 'u') {
+        if (mode_digit(p+4, 2, &mode)) PRESET_U8(THRU_ADDRESS) = (uint8_t)mode;
+        return 1;
+    }
+    if (p[0] == 'b' && p[1] == 'a' && p[2] == 'n' && p[3] == 'k') {
+        if (mode_digit(p+4, 8, &mode)) PRESET_U8(BANK_ADDRESS) = (uint8_t)mode;
+        return 1;
+    }
     unsigned dryk = p[0] == 'd' && p[1] == 'r' && p[2] == 'y' && p[3] == 'k';
     unsigned dlen = p[0] == 'd' && p[1] == 'l' && p[2] == 'e' && p[3] == 'n';
     unsigned sosc = p[0] == 's' && p[1] == 'o' && p[2] == 's' && p[3] == 'c';
     if (dryk || dlen || sosc) {
-        uint32_t mode;
         if (mode_digit(p+4, dryk ? 3u : sosc ? 2u : 1u, &mode)) {
             volatile uint8_t *dest = (volatile uint8_t *)(dryk ? DRYK_ADDRESS : sosc ? SOSC_ADDRESS : DLEN_ADDRESS);
             *dest = (uint8_t)mode;
@@ -120,6 +135,13 @@ void presets_write(void *file) {
           (unsigned)PRESET_U8(SOSC_ADDRESS));
     print(file, "dlen %u //0 fixed, 1 extend last splice at CCW in dryk 2.\n",
           (unsigned)*(volatile uint8_t *)DLEN_ADDRESS);
+    unsigned notch = PRESET_U8(NTCH_ADDRESS);
+    if (notch >= 1 && notch <= 4)
+        print(file, "ntch %u //Wide unity zones: 0 off, 1 +1x, 2 -1x, 3 both.\n", notch - 1);
+    print(file, "thru %u //At Organize CW, 0 off, 1 next, 2 by direction.\n",
+          (unsigned)PRESET_U8(THRU_ADDRESS));
+    print(file, "bank %u //0 off, 1 root, 2-8 folders. Loads normally.\n",
+          (unsigned)PRESET_U8(BANK_ADDRESS));
     unsigned staged = PRESET_NORMAL->ready == 2;
     unsigned mask = staged ? PRESET_NORMAL->mask :
         PRESET->magic == PRESET_MAGIC ? PRESET->saved_mask : 0;

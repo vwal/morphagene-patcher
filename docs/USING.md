@@ -25,6 +25,23 @@ back near where it was (pickup). That way the sound doesn't jump when you let go
 
 Settings are in `options.txt`; see [OPTIONS.md](OPTIONS.md).
 
+## Banks and splice selection
+
+Set `bank 1` in the root `options.txt` and mount the card normally. Bank 1 uses existing root reels. For more banks, create folders named `bank2` through `bank8` on the card. Each bank holds up to 32 reels. Recording another splice keeps it on the current reel. On matched cards used for settings-only reload, keep the reel and its markers in the same bank and slot.
+
+1. Hold **SPLICE first**, add **REC**, and keep both held for about three seconds until **REEL blinks**. Release both.
+2. Turn **Organize** to the bank. Confirm with a short **SPLICE → REC** chord. Release both between confirmations.
+3. Turn Organize to a recorded reel and confirm. A sole recorded reel double-flashes. For a new recording, choose the pink/white **New Reel** and confirm. It fills the reel step in an empty bank, or the top 5% clockwise when a blank or free slot is available in a populated bank.
+4. For a recorded reel, choose its splice and confirm. A single splice spans the whole dial. Tap **SHIFT** to cancel while browsing.
+
+With `audt 0` or no audition setting, pause on a reel to hear its first splice, or on a splice to hear it loop forward at +1×. The original performance keeps running underneath. Cancel returns to its current position. Use `audt 1` to keep that performance audible while preparing a change. Final confirmation uses `omod 0` for the current Gene transition or `omod 1` for an immediate switch. Different reels take their usual SD load time. New Reel opens on confirmation at the reel step.
+
+For the usual current-bank reel browser, release the initial chord before the long hold completes. That browser keeps its native audition. `bank 0` (default) uses the root and the ordinary browser.
+
+## Play through a reel
+
+Set `thru 1` and turn Organize into its last 5% clockwise to advance and wrap through splices. With `thru 2`, reverse Varispeed steps to the previous splice and wraps from first to last. Below the play-through zone, Organize still selects every splice manually. Start with full-length Genes and ordinary timing to hear complete phrases. Shorter Genes can advance the sequence faster. The default `thru 0` leaves the whole dial available for manual selection.
+
 ## Return to 1:1 and optional presets
 
 With `vuni 1`, hold SHIFT alone for at least 0.5 seconds, then release for exact
@@ -32,10 +49,7 @@ forward +1x from any Varispeed position. Short taps still navigate splices.
 Knob movement, another button or card/reload activity cancels the reset. Keep
 the SHIFT input unpatched. Speed holds until the combined knob/CV input picks up.
 
-With `vctr 1`, +1x sits at calibrated noon in every layout, range and scale,
-with a 48-52% notch. Bidirectional reverse/stop fit into the left half. With
-`vctr 0`, no extra flat zone is added to continuous Varispeed. Both options
-default to 0.
+With `vctr 1`, +1× sits at calibrated noon in every layout, range and scale. Bidirectional layouts fit stop and reverse into the left half. Use `ntch 0` for a continuous sweep, `1` for the forward unity notch, `2` for reverse, or `3` for both. A reverse notch applies only in bidirectional layouts. Each added notch spans about 4% of knob travel. Quantization still snaps according to the selected scale. Omitting `ntch` at startup keeps the c6 behavior, including the forward 48–52% notch when centered.
 
 All dialable control values can be optionally recalled; see [all keys](OPTIONS.md).
 Included values use soft pickup from the preset position. Secondary amounts

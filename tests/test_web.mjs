@@ -8,7 +8,7 @@ for (const name of ['page.js', 'options.js']) {
   vm.runInContext(fs.readFileSync(new URL('../web/'+name,import.meta.url),'utf8'),context);
 }
 handlers.DOMContentLoaded();
-assert.match(elements['options-text'].value,/^\/\/ firmware version 204\+c6\n/);
+assert.match(elements['options-text'].value,/^\/\/ firmware version 204\+c7\n/);
 assert.equal(elements['recall-dstr'].checked,true);
 assert.equal(elements['opt-dstr'].disabled,false);
 assert.match(elements['options-text'].value,/^dstr 1 /m);
@@ -51,7 +51,7 @@ out=await load('6 0 0\nvqnt 2\n');assert.match(out,/^vqnt 0$/m);
 await load('6 0 0\nvqnt 1\n');out=await load('6 0 0\n');assert.match(out,/^vqnt 0 /m);
 await load(null);assert.equal(elements['opt-root'].value,'50');
 out=await load('6 46345 0\n// firmware version 204+c2\n// firmware version 155b\nvsop 1\n');
-assert.ok(out.startsWith('6 46345 0\n// firmware version 204+c6\n'));
+assert.ok(out.startsWith('6 46345 0\n// firmware version 204+c7\n'));
 assert.equal((out.match(/^\/\/ firmware version /gm)||[]).length,1);
 out=await load(out);assert.equal((out.match(/^\/\/ firmware version /gm)||[]).length,1);
 assert.match(out,/^vsop 1$/m);
@@ -318,7 +318,7 @@ elements['opt-sosc'].value='2';
 handlers['opt-sosc:change']();
 assert.deepEqual(activeKey(elements['options-text'].value,'sosc').map(line=>line.split(' //')[0]),['sosc 2']);
 
-for(const key of ['vuni','vctr','dlen']) {
+for(const key of ['vuni','vctr','dlen','audt']) {
   for(const n of [0,1]) {
     out=await load(`6 0 0\n${key} ${n}\n`);
     assert.equal(elements['opt-'+key].value,String(n));
@@ -331,6 +331,42 @@ for(const key of ['vuni','vctr','dlen']) {
   }
   out=await load(`6 0 0\n${key} 1\n${key} 0\n`);
   assert.deepEqual(activeKey(out,key),[`${key} 0`]);
+}
+
+// c6 cards may omit ntch, even when vctr is configured explicitly. Keep
+// that distinct from ntch 0 through imports, edits, downloads and resets.
+for (const center of [0,1]) {
+  out = await load('6 0 0\nvctr '+center+'\n');
+  assert.deepEqual(activeKey(out,'ntch'), []);
+  assert.deepEqual(activeKey(out,'thru'), []);
+  for (const [key, max] of [['ntch',3], ['thru',2]]) {
+    for (let n=0; n<=max; n++) {
+      elements['opt-'+key].value = String(n);
+      handlers['opt-'+key+':change']();
+      out = await load(elements['options-text'].value);
+      assert.equal(elements['opt-'+key].value, String(n));
+      assert.equal(activeKey(out,key).length,1);
+    }
+    elements['opt-'+key].value = '';
+    handlers['opt-'+key+':change']();
+    assert.deepEqual(activeKey(elements['options-text'].value,key), []);
+  }
+}
+
+// Import an older card with no bank or audition option.
+out = await load('1 45875 0\n// firmware version 204+c6-nt\nthru 1\n');
+assert.equal(elements['opt-bank'].value, '0');
+assert.match(out, /^bank 0 /m);
+assert.match(out, /^audt 0 /m);
+for (const token of ['9', '-1', '01', '1.0', '']) {
+  out = await load('1 45875 0\nbank '+token+'\n');
+  assert.equal(elements['opt-bank'].value, '0');
+}
+for (let n=0; n<=8; ++n) {
+  out = await load('1 45875 0\nbank 0\nbank '+n+' // bank selection\n');
+  assert.equal(elements['opt-bank'].value, String(n));
+  assert.deepEqual(activeKey(out,'bank'), ['bank '+n]);
+  assert.equal(await load(out), out);
 }
 
 // An older normal mount dispatches each 63-byte FatFs chunk independently.
@@ -521,23 +557,24 @@ for (const comment of vm.runInContext('OBSOLETE_COMMENTS.dstr', context)) {
   assert.equal(elements['opt-dstr'].value,'8');
   assert.equal(elements['recall-dstr'].checked,true);
   assert.match(activeDensity(out)[0], /^dstr 8 \/\/0 stock timing/);
-  assert.match(out, /^4 45875 0\n\/\/ firmware version 204\+c6\n/);
+  assert.match(out, /^4 45875 0\n\/\/ firmware version 204\+c7\n/);
 }
 out=await load('4 45875 0\n// firmware version 204+c5-dstr\ndstr 0.0 // user timing note\n');
 assert.deepEqual(activeDensity(out), ['dstr 0 // user timing note']);
-assert.match(out,/^4 45875 0\n\/\/ firmware version 204\+c6\n/);
-console.log('PASS all 45 explicit zeros, normalized minima, checked preset round trip, signed ratios and stock timing');
+assert.match(out,/^4 45875 0\n\/\/ firmware version 204\+c7\n/);
+console.log('PASS all 49 explicit zeros, normalized minima, checked preset round trip, signed ratios and stock timing');
 
 // Generated markup exposes native, labelled controls with firmware bounds.
 const html=fs.readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
 const htmlIds=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(new Set(htmlIds).size,htmlIds.length);
 const stockControls = 'vsop inop pmin omod gnsm rsop pmod ckop cvop mcr1 mcr2 mcr3'.split(' ');
+const extendedStockControls = new Set(['vsop','inop','omod','mcr1','mcr2','mcr3']);
 const optionalControls = new Set(['dstr', ...allPresetKeys]);
 const headers = [...html.matchAll(/<label class="option-header" for="opt-([^"]+)">(.*?)<\/label>/g)];
 assert.equal(headers.length, editorFields.length);
 for (const [, key, header] of headers) {
-  const origin = stockControls.includes(key) ? 'Stock' : 'Enhancement';
+  const origin = extendedStockControls.has(key) ? 'Stock+' : stockControls.includes(key) ? 'Stock' : 'Enhancement';
   assert.ok(header.includes('<small class="option-origin">'+origin+'</small>'), key);
   assert.equal(header.includes('OPTIONAL:'), optionalControls.has(key), key);
 }
@@ -554,7 +591,7 @@ for(const key of presetKeys) {
   assert.ok(html.includes(`for="recall-${key}"`));
   assert.ok(html.includes(`id="help-${key}"`));
 }
-for(const key of ['vuni','vctr','dlen']) {
+for(const key of ['vuni','vctr','dlen','audt']) {
   assert.ok(html.includes(`<select id="opt-${key}" aria-describedby="help-${key}">`));
   assert.ok(html.includes(`for="opt-${key}"`));
 }
@@ -571,23 +608,22 @@ assert.match(html,/they cannot run together/);
 assert.match(html,/dens 1 takes priority over the Turing rate/);
 const content=JSON.parse(fs.readFileSync(new URL('../web/site-content.json',import.meta.url),'utf8'));
 assert.deepEqual(content.fields.map(field=>field[0]).sort(),Array.from(vm.runInContext('FIELDS',context)).sort());
-assert.match(html,/no extra flat zone is added/);
+assert.match(html,/Scale steps still apply when quantized/);
 assert.match(html, /id="opt-dstr" type="number" min="0" max="128" step="0.1" value="1"/);
-assert.match(html,/Morphagene mg204\+c6/);
-assert.match(html,/mg204\+c6 · Public release/);
+assert.match(html,/Morphagene mg204\+c7/);
+assert.match(html,/mg204\+c7 · Public release/);
 for(const id of ['firmware','remix','build-card','build-wav']) assert.ok(htmlIds.includes(id));
-assert.match(html,/mg204\+c6\.wav/);
-assert.match(html,/<details><summary>Version by version<\/summary>/);
-const history = html.match(/<section[^>]+id="versions"[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
-assert.match(history,/<h3>mg204\+c6\b/);
-assert.match(history,/<h3>mg204\+c5\b/);
-assert.match(history,/<h3>mg204\+c4\b/);
-assert.match(history,/<h3>mg204\+c3\b/);
-assert.match(history,/<h3>mg204\+c2\b/);
+assert.match(html,/mg204\+c7\.wav/);
+const history = html.match(/<details id="versions">([\s\S]*?)<\/details>/)?.[1] ?? '';
+assert.match(history, /<summary><h2>Version by version<\/h2>/);
+assert.deepEqual([...history.matchAll(/<h3 id="release-c\d*">(mg204\+c\d*)<\/h3>/g)].map(m => m[1]),
+  ['mg204+c7', 'mg204+c6', 'mg204+c5', 'mg204+c4', 'mg204+c3', 'mg204+c2', 'mg204+c']);
+assert.match(history, /<code>audt 1<\/code>/);
 assert.doesNotMatch(html,/<details[^>]*\bopen\b/);
 assert.match(html,/This project contains carefully tested AI-generated code\./);
 assert.match(html,/Independent customization\. Not an official Make Noise release\./);
 const order=content.fields.map(field=>field[0]);
+assert.equal(order.indexOf('audt'), order.indexOf('bank')+1);
 assert.equal(order.indexOf('sosc'),order.indexOf('dryk')+1);
 assert.equal(order.indexOf('dlen'),order.indexOf('sosc')+1);
 assert.equal(order.indexOf('mpos'),order.indexOf('mlop')+1);
@@ -601,7 +637,7 @@ assert.match(html,/100% gives the shortest Genes/);
 assert.match(html,/Bidirectional — classic/);
 assert.match(html,/Bidirectional — V\/oct/);
 assert.match(html,/attenuverter carefully adjusted/);
-console.log('PASS mg204+c6 editor: grouped controls, percentage guidance, version history, disclosures and patcher');
+console.log('PASS mg204+c7 editor: grouped controls, percentage guidance, version history, disclosures and patcher');
 
 // Release check: a stale standalone file can look correct while exporting
 // settings for earlier firmware. Both editions must ship the current editor.

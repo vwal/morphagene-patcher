@@ -1,9 +1,9 @@
 {
-  "release": "mg204+c6",
+  "release": "mg204+c7",
   "base": "mg204",
-  "raw_image_bytes": 202752,
-  "raw_image_sha256": "4596b236d5a0b82e56aaba6c6c4ed2204677b2224362356e2a1369cd681e7ab4",
-  "wav_download": "mg204+c6.wav",
+  "raw_image_bytes": 223232,
+  "raw_image_sha256": "6947fd4ef33b750a1dd9ad6afa6f8a781543b937e1b5c9ca2188f2f973b887e1",
+  "wav_download": "mg204+c7.wav",
   "sd_download": "mgmod.bin",
   "source": "https://github.com/vwal/morphagene-patcher"
 }

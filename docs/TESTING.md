@@ -1,4 +1,6 @@
-# mg204+c6 firmware tests
+# mg204+c7 firmware tests
+
+The c7 release reproduces the hardware-tested Development 24 application with the public version comment. The bank and audio tests cover bank-local recording, previewing and cancelling a splice, confirmation timing, forward and reverse play-through, and idle card removal. [Release validation](RELEASE_VALIDATION.md)
 
 The density tests compare `dens 1, dstr 0` output with stock timing at startup and after settings-only reload. They also check the 1.0 Gene/sec startup default, explicit rate recall, current timing and phase when the line is omitted, and the shifted knob’s 0.1–128 Genes/sec range. The normal card reader, live reader, hosted editor and offline editor exercise explicit zero across their settings. See [release validation](RELEASE_VALIDATION.md).
 
@@ -69,8 +71,7 @@ suite. These tests complement, and do not replace, a hardware audition.
 
 ## Updating source and reference bundles
 
-After an intentional firmware change, first run the tests. Build each remix,
-record the printed image SHA-256 in its `remixes/*.py` manifest, and regenerate:
+The c7 picker calls specific entry points in previously linked modules. A release build checks the entire linked image against the manifest before generating a download. For a new firmware revision, verify those entry points against the new link map and test the candidate in development first. Record the verified image hash in both remix manifests, then rebuild the release patch data:
 
 ```bash
 python -m mgmod webpatch --firmware "$MGMOD_FIRMWARE"

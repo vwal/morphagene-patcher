@@ -42,6 +42,10 @@ and reproduced in the main license. Existing MIT portions in modified files
 remain MIT; the additional no-sale terms apply only to our own copyrightable
 additions. Unchanged upstream files are not relicensed.
 
+The splice play-through and reel bank adaptations also draw on Carlos de Paula’s
+[fork at commit 3305b85](https://github.com/carlosedp/morphagene-mods/tree/3305b8566641ed24bb176c98e243831bbf1e21f8).
+The fork carries the same MIT contributor notice preserved here.
+
 Our changes relative to that baseline are recorded in the release's
 `source.patch`; new and modified files are also identified in
 `license-provenance.json`. That inventory is a provenance aid, not a claim that

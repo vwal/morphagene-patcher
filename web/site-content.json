@@ -34,12 +34,24 @@
     [
       "vctr",
       "1:1 at Varispeed noon",
-      "Optional and off by default. Places forward +1x at calibrated noon in every layout, range and scale, with an easy-to-find 48-52% notch. Bidirectional layouts fit stop and reverse into the left half. With this off, no extra flat zone is added to continuous Varispeed.",
+      "Places forward +1\u00d7 at calibrated noon with zero Varispeed CV. In bidirectional layouts, stop and reverse fit into the left half. Choose any additional flat zones with ntch.",
       [
         "0: Original mapping",
-        "1: +1x at noon with notch"
+        "1: +1\u00d7 at noon"
       ],
       "0"
+    ],
+    [
+      "ntch",
+      "Varispeed unity notches",
+      "Widen the knob position for exact forward or reverse original speed. Each selected notch spans about 4% of knob travel. In the forward-only layout, 2 adds no notch and 3 adds only the forward notch. Scale steps still apply when quantized. Omit this line to follow vctr at boot (a forward notch with vctr 1) and keep the current notch setting on a settings-only reload.",
+      [
+        "0: No added notches",
+        "1: Forward (+1\u00d7)",
+        "2: Reverse (\u22121\u00d7)",
+        "3: Both directions"
+      ],
+      ""
     ],
     [
       "vpos",
@@ -98,21 +110,21 @@
     [
       "mcr1",
       "Gene 2 chord ratio",
-      "Sets the playback speed of Gene 2 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. The magnitude can range from 0.0625 to 16, with up to eight decimal places. An explicit zero selects the minimum forward ratio, 0.0625.",
+      "Sets the playback speed of Gene 2 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. Turing mode also uses these ratios. The magnitude can range from 0.0625 to 16, with up to eight decimal places. An explicit zero selects the minimum forward ratio, 0.0625.",
       null,
       "2"
     ],
     [
       "mcr2",
       "Gene 3 chord ratio",
-      "Sets the playback speed of Gene 3 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. The magnitude can range from 0.0625 to 16, with up to eight decimal places. An explicit zero selects the minimum forward ratio, 0.0625.",
+      "Sets the playback speed of Gene 3 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. Turing mode also uses these ratios. The magnitude can range from 0.0625 to 16, with up to eight decimal places. An explicit zero selects the minimum forward ratio, 0.0625.",
       null,
       "1.5"
     ],
     [
       "mcr3",
       "Gene 4 chord ratio",
-      "Sets the playback speed of Gene 4 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. The magnitude can range from 0.0625 to 16, with up to eight decimal places. An explicit zero selects the minimum forward ratio, 0.0625.",
+      "Sets the playback speed of Gene 4 at high Morph. Use 1 for unison, 2 for an octave up, or a negative ratio for reverse playback. Turing mode also uses these ratios. The magnitude can range from 0.0625 to 16, with up to eight decimal places. An explicit zero selects the minimum forward ratio, 0.0625.",
       null,
       "1.33333"
     ],
@@ -366,10 +378,48 @@
     [
       "omod",
       "Organize response",
-      "Choose when a splice selected with Organize or SHIFT takes over.",
+      "Select when the new splice takes over during normal Organize or SHIFT navigation, splice preset recall, and final confirmation in the bank picker. With 0, a switch to another reel starts loading at the next Gene transition. With 1, the load starts when you confirm.",
       [
         "0: At Gene or splice end",
         "1: Immediately"
+      ],
+      "0"
+    ],
+    [
+      "thru",
+      "Play through splices",
+      "The top 5% clockwise of Organize plays through the reel. Mode 1 always steps forward. Mode 2 follows Varispeed direction and wraps in either direction. The lower 95% still selects every splice manually. For one pass per splice, use full-length Genes and stock Gene timing. Short Genes or a clock can step sooner. Recording pauses automatic stepping. Omit the line for off at boot and to keep the live setting on a settings-only reload.",
+      [
+        "0: Off",
+        "1: Next splice",
+        "2: Follow playback direction"
+      ],
+      "0"
+    ],
+    [
+      "bank",
+      "Reel bank on card load",
+      "0 uses the card root and the ordinary reel browser. 1 enables banks and starts at the root. Banks 2\u20138 use folders bank2 through bank8, with up to 32 reels per bank. Existing folders appear in the picker even when empty. Hold SPLICE, add REC and wait for REEL to blink. Release both. Turn Organize to choose a bank, reel and splice in turn. Confirm each with a short SPLICE-then-REC chord. Tap SHIFT to cancel. At the reel step, a lone recorded reel double-flashes. When space is available, the last 5% clockwise selects pink/white New Reel. In an empty bank that choice spans the whole dial. Confirm New Reel to open a blank. For a new reel in the current bank, use the ordinary short chord, turn Organize fully clockwise, then confirm with a second short chord. A settings-only reload keeps the current bank.",
+      [
+        "0: Off (card root)",
+        "1: Bank 1 (card root)",
+        "2: Bank 2 (bank2 folder)",
+        "3: Bank 3 (bank3 folder)",
+        "4: Bank 4 (bank4 folder)",
+        "5: Bank 5 (bank5 folder)",
+        "6: Bank 6 (bank6 folder)",
+        "7: Bank 7 (bank7 folder)",
+        "8: Bank 8 (bank8 folder)"
+      ],
+      "0"
+    ],
+    [
+      "audt",
+      "Bank picker audition",
+      "With 0, the bank step keeps playing the current performance. The reel step previews the first splice, and the splice step previews the highlighted splice. Previews play forward at +1\u00d7. The current performance keeps running underneath. With 1, you hear that performance throughout browsing. A missing line enables audition on boot and on a successful settings-only reload. The ordinary short reel browser keeps its native audition.",
+      [
+        "0: Audition while browsing",
+        "1: Keep current playback"
       ],
       "0"
     ],
@@ -426,6 +476,36 @@
   ],
   "features": [
     [
+      "New in mg204+c7",
+      "Eight reel banks on one card",
+      "Enable <code>bank 1</code> to keep the root as bank 1. Add folders named <code>bank2</code> through <code>bank8</code> as needed. Each bank holds up to 32 reels with their own splice markers. The picker includes existing folders, even empty ones. Choose the pink/white <strong>New Reel</strong> at the reel step to open a blank for recording."
+    ],
+    [
+      "New in mg204+c7",
+      "Audition a splice across banks",
+      "Hold SPLICE, add REC and keep both down until REEL blinks. Release both, turn Organize, and confirm the bank, reel and splice with short SPLICE-then-REC chords. By default, <code>audt 0</code> previews the highlighted reel\u2019s first splice, then the highlighted splice, at forward +1\u00d7. Your performance keeps running underneath. Tap SHIFT to return to it, or set <code>audt 1</code> to hear it throughout browsing. A short initial chord still opens the ordinary reel browser."
+    ],
+    [
+      "New in mg204+c7",
+      "Play through splices in either direction",
+      "Turn Organize into its top 5% clockwise to play splices in sequence. <code>thru 1</code> steps through splice numbers in ascending order. <code>thru 2</code> follows Varispeed, so reversing also steps to the previous splice. Both wrap around the reel. Use full-length Genes and stock timing for one pass per splice, or shorten the Genes to step sooner."
+    ],
+    [
+      "New in mg204+c7",
+      "Choose your unity-speed notches",
+      "Use <code>ntch 1</code> for a forward +1\u00d7 notch, <code>ntch 2</code> for a reverse \u22121\u00d7 notch, or <code>ntch 3</code> for both. Each spans about 4% of the dial. Choose <code>ntch 0</code> for a continuous sweep with quantization off. <code>vctr 1</code> still puts forward unity at noon."
+    ],
+    [
+      "New in mg204+c7",
+      "Cue the next change",
+      "Confirm a splice with <code>omod 0</code> to switch at the current Gene transition, or <code>omod 1</code> to switch immediately. Across reels or banks, the SD load begins at that point. Tap SHIFT to cancel a queued cross-reel change before the load starts."
+    ],
+    [
+      "New in mg204+c7",
+      "Reload a card during playback",
+      "The module can now detect an idle card\u2019s removal even when a cached filesystem read would have kept SHIFT lit. After writes finish, remove the card and wait for SHIFT to go dark. Insert and tap SHIFT for a normal load, or hold SHIFT until it lights and insert a matching card for a settings-only swap."
+    ],
+    [
       "New in mg204+c6",
       "Recall Gene timing",
       "Set <code>dens 1</code> and <code>dstr 0</code> to boot with stock Gene timing and keep SHIFT + Gene Size available. On a settings-only reload, include <code>dstr</code> to recall stock timing or a rate from 0.1 to 128 Genes/sec. Omit it to keep the live timing. A fresh boot with no <code>dstr</code> line uses 1 Gene/sec. An existing <code>dstr 8.0</code> still selects 8 Genes/sec. External clock takes priority, and available voices limit the overlap of long Genes."
@@ -453,7 +533,7 @@
     [
       "New in mg204+c2",
       "1:1 at noon",
-      "Enable <code>vctr 1</code> to place forward +1x at calibrated noon in full-range and bidirectional layouts, with every quantized scale. The 48-52% notch makes it easy to find in continuous mode too. Stop and reverse fit into the left half in bidirectional modes. Both unity options default to off."
+      "Enable <code>vctr 1</code> to place forward +1x at calibrated noon in full-range and bidirectional layouts, with every quantized scale. Omit ntch on boot for the original 48\u201352% centered notch, or choose your notches explicitly. Stop and reverse fit into the left half in bidirectional modes. Both unity options default to off."
     ],
     [
       "New in mg204+c2",
